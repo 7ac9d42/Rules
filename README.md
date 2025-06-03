@@ -42,10 +42,10 @@ mihomo使用mrs格式文件，Stash使用yaml格式文件
 
 #### Substore部署使用教程，高级玩法请将Substore更新至最新版本，注意更新前请先备份以防止配置丢失
 
-[![Sub-store结合教程](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/sub-store-mini.png)](https://github.com/Lanlan13-14/Rules/blob/main/Others/Substore.md)[Sub-store结合教程](https://github.com/Lanlan13-14/Rules/blob/main/Others/Substore.md)
-
-[![Sub-store直达链接](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/sub-store-mini.png)](https://github.com/sub-store-org/Sub-Store)[Sub-store直达链接](https://github.com/sub-store-org/Sub-Store)
-
+<a href="https://github.com/Lanlan13-14/Rules/blob/main/Others/Substore.md"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/Sub-Store.png" width="32" style="vertical-align:middle;"/> Sub-store结合教程</a>
+>
+<a href="https://github.com/sub-store-org/Sub-Store"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/Sub-Store.png" width="32" style="vertical-align:middle;"/> Sub-store直达链接</a>
+>
 若无所需游戏规则，可以向该项目提交请求或者自己抓包获取后给该项目提交请求
 [游戏规则相关内容](https://github.com/FQrabbit/SSTap-Rule)
 
@@ -88,40 +88,44 @@ mihomo使用mrs格式文件，Stash使用yaml格式文件
 
 **[configfull_NoAd_Stash_lite.yaml](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_NoAd_Stash_lite.yaml)**
 
+## 一键生成配置/Generate configuration with one click
+地址
+https://mihomo.haxtop.ggff.net/
+>
 ## 客户端推荐/Client Recommendation
 •Windows/MacOS/Linux
-
-
-[![Mihomo](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo-mini.png)](https://github.com/xishang0128/clash-meta-party)[Mihomo-Party](https://github.com/mihomo-party-org/mihomo-party)（若出现DNS泄漏请打开严格路由）
 >
-<a href="https://apps.apple.com/us/app/clash-mi/id6744321968"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/clashmi.png" width="32" style="vertical-align:middle;"/> ClashMi</a>
-
-
+<a href="https://github.com/mihomo-party-org/mihomo-party"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo.png" width="32" style="vertical-align:middle;"/> Mihomo-party</a>
+>
+<a href="https://github.com/chen08209/FlClash"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/flclash.png" width="32" style="vertical-align:middle;"/> Flclash</a>
+>
+>
 •Android
 >
-[![Flclash](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/flclash-mini.png)](https://github.com/chen08209/FlClash)[FlClash](https://github.com/chen08209/FlClash)
+<a href="https://github.com/chen08209/FlClash"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/flclash.png" width="32" style="vertical-align:middle;"/> Flclash</a>
 >
 <a href="https://github.com/KaringX/clashmi"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/clashmi.png" width="32" style="vertical-align:middle;"/> ClashMi</a>
 >
 •iOS
 >
+<a href="https://apps.apple.com/us/app/pharos-pro/id1456610173"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/pharos.png" width="32" style="vertical-align:middle;"/> Pharos</a>
+>
+<a href="https://apps.apple.com/app/stash/id1596063349?platform=iphone&l=zh-CN"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/stash.png" width="32" style="vertical-align:middle;"/> Stash</a>
+>
 <a href="https://apps.apple.com/us/app/clash-mi/id6744321968"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/clashmi.png" width="32" style="vertical-align:middle;"/> ClashMi</a>
 >
-[![Stash](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/stash-mini.png)](https://apps.apple.com/app/stash/id1596063349?platform=iphone&l=zh-CN)[Stash](https://apps.apple.com/app/stash/id1596063349?platform=iphone&l=zh-CN)
 >
-[![Pharos](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/pharos-mini.png)](https://apps.apple.com/us/app/pharos-pro/id1456610173)[Pharos](https://apps.apple.com/us/app/pharos-pro/id1456610173)
-
-•鸿蒙/HarmonyOS
-
-[![ClashNEXT](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/clash-next-mini.png)](https://github.com/xiaobaigroup/hapapp)[ClashNEXT](https://github.com/xiaobaigroup/hapapp)
-
-
+•HarmonyOS
+>
+<a href="https://github.com/xiaobaigroup/ClashBox"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/clashbox.png" width="32" style="vertical-align:middle;"/> ClashBox</a>  
+>
+>
 •Openwrt
-
-[![Nikki](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/nikki-mini.png)](https://github.com/nikkinikki-org/OpenWrt-nikki)[Nikki](https://github.com/nikkinikki-org/OpenWrt-nikki)
-
-[![Openclash](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/openclash-mini.png)](https://github.com/vernesong/OpenClash)[Openclash](https://github.com/vernesong/OpenClash)
-
+>
+<a href="https://github.com/nikkinikki-org/OpenWrt-nikki"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/nikki.png" width="32" style="vertical-align:middle;"/> Nikki</a>
+>
+<a href="https://github.com/vernesong/OpenClash"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/openclash.png" width="32" style="vertical-align:middle;"/> Openclash</a>
+>
 ## 🚫广告拦截效果/Test your ad blocking effect
 
 [AdBlock Tester](https://adblock-tester.com)
@@ -154,6 +158,7 @@ mihomo使用mrs格式文件，Stash使用yaml格式文件
 
 •[SSTap](https://github.com/FQrabbit/SSTap-Rule)
 
+•[Kwisma](https://github.com/Kwisma/cf-worker-mihomo)
 
 # Tip
 生活是条双行道，
