@@ -174,5 +174,3 @@ Please do not become a 'help vampire'.
 如果你觉得本项目对你有帮助，欢迎点击右上角 ⭐Star 支持我们，让更多人了解和使用这个项目。
 >
 If you think this project is helpful to you, please click ⭐Star in the upper right corner to support us so that more people can understand and use this project.
->
-<img src="https://api.star-history.com/svg?repos=setube/stb&type=Date" />
