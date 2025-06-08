@@ -25,6 +25,12 @@
 >
 > Once you use and copy any file of this project, you are deemed to have accepted this disclaimer.
 
+>[!NOTE]
+> ## 关于Smart策略组相关
+> Smart策略组由于其内核的复杂性，我考虑在其稳定后再加入
+>
+>Due to the complexity of the Smart Strategy Group's core, I am considering adding it after it becomes stable.
+>
 - 本项目涉及的文件仅用于资源共享和学习研究，不能保证其合法性，准确性，完整性和有效性，请根据情况自行判断，有Bug建议可以提issue.
 
 - 请勿将本项目的任何内容用于商业或非法目的，否则后果自负.
@@ -160,16 +166,16 @@ https://mihomo.haxtop.ggff.net/
 
 •[Kwisma](https://github.com/Kwisma/cf-worker-mihomo)
 
-# Tip
-生活是条双行道，
-这是一个简单而深刻，且不可否认的事实。如遇问题或建议欢迎指出，同时确保你的帖子包含对他人来说有用的细节和信息。通过Github社区分享你的发现。同样地分享你遇到的问题
-也感谢每一位为该项目做出贡献的开发者，是他们为该项目添砖加瓦
-请不要成为一只“吸取帮助的吸血鬼”
+>[!TIP]
+>生活是条双行道，
+>这是一个简单而深刻，且不可否认的事实。如遇问题或建议欢迎>>指出，同时确保你的帖子包含对他人来说有用的细节和信息。通>过Github社区分享你的发现。同样地分享你遇到的问题
+>也感谢每一位为该项目做出贡献的开发者，是他们为该项目添砖>>加瓦
+>请不要成为一只“吸取帮助的吸血鬼”
 >
-Life is a two-way street.
-This is a simple yet profound and undeniable fact. If you encounter any problems or have suggestions, feel free to point them out, while ensuring that your post contains useful details and information for others. Share your discoveries with the GitHub community. Likewise, share the problems you've encountered.
-We also thank every developer who has contributed to this project; it is their efforts that have helped build and improve it.
-Please do not become a 'help vampire'.
+>Life is a two-way street.
+>This is a simple yet profound and undeniable >fact. If you encounter any problems or have >suggestions, feel free to point them out, while >ensuring that your post contains useful details >and information for others. Share your >discoveries with the GitHub community. Likewise, >share the problems you've encountered.
+>We also thank every developer who has >contributed to this project; it is their efforts >that have helped build and improve it.
+>Please do not become a 'help vampire'.
 >
 如果你觉得本项目对你有帮助，欢迎点击右上角 ⭐Star 支持我们，让更多人了解和使用这个项目。
 >
