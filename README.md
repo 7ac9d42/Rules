@@ -166,17 +166,18 @@ https://mihomo.haxtop.ggff.net/
 
 •[Kwisma](https://github.com/Kwisma/cf-worker-mihomo)
 
->[!TIP]
->生活是条双行道，
->这是一个简单而深刻，且不可否认的事实。如遇问题或建议欢迎>>指出，同时确保你的帖子包含对他人来说有用的细节和信息。通>过Github社区分享你的发现。同样地分享你遇到的问题
->也感谢每一位为该项目做出贡献的开发者，是他们为该项目添砖>>加瓦
->请不要成为一只“吸取帮助的吸血鬼”
+> [!TIP]
+> **生活是一条双行道，这是一个简单而深刻的事实。**  
+> 如果你在使用过程中遇到问题或有任何建议，欢迎指出。请确保你的帖子包含对他人有用的细节与信息，并通过 GitHub 社区分享你的发现。  
+> 同样地，也欢迎分享你遇到的问题。  
+> 感谢每一位为本项目做出贡献的开发者，正是他们的努力让项目不断进步。  
+> 请不要成为只索取不回馈的“伸手党”。
 >
->Life is a two-way street.
->This is a simple yet profound and undeniable >fact. If you encounter any problems or have >suggestions, feel free to point them out, while >ensuring that your post contains useful details >and information for others. Share your >discoveries with the GitHub community. Likewise, >share the problems you've encountered.
->We also thank every developer who has >contributed to this project; it is their efforts >that have helped build and improve it.
->Please do not become a 'help vampire'.
+> **Life is a two-way street. This is a simple, profound, and undeniable truth.**  
+> If you encounter any problems or have suggestions, feel free to report them. Just make sure your post includes helpful details and information for others.  
+> Share your findings with the GitHub community — and also share the issues you’ve run into.  
+> We’re grateful to every developer who has contributed to this project; your efforts build the foundation we stand on.  
+> Please don’t be a “help vampire.”
 >
-如果你觉得本项目对你有帮助，欢迎点击右上角 ⭐Star 支持我们，让更多人了解和使用这个项目。
->
-If you think this project is helpful to you, please click ⭐Star in the upper right corner to support us so that more people can understand and use this project.
+> 如果你觉得这个项目对你有帮助，欢迎点击右上角的 ⭐Star 支持我们，让更多人了解并使用这个项目。  
+> If you find this project helpful, please click ⭐Star in the upper-right corner to support us — and help more people discover and use it.
