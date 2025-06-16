@@ -105,9 +105,6 @@ sniffer:
     # 向日葵服务
     - "*.oray.com"
     - "*.sunlogin.net"
-    - "*.kuapt.top"
-    - "*.*.kuapt.top"
-    - "*.catxxp123.top"
 
 # 代理模式
 tun:
@@ -318,6 +315,10 @@ rules:
   - RULE-SET,private_ip,全球直连,no-resolve
   - RULE-SET,cn_ip,全球直连,no-resolve
   - MATCH,Final
+  - DOMAIN-KEYWORD,kuapt,全球直连
+  - DOMAIN-KEYWORD,catxxp123,全球直连
+  - DOMAIN-SUFFIX,maj-soul.com,DIRECT
+  - DOMAIN-SUFFIX,3ct.2ndtool.top,DIRECT
 rule-anchor:
   ip: &ip {type: http, interval: 86400, behavior: ipcidr, format: mrs}
   ip_text: &ip_text {type: http, interval: 86400, behavior: ipcidr, format: text}
