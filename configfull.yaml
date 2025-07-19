@@ -222,8 +222,8 @@ proxy-groups:
   - {name: 美国均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(美|🇺🇲|US|America|united States))" ,exclude-filter: "(?=.*(?i)(The_US_balance|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|russia|austria|plus|traffic|Australia|rus|aus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png" }
 
   - {name: 自用就近节点, type: select, proxies: [就近备份自动, 就近备份均衡], include-all: true, filter: "(?=.*(?i)(港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png" }
-  - {name: 就近备份自动, type: url-test, include-all: true, tolerance: 10, interval: 180, hidden: true, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))" ,exclude-filter: "(?i)(The_HK_automation|wcloud|The_SG_automation)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png" }
-  - {name: 就近备份均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))" ,exclude-filter: "(?i)(The_HK_balance|wcloud|The_SG_balance)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+  - {name: 就近备份自动, type: url-test, include-all: true, tolerance: 10, interval: 180, hidden: true, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))" ,exclude-filter: "(?=.*(?i)(The_HK_automation|wcloud|The_SG_automation))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png" }
+  - {name: 就近备份均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))" ,exclude-filter: "(?=.*(?i)(The_HK_balance|wcloud|The_SG_balance))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
 
   - {name: 全部节点, type: select, include-all: true, tolerance: 20, interval: 300, exclude-filter: "(?i)(🟢 直连)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/all.png"}
 # 功能型代理组默认隐藏 start
