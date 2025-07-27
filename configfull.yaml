@@ -24,7 +24,7 @@ proxy-providers:
       udp: true
   Airport_02:
     <<: *PProviders
-    proxy: "节点选择"
+    proxy: "🟢 直连"
     url: "订阅链接2"
     override:
       additional-prefix: '[机场名称2]'
