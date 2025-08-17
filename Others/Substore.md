@@ -479,3 +479,5 @@ function main(config) {
 ```
 http(s)://面板连接地址/api/v1/open_api/sub_store?user=用户名&pwd=密码&tunnel=隧道id
 ```
+如果你不习惯使用proxy-providers的方式获得节点，可以使用
+rewrite目录下的文件，选择添加mihomo配置，来源选择你在订阅管理处处理好的节点，脚本填入rewrite目录下的raw格式链接保存即可
