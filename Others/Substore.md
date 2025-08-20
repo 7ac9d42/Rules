@@ -506,6 +506,10 @@ rewrite目录下的文件，选择添加mihomo配置，来源选择你在订阅�
       <td>3</td>
       <td>Akko</td>
     </tr>
+    <tr>
+      <td>4</td>
+      <td>OrangeVPS</td>
+    </tr>
   </tbody>
 </table>
 
