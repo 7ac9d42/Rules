@@ -508,7 +508,7 @@ rewrite目录下的文件，选择添加mihomo配置，来源选择你在订阅�
     </tr>
     <tr>
       <td>4</td>
-      <td>OrangeVPS</td>
+      <td>OrangeVPS（建站用途可购入其余不推荐）</td>
     </tr>
   </tbody>
 </table>
