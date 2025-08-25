@@ -37,12 +37,20 @@ jobs:
         curl -sL "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/qx.list" -o rules/Domain/qx.list  
         curl -sL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-ads-all.list" -o rules/Domain/category-ads-all.list  
 
-    - name: Extract DOMAIN rules from qx.list  
+        # 下载 pcdn.json 并提取 domain / domain_suffix
+        curl -sL "https://raw.githubusercontent.com/DDCHlsq/sing-ruleset/refs/heads/master/pcdn.json" -o pcdn.json
+
+    - name: Extract DOMAIN rules from qx.list and pcdn.json  
       run: |  
         # 提取 qx.list 中的 DOMAIN 规则  
         grep -Eo 'DOMAIN,[^,]+' rules/Domain/qx.list | sed 's/DOMAIN,//' > rules/Domain/banAd-domain.list  
         grep -Eo 'DOMAIN-SUFFIX,[^,]+' rules/Domain/qx.list | sed 's/DOMAIN-SUFFIX,//' >> rules/Domain/banAd-domain.list  
-  
+
+        # 提取 pcdn.json 中的 domain
+        jq -r '.rules[].domain[]?' pcdn.json >> rules/Domain/banAd-domain.list
+        # 提取 pcdn.json 中的 domain_suffix，去掉开头的 . 并加上 '*.' 前缀
+        jq -r '.rules[].domain_suffix[]?' pcdn.json | sed 's/^\.//' | sed 's/^/*./' >> rules/Domain/banAd-domain.list
+
     - name: Convert BanAd Rules to YAML  
       run: |  
         echo "payload:" > rules/Domain/banAd.yaml  
@@ -56,11 +64,11 @@ jobs:
     - name: Clean up the source files  
       run: |  
         # 删除源文件，保留 banAd.yaml 和 banAd.mrs  
-        rm -f rules/Domain/qx.list rules/Domain/category-ads-all.list rules/Domain/banAd-domain.list  
+        rm -f rules/Domain/qx.list rules/Domain/category-ads-all.list rules/Domain/banAd-domain.list pcdn.json  
   
     - name: Commit and Push Changes  
       run: |  
         git add .  
-        git commit -m "Updated BanAd rules (qx.list -> banAd.mrs)" || true  # 如果没有变更，commit 会失败，`|| true` 避免脚本报错  
-        git pull --rebase  # 先同步远程最新代码，避免 push 失败  
+        git commit -m "Updated BanAd rules (qx.list + pcdn.json -> banAd.mrs)" || true  
+        git pull --rebase  
         git push

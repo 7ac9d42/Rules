@@ -310,6 +310,19 @@ function main(config) {
 在 rules 中插入新的规则 "RULE-SET,localip192.168.31.0,Back_store,no-resolve"
 其余以此类推，规则写法部分参考[mihomo官方文档](https://wiki.metacubex.one)
 
+### 修改配置文件规则链接
+比如我想要把默认配置的mini版去广告规则改为完整版那可用如下代码
+```
+// 加载原始 YAML 内容（假设 $content 包含原始 YAML）
+const yaml = ProxyUtils.yaml.safeLoad($content)
+
+// 修改 rule-providers.banAd_domain.url
+yaml['rule-providers']['banAd_domain']['url'] = 'https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/banAd.mrs'
+
+// 将修改后的 YAML 转换回字符串
+$content = ProxyUtils.yaml.safeDump(yaml)
+```
+其余链接也可以按示例修改
 ##### 添加链式代理内容
 1.添加链式代理策略组
 ```
@@ -505,6 +518,10 @@ rewrite目录下的文件，选择添加mihomo配置，来源选择你在订阅�
     <tr>
       <td>3</td>
       <td>Akko</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>OrangeVPS（建站用途可购入其余不推荐）</td>
     </tr>
   </tbody>
 </table>
