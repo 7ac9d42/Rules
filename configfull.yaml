@@ -132,7 +132,7 @@ tun:
 dns:
   enable: true
   listen: 0.0.0.0:1053
-  ipv6: false
+  ipv6: true
   prefer-h3: false # 是否开启 DoH 支持 HTTP/3，将并发尝试
   respect-rules: true
   # 模式切换 redir-host / fake-ip
@@ -178,7 +178,6 @@ dns:
   nameserver:    
     - https://dns.cloudflare.com/dns-query
     - https://dns.google/dns-query
-    - https://1.1.1.1/dns-query
 
 proxies:
   - name: "🟢 直连"
