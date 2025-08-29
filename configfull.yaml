@@ -179,9 +179,6 @@ dns:
     - https://dns.cloudflare.com/dns-query
     - https://dns.google/dns-query
     - https://1.1.1.1/dns-query
-  fallback:
-    - https://1.1.1.1/dns-query
-    - tls://8.8.8.8:853
 
 proxies:
   - name: "🟢 直连"
