@@ -181,7 +181,7 @@ dns:
     - https://1.1.1.1/dns-query
     - tls://8.8.8.8:853
 
-proxies: 
+proxies:
   - name: "🟢 直连"
     type: direct
     udp: true
