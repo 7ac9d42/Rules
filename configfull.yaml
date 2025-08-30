@@ -50,7 +50,7 @@ mixed-port: 7890
 ipv6: true
 allow-lan: true
 unified-delay: true
-tcp-concurrent: true
+tcp-concurrent: false
 # interface-name: eth0  （路由器下根据情况指定出站接口）
 authentication:
 #  密码设置选项默认无
@@ -119,7 +119,7 @@ sniffer:
 # 代理模式
 tun:
   enable: true
-  stack: gvisor
+  stack: mixed
   mtu: 1500
   dns-hijack:
     - "any:53"
