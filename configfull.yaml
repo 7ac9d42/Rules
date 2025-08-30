@@ -40,7 +40,12 @@ proxy-providers:
       udp: true
 
 ##############################################
-
+# 实验性配置，用于尝试解决一些特殊问题
+experimental:
+  # 禁用 quic-go 的 GSO 优化（Linux 6.6+ 常见问题）
+  quic-go-disable-gso: true
+  # 禁用 quic-go 的 ECN（部分路由器/防火墙丢弃带 ECN 标记的包）
+  # quic-go-disable-ecn: false
 
 # 用于下载订阅时指定UA
 global-ua: clash.meta
