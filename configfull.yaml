@@ -43,9 +43,9 @@ proxy-providers:
 # 实验性配置，用于尝试解决一些特殊问题
 experimental:
   # 禁用 quic-go 的 GSO 优化（Linux 6.6+ 常见问题）
-  quic-go-disable-gso: true
+  quic-go-disable-gso: false
   # 禁用 quic-go 的 ECN（部分路由器/防火墙丢弃带 ECN 标记的包）
-  # quic-go-disable-ecn: false
+  quic-go-disable-ecn: false
 
 # 用于下载订阅时指定UA
 global-ua: clash.meta
@@ -55,7 +55,7 @@ mixed-port: 7890
 ipv6: true
 allow-lan: true
 unified-delay: true
-tcp-concurrent: false
+tcp-concurrent: true
 # interface-name: eth0  （路由器下根据情况指定出站接口）
 authentication:
 #  密码设置选项默认无
@@ -125,10 +125,11 @@ sniffer:
 tun:
   enable: true
   stack: mixed
-  mtu: 1500
+  mtu: 9000
   dns-hijack:
     - "any:53"
     - "tcp://any:53"
+  strict-route: true
   auto-route: true
   auto-redirect: true
   auto-detect-interface: true
