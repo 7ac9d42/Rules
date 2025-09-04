@@ -55,7 +55,7 @@ mixed-port: 7890
 ipv6: true
 allow-lan: true
 unified-delay: true
-tcp-concurrent: true
+tcp-concurrent: false
 # interface-name: eth0  （路由器下根据情况指定出站接口）
 authentication:
 #  密码设置选项默认无
@@ -125,7 +125,7 @@ sniffer:
 tun:
   enable: true
   stack: mixed
-  mtu: 9000
+  mtu: 1500
   dns-hijack:
     - "any:53"
     - "tcp://any:53"
