@@ -5,7 +5,7 @@ Direct_first: &Direct_first {type: select, proxies: [全球直连, 节点选择,
 
 Include_all: &Include_all {type: select, proxies: [节点选择, 自用就近节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, 自建/家宽节点, 全球直连], include-all: true, exclude-filter: "(?i)(🟢 直连)"}
 
-Urltest_Base: &Urltest_Base {type: url-test, include-all: true, tolerance: 20, interval: 180, max-failed-times: 1, hidden: true}
+Urltest_Base: &Urltest_Base {type: url-test, include-all: true, tolerance: 15, interval: 90, max-failed-times: 1, hidden: true}
 
 PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', interval: 180}, filter: '^(?!.*(拒绝|直连|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|提示|特别|访问|支持|教程|关注|更新|作者|加入|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author|traffic))'}
 
@@ -195,6 +195,9 @@ proxy-groups:
   - {name: 节点选择, type: select, proxies: [自用就近节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, 自建/家宽节点, 故障转移, 🟢 直连], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
   - {name: 自用就近节点, type: select, proxies: [就近备份自动, 就近备份均衡], include-all: true, filter: "(?=.*(?i)(港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png" }
   - {name: 自建/家宽节点, type: fallback, include-all: true, filter: "(?=.*(?i)(自建|CF|The_house|private|home|家宽|Self_Back|hgc|HKT|HKBN|icable|Hinet|att))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
+  - {name: 就近备份自动, <<: *Urltest_Base, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))" ,exclude-filter: "(?=.*(?i)(The_HK_automation|wcloud|The_SG_automation))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png" }
+  - {name: 就近备份均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))" ,exclude-filter: "(?=.*(?i)(The_HK_balance|wcloud|The_SG_balance))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+
 
   - {name: YouTube, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/youtube.png"}
   - {name: FCM, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fcm.png"}
@@ -252,8 +255,6 @@ proxy-groups:
   - {name: 美国均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(美|🇺🇲|US|America|united States|Ashburn))" ,exclude-filter: "(?=.*(?i)(The_US_balance|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|russia|austria|plus|traffic|Australia|rus|aus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 全部节点, type: select, include-all: true, tolerance: 20, interval: 300, exclude-filter: "(?i)(🟢 直连)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/all.png"}
 
-  - {name: 就近备份自动, <<: *Urltest_Base, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))" ,exclude-filter: "(?=.*(?i)(The_HK_automation|wcloud|The_SG_automation))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png" }
-  - {name: 就近备份均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|新|🇸🇬|SG|Singapore|Self_Back))" ,exclude-filter: "(?=.*(?i)(The_HK_balance|wcloud|The_SG_balance))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
 # 功能型代理组默认隐藏 start
   - {name: 🔗 代理, type: select, hidden: true, proxies: [节点选择]}
   - {name: 🚫 拒绝, type: select, hidden: true, proxies: [REJECT]}
