@@ -1,8 +1,11 @@
 payload:
+  - '*.mcdn.bilivideo.cn'
+  - '*.mcdn.bilivideo.com'
   - '*.p2p.huya.com'
   - '*.p2ptun.qq.com'
   - '*.pcdn.yximgs.com'
   - '*.stun.yfp2p.net'
+  - '*.szbdyd.com'
   - '+.1rtb.com'
   - '+.a.market.xiaomi.com'
   - '+.ad.gameley.com'

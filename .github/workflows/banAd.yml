@@ -40,16 +40,22 @@ jobs:
         # 下载 pcdn.json 并提取 domain / domain_suffix
         curl -sL "https://raw.githubusercontent.com/DDCHlsq/sing-ruleset/refs/heads/master/pcdn.json" -o pcdn.json
 
-    - name: Extract DOMAIN rules from qx.list and pcdn.json  
+        # 下载自定义规则 pcdn.list
+        curl -sL "https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/pcdn.list" -o pcdn.list
+
+    - name: Extract DOMAIN rules from qx.list, pcdn.json and pcdn.list  
       run: |  
-        # 提取 qx.list 中的 DOMAIN 规则  
+        # 提取 qx.list 中的 DOMAIN 和 DOMAIN-SUFFIX 规则  
         grep -Eo 'DOMAIN,[^,]+' rules/Domain/qx.list | sed 's/DOMAIN,//' > rules/Domain/banAd-domain.list  
         grep -Eo 'DOMAIN-SUFFIX,[^,]+' rules/Domain/qx.list | sed 's/DOMAIN-SUFFIX,//' >> rules/Domain/banAd-domain.list  
 
-        # 提取 pcdn.json 中的 domain
-        jq -r '.rules[].domain[]?' pcdn.json >> rules/Domain/banAd-domain.list
-        # 提取 pcdn.json 中的 domain_suffix，去掉开头的 . 并加上 '*.' 前缀
-        jq -r '.rules[].domain_suffix[]?' pcdn.json | sed 's/^\.//' | sed 's/^/*./' >> rules/Domain/banAd-domain.list
+        # 提取 pcdn.json 中的 domain  
+        jq -r '.rules[].domain[]?' pcdn.json >> rules/Domain/banAd-domain.list  
+        # 提取 pcdn.json 中的 domain_suffix，去掉开头的 . 并加上 '*.' 前缀  
+        jq -r '.rules[].domain_suffix[]?' pcdn.json | sed 's/^\.//' | sed 's/^/*./' >> rules/Domain/banAd-domain.list  
+
+        # 处理自定义 pcdn.list 文件
+        sed -E 's/^DOMAIN-SUFFIX,(.*)/*.\1/; s/^DOMAIN,(.*)/\1/' pcdn.list >> rules/Domain/banAd-domain.list
 
     - name: Convert BanAd Rules to YAML  
       run: |  
@@ -63,12 +69,12 @@ jobs:
   
     - name: Clean up the source files  
       run: |  
-        # 删除源文件，保留 banAd.yaml 和 banAd.mrs  
+        # 删除源文件，保留 banAd.yaml、banAd.mrs 和 pcdn.list  
         rm -f rules/Domain/qx.list rules/Domain/category-ads-all.list rules/Domain/banAd-domain.list pcdn.json  
   
     - name: Commit and Push Changes  
       run: |  
         git add .  
-        git commit -m "Updated BanAd rules (qx.list + pcdn.json -> banAd.mrs)" || true  
+        git commit -m "Updated BanAd rules (qx.list + pcdn.json + pcdn.list -> banAd.mrs)" || true  
         git pull --rebase  
         git push
