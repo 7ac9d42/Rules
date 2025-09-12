@@ -363,6 +363,7 @@ rules:
   - DOMAIN-KEYWORD,c4lm0n,全球直连
   - DOMAIN-SUFFIX,homdgcat.wiki,全球直连
   - DOMAIN-SUFFIX,bsbsb.top,全球直连
+  - DOMAIN-SUFFIX,catmajsoul.com,全球直连
   - MATCH,Final
 
 rule-anchor:
