@@ -11,8 +11,8 @@ PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: tru
 
 ##############################################
 # 机场订阅，Airport_01/02/03名称不能重复,但可修改为自己喜欢的
-# 订阅链接1/2/3是用来写订阅链接的，填入即可
-# 机场名称1/2/3是用来给节点添加备注的，不用记得整行删除
+# 订阅链接 1/2/3是用来写订阅链接的，填入即可
+# 机场名称 1/2/3是用来给节点添加备注的，不用记得整行删除
 proxy-providers:
   Airport_01:
     <<: *PProviders
@@ -22,7 +22,7 @@ proxy-providers:
       additional-prefix: '[机场名称1]'
       skip-cert-verify: true
       udp: true
-  Airport_01:
+  Airport_02:
     <<: *PProviders
     proxy: "🟢 直连"
     url: "订阅链接2"
@@ -30,7 +30,7 @@ proxy-providers:
       additional-prefix: '[机场名称2]'
       skip-cert-verify: true
       udp: true
-  Airport_02:
+  Airport_03:
     <<: *PProviders
     proxy: "🟢 直连"
     url: "订阅链接3"
