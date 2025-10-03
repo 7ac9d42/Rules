@@ -192,7 +192,7 @@ proxies:
     udp: true
 # 策略组
 proxy-groups:
-  - {name: 节点选择, type: select, proxies: [多机场优先级转移[<-直接选这个]], 自建/家宽节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, 🟢 直连], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
+  - {name: 节点选择, type: select, proxies: [多机场优先级转移(<-直接选这个), 自建/家宽节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, 🟢 直连], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
   - {name: 自建/家宽节点, type: fallback, include-all: true, filter: "(?=.*(?i)(自建|CF|The_house|private|home|家宽|Self_Back|hgc|HKT|HKBN|icable|Hinet|att))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
   # 按机场名称分组并做地区+机场双优先级故障转移
   - {name: 机场名称1-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?=.*(?i)(BETA-1))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
@@ -210,7 +210,7 @@ proxy-groups:
   - {name: 机场名称3-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
   - {name: 机场名称3地区优先, type: fallback, proxies: [机场名称3-香港, 机场名称3-日本, 机场名称3-新加坡], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   # 总故障转移组 - 机场优先级: 1 > 2 > 3
-  - {name: 多机场优先级转移[<-直接选这个], type: fallback, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 多机场优先级转移(<-直接选这个), type: fallback, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
   # 低倍率/MITM节点组 - 筛选香港/日本/新加坡的低倍率节点和MITM/Pornhub节点
   - {name: 低倍率/MITM节点, type: select, filter: "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰|日本|🇯🇵|JP|Japan|新|🇸🇬|SG|Singapore))(?=.*(?i)(0\\.01|0\\.1|0\\.2|0\\.3|0\\.5|MITM|pornhub))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
