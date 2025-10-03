@@ -213,7 +213,7 @@ proxy-groups:
   - {name: 多机场优先级转移(<-直接选这个), type: fallback, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
   # 低倍率/MITM节点组 - 筛选香港/日本/新加坡的低倍率节点和MITM/Pornhub节点
-  - {name: 低倍率/MITM节点, type: select, filter: "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰|日本|🇯🇵|JP|Japan|新|🇸🇬|SG|Singapore))(?=.*(?i)(0\\.01|0\\.1|0\\.2|0\\.3|0\\.5|MITM|pornhub))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
+  - {name: 低倍率/MITM节点, type: select, include-all: true, filter: "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰|日本|🇯🇵|JP|Japan|新|🇸🇬|SG|Singapore))(?=.*(?i)(0\\.01|0\\.1|0\\.2|0\\.3|0\\.5|MITM|pornhub))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
 
   - {name: YouTube, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/youtube.png"}
   - {name: FCM, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fcm.png"}
