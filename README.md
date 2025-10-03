@@ -1,3 +1,5 @@
+# 本项目为原项目的一个自用fork，以下README为原项目README，本人未作修改。本项目不接受需求类issue但是仍欢迎友好讨论交流
+
 # 置顶/Precautions
 
 > [!Caution]
