@@ -193,28 +193,44 @@ proxies:
 # 策略组
 proxy-groups:
   - {name: 节点选择, type: select, proxies: [多机场优先级转移(<-直接选这个), 自建/家宽节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, 🟢 直连], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
-  - {name: 自建/家宽节点, type: fallback, include-all: true, filter: "(?=.*(?i)(自建|CF|The_house|private|home|家宽|Self_Back|hgc|HKT|HKBN|icable|Hinet|att))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
-  # 按机场名称分组并做地区+机场双优先级故障转移
+
+  # 按机场URL_Test区域
   - {name: 机场名称1-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?=.*(?i)(BETA-1))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
   - {name: 机场名称1-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 机场名称1-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称1地区优先, type: fallback, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称1-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(美|🇺🇲|US|America|United States))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
   - {name: 机场名称2-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?=.*(?i)(BETA-1))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
   - {name: 机场名称2-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 机场名称2-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称2地区优先, type: fallback, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称2-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(美|🇺🇲|US|America|United States))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
   - {name: 机场名称3-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?=.*(?i)(BETA-1))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
   - {name: 机场名称3-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 机场名称3-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称3地区优先, type: fallback, proxies: [机场名称3-香港, 机场名称3-日本, 机场名称3-新加坡], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-  # 总故障转移组 - 机场优先级: 1 > 2 > 3
+  - {name: 机场名称3-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(美|🇺🇲|US|America|United States))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+
+  # 按机场名称分组
+  - {name: 机场名称1地区优先, type: fallback, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡, 机场名称1-美国], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称2地区优先, type: fallback, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称3地区优先, type: fallback, proxies: [机场名称3-香港, 机场名称3-日本, 机场名称3-新加坡, 机场名称3-美国], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   - {name: 多机场优先级转移(<-直接选这个), type: fallback, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
-  # 低倍率/MITM节点组 - 筛选香港/日本/新加坡的低倍率节点和MITM/Pornhub节点
-  - {name: 低倍率/MITM节点, type: select, include-all: true, filter: "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰|日本|🇯🇵|JP|Japan|新|🇸🇬|SG|Singapore))(?=.*(?i)(0\\.01|0\\.1|0\\.2|0\\.3|0\\.5|MITM|pornhub))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
+  # 多地区优先转移
+  - {name: 香港-机场优先, type: fallback, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 新加坡-机场优先, type: fallback, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 美国-机场优先, type: fallback, proxies: [机场名称1-美国, 机场名称2-美国, 机场名称3-美国], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 日本-机场优先, type: fallback, proxies: [机场名称1-日本, 机场名称2-日本, 机场名称3-日本], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  #- {name: 多地区优先转移(<-地区优先), type: fallback, proxies: [香港-机场优先, 新加坡-机场优先, 美国-机场优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/failover.png"}
 
+  # 低倍率/MITM节点组
+  - {name: 低倍率/MITM节点, type: select, include-all: true, filter: "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰|日本|🇯🇵|JP|Japan|新|🇸🇬|SG|Singapore))(?=.*(?i)(0\\.01|0\\.1|0\\.2|0\\.3|0\\.5|MITM|pornhub))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
+  # TG专用节点组
+  - {name: TelegramEU, type: select, proxies: [新加坡-机场优先, 香港-机场优先, 日本-机场优先, 节点选择, 自建/家宽节点, 欧洲节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: TelegramSG, type: select, proxies: [新加坡-机场优先, 香港-机场优先, 日本-机场优先, 节点选择, 自建/家宽节点, 新加坡节点, 香港节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: TelegramUS, type: select, proxies: [美国-机场优先, 新加坡-机场优先, 香港-机场优先, 日本-机场优先, 节点选择, 自建/家宽节点, 美国节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+
+  - {name: 自建/家宽节点, type: fallback, include-all: true, filter: "(?=.*(?i)(自建|CF|The_house|private|home|家宽|Self_Back|hgc|HKT|HKBN|icable|Hinet|att))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
   - {name: YouTube, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/youtube.png"}
   - {name: FCM, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fcm.png"}
   - {name: GoogleVPN, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/googlevpn.png"}
@@ -223,8 +239,7 @@ proxy-groups:
   - {name: AI, <<: *Include_all, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/ai.png"}
   - {name: GitHub, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/github.png"}
   - {name: OneDrive, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/onedrive.png"}
-  - {name: Microsoft, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/microsoft.png"}
-  - {name: Telegram, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: Microsoft, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/microsoft.png"}  
   - {name: Discord, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/discord.png"}
   - {name: Talkatone, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/talkatone.png"}
   - {name: LINE, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/line.png"}
@@ -242,17 +257,16 @@ proxy-groups:
   - {name: 巴哈姆特, type: select, proxies: [台湾节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/bahamut.png"}
   - {name: Spotify, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/spotify.png"}
   - {name: 国内媒体, type: select, <<: *Direct_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Chinese_media.png"}
-  - {name: Global-TV,type: select, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global_tv.png"}
-  - {name: Global-Medial,type: select, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global_media.png"}
+  - {name: Global-TV, type: select, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global_tv.png"}
+  - {name: Global-Medial, type: select, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global_media.png"}
   - {name: 游戏平台, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/game.png"}
-  - {name: Speedtest,type: select, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/speedtest.png"}
+  - {name: Speedtest, type: select, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/speedtest.png"}
   - {name: PayPal, <<: *Include_all, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/paypal.png"}
   - {name: Wise, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/wise.png"}
   - {name: 国外电商, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/shopping.png"}
-  - {name: STEAM,type: select, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/steam.png"}
+  - {name: STEAM, type: select, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/steam.png"}
   - {name: 全球直连, type: select, proxies: [🟢 直连, 🔗 代理], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/direct.png"}
   - {name: 隐私拦截, type: select, proxies: [🚫 拒绝, ⚪ 丢弃 ,🟢 直连, 🔗 代理], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/block.png"}
-  - {name: Final, type: select, <<: *Proxy_first,  icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/final.png"}
 
   # 地区节点组
   - {name: 香港节点, type: select, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港, 香港均衡], include-all: true, filter: "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
@@ -279,9 +293,16 @@ proxy-groups:
   - {name: 🚫 拒绝, type: select, hidden: true, proxies: [REJECT]}
   - {name: ⚪ 丢弃, type: select, hidden: true, proxies: [REJECT-DROP]}
 # over
-  - {name: GLOBAL, type: select, include-all: true , proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, GitHub, OneDrive, Microsoft, Telegram, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, 巴哈姆特, Spotify, 国内媒体, Global-TV, Global-Medial, 游戏平台, Speedtest, PayPal, Wise, 国外电商, STEAM, 全球直连, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 美国自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点, Final], exclude-filter: "(?i)(🟢 直连)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
+  - {name: GLOBAL, type: select, include-all: true , proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, GitHub, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, 巴哈姆特, Spotify, 国内媒体, Global-TV, Global-Medial, 游戏平台, Speedtest, PayPal, Wise, 国外电商, STEAM, 全球直连, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 美国自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点, Final], exclude-filter: "(?i)(🟢 直连)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
+  - {name: Final, type: select, <<: *Proxy_first,  icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/final.png"}
 
 rules:
+  - # 自定义TG按照DC分流
+  - RULE-SET,telegram_domain,TelegramSG
+  - RULE-SET,TelegramSG_ip,TelegramSG,no-resolve
+  - RULE-SET,TelegramUS_ip,TelegramUS,no-resolve
+  - RULE-SET,TelegramEU_ip,TelegramEU,no-resolve
+
   - RULE-SET,banAd_domain,隐私拦截
   - RULE-SET,wechat_domain,全球直连
   - RULE-SET,wechat_asn,全球直连,no-resolve
@@ -313,8 +334,6 @@ rules:
   - RULE-SET,google_ip,Google,no-resolve
   - RULE-SET,onedrive_domain,OneDrive
   - RULE-SET,microsoft_domain,Microsoft
-  - RULE-SET,telegram_domain,Telegram
-  - RULE-SET,telegram_ip,Telegram,no-resolve
   - RULE-SET,line_domain,LINE
   - RULE-SET,talkatone_domain,Talkatone
   - RULE-SET,talkatone_ip,Talkatone,no-resolve
@@ -384,6 +403,7 @@ rules:
   - DOMAIN-SUFFIX,catmajsoul.com,全球直连
   - DOMAIN-SUFFIX,catmjstudio.com,全球直连
   - DOMAIN-SUFFIX,kejiweixun.com,全球直连
+  - DOMAIN,ykk.emby.moe,Emby
   - MATCH,Final
 
 rule-anchor:
@@ -396,6 +416,12 @@ rule-anchor:
   class: &class {type: http, interval: 86400, behavior: classical, format: text}
   class_yaml: &class_yaml {type: http, interval: 86400, behavior: classical, format: yaml}
 rule-providers: 
+  # 自定义TG依照DC分流规则
+  telegram_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs" }
+  TelegramSG_ip: { <<: *ip, url: "https://github.com/7ac9d42/Rules/raw/refs/heads/main/rules/Telegram/TelegramSG.msr" }
+  TelegramUS_ip: { <<: *ip, url: "https://github.com/7ac9d42/Rules/raw/refs/heads/main/rules/Telegram/TelegramUS.msr" }
+  TelegramEU_ip: { <<: *ip, url: "https://github.com/7ac9d42/Rules/raw/refs/heads/main/rules/Telegram/TelegramEU.msr" }
+  
   banAd_domain: { <<: *domain, url: "https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/banAd_mini.mrs" }
   private_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs" }
   bank_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-bank-cn.mrs" }
@@ -412,7 +438,6 @@ rule-providers:
   youtube_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/youtube.mrs" }
   google_domain: { <<: *domain, url: "https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/google.mrs" }
   github_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/github.mrs" }
-  telegram_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs" }
   netflix_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.mrs" }
   paypal_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/paypal.mrs" }
   onedrive_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/onedrive.mrs" }
@@ -477,7 +502,6 @@ rule-providers:
   bilibili_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo-lite/geoip/bilibili.mrs" }
   cn_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/cn.mrs" }
   google_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/google.mrs" }
-  telegram_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/telegram.mrs" }
   netflix_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/netflix.mrs" }
   Amazon_ip: { <<: *ip, url: "https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/IP/amazon-ip.mrs" }
   facebook_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geoip/facebook.mrs" }
