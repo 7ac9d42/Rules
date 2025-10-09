@@ -182,7 +182,7 @@ dns:
     - https://doh.pub/dns-query
     - https://dns.alidns.com/dns-query
     - https://223.5.5.5/dns-query#h3=true
-  nameserver:    
+  nameserver:
     - https://dns.cloudflare.com/dns-query
     - https://dns.google/dns-query
 
@@ -239,7 +239,7 @@ proxy-groups:
   - {name: AI, <<: *Include_all, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/ai.png"}
   - {name: GitHub, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/github.png"}
   - {name: OneDrive, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/onedrive.png"}
-  - {name: Microsoft, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/microsoft.png"}  
+  - {name: Microsoft, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/microsoft.png"}
   - {name: Discord, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/discord.png"}
   - {name: Talkatone, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/talkatone.png"}
   - {name: LINE, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/line.png"}
@@ -421,7 +421,7 @@ rule-providers:
   TelegramSG_ip: { <<: *ip, url: "https://github.com/7ac9d42/Rules/raw/refs/heads/main/rules/Telegram/TelegramSG.msr" }
   TelegramUS_ip: { <<: *ip, url: "https://github.com/7ac9d42/Rules/raw/refs/heads/main/rules/Telegram/TelegramUS.msr" }
   TelegramEU_ip: { <<: *ip, url: "https://github.com/7ac9d42/Rules/raw/refs/heads/main/rules/Telegram/TelegramEU.msr" }
-  
+
   banAd_domain: { <<: *domain, url: "https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/banAd_mini.mrs" }
   private_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs" }
   bank_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-bank-cn.mrs" }
