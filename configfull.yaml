@@ -198,17 +198,17 @@ proxy-groups:
   - {name: 机场名称1-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?=.*(?i)(BETA-1))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
   - {name: 机场名称1-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 机场名称1-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称1-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 机场名称1-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
   - {name: 机场名称2-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?=.*(?i)(BETA-1))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
   - {name: 机场名称2-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 机场名称2-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称2-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 机场名称2-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
   - {name: 机场名称3-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?=.*(?i)(BETA-1))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
   - {name: 机场名称3-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 机场名称3-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称3-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 机场名称3-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))", exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
   # 按机场名称分组
   - {name: 机场名称1地区优先, type: fallback, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡, 机场名称1-美国], interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
@@ -273,19 +273,19 @@ proxy-groups:
   - {name: 新加坡节点, type: select, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡, 新加坡均衡], include-all: true, filter: "(?=.*(?i)(新|🇸🇬|SG|singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
   - {name: 日本节点, type: select, proxies: [机场名称1-日本, 机场名称2-日本, 机场名称3-日本, 日本均衡], include-all: true, filter: "(?=.*(?i)(日本|🇯🇵|JP|Japan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 台湾节点, type: select, proxies: [台湾自动, 台湾均衡], include-all: true, filter: "(?=.*(?i)(台|🇹🇼|TW|Taiwan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
-  - {name: 美国节点, type: select, proxies: [美国自动, 美国均衡], include-all: true, filter: "(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle))" ,exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 美国节点, type: select, proxies: [美国自动, 美国均衡], include-all: true, filter: "(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))" ,exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
   - {name: 欧洲节点, type: select, include-all: true, filter: "(?=.*(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/European.png"}
 
   # 额外的URL test组
   - {name: 台湾自动, <<: *Urltest_Base, filter: "(?=.*(?i)(台|🇹🇼|TW|Taiwan))" ,exclude-filter: "(?=.*(?i)(The_TW_automation|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
-  - {name: 美国自动, <<: *Urltest_Base, filter: "(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle))" ,exclude-filter: "(?=.*(?i)(The_US_automation|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|russia|austria|plus|traffic|Australia|rus|aus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
+  - {name: 美国自动, <<: *Urltest_Base, filter: "(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))" ,exclude-filter: "(?=.*(?i)(The_US_automation|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|russia|austria|plus|traffic|Australia|rus|aus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
 
   # Load balance组
   - {name: 香港均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(香港|hk|hongkong|Hong Kong|🇭🇰))" ,exclude-filter: "(?=.*(?i)(The_HK_balance|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 新加坡均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(新|🇸🇬|SG|Singapore))" ,exclude-filter: "(?=.*(?i)(The_SG_balance|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 日本均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(日本|🇯🇵|JP|Japan))" ,exclude-filter: "(?=.*(?i)(The_JP_balance|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 台湾均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(台|🇹🇼|TW|Taiwan))" ,exclude-filter: "(?=.*(?i)(The_TW_balance|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
-  - {name: 美国均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle))" ,exclude-filter: "(?=.*(?i)(The_US_balance|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|russia|austria|plus|traffic|Australia|rus|aus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+  - {name: 美国均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: "(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))" ,exclude-filter: "(?=.*(?i)(The_US_balance|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|russia|austria|plus|traffic|Australia|rus|aus))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 全部节点, type: select, include-all: true, tolerance: 20, interval: 300, exclude-filter: "(?i)(🟢 直连)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/all.png"}
 
 # 功能型代理组默认隐藏 start
