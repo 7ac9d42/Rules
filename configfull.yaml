@@ -3,7 +3,7 @@ Proxy_first: &Proxy_first {type: select, proxies: [节点选择, 自建/家宽�
 
 Direct_first: &Direct_first {type: select, proxies: [全球直连, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全部节点]}
 
-Include_all: &Include_all {type: select, proxies: [自建/家宽节点, 节点选择, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点], include-all: true, exclude-filter: "(?i)(🟢 直连)"}
+Include_all: &Include_all {type: select, proxies: [节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点], include-all: true, exclude-filter: "(?i)(🟢 直连)"}
 
 Urltest_Base: &Urltest_Base {type: url-test, include-all: true, tolerance: 15, interval: 90, max-failed-times: 1, hidden: true}
 
