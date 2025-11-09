@@ -412,6 +412,7 @@ rules:
   - DOMAIN-SUFFIX,catmjstudio.com,全球直连
   - DOMAIN-SUFFIX,kejiweixun.com,全球直连
   - DOMAIN,ykk.emby.moe,Emby
+  - DOMAIN-SUFFIX,linux.do,节点选择
   - MATCH,Final
 
 rule-anchor:
