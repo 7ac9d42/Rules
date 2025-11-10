@@ -473,6 +473,23 @@ function main(config) {
   return config;
 }
 ```
+### 4.针对stash部分策略组不显示问题使用以下代码
+```
+// 读取 YAML 内容
+const yaml = ProxyUtils.yaml.safeLoad($content ?? $files[0])
+
+// 检查并修改 proxy-groups
+if (yaml['proxy-groups'] && Array.isArray(yaml['proxy-groups'])) {
+  yaml['proxy-groups'].forEach(group => {
+    if (group.hidden === true) {
+      group.hidden = false
+    }
+  })
+}
+
+// 导出回 YAML 字符串
+$content = ProxyUtils.yaml.dump(yaml)
+```
 #### 最后预览符合预期后保存复制链接即可，如果想要在外面也能更新那么只需要一个反代+域名+ssl证书即可实现，反代地址填入刚刚复制的链接即可
 </ul>
 </details>
