@@ -281,7 +281,7 @@ proxy-groups:
   - {name: 新加坡节点, type: select, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡, 新加坡均衡], include-all: true, filter: "(?=.*(?i)(新|🇸🇬|SG|singapore))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
   - {name: 日本节点, type: select, proxies: [机场名称1-日本, 机场名称2-日本, 机场名称3-日本, 日本均衡], include-all: true, filter: "(?=.*(?i)(日本|🇯🇵|JP|Japan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 台湾节点, type: select, proxies: [台湾自动, 台湾均衡], include-all: true, filter: "(?=.*(?i)(台|🇹🇼|TW|Taiwan))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
-  - {name: 美国节点, type: select, proxies: [美国自动, 美国均衡], include-all: true, filter: "(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))" ,exclude-filter: "(?=.*(?i)(Australia|Russia))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 美国节点, type: select, proxies: [美国自动, 美国均衡], include-all: true, filter: "(?=.*(?i)(美|🇺🇲|US|America|United States|Los Angeles|Chicago|Ashburn|Seattle|Kansas))" ,exclude-filter: "(?=.*(?i)(Australia|Russia|RUS))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
   - {name: 欧洲节点, type: select, include-all: true, filter: "(?=.*(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦))", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/European.png"}
 
   # 额外的URL test组
