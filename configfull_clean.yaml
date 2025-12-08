@@ -15,7 +15,7 @@ exclude_beta: &exclude_beta "(?=.*(?i)(BETA-1))"
 exclude_highrisk: &exclude_highrisk "(?=.*(?i)(Australia|Russia))"
 
 ## 代理锚点
-Urltest_Base: &Urltest_Base {type: url-test, include-all: true, url: "https://www.gstatic.com/generate_204", timeout: 4, tolerance: 30, interval: 45, max-failed-times: 2, hidden: true, exclude-filter: "(?i)(🟢 直连)"}
+Urltest_Base: &Urltest_Base {type: url-test, include-all: true, url: "https://www.gstatic.com/generate_204", timeout: 3, tolerance: 30, interval: 60, max-failed-times: 2, hidden: true, exclude-filter: "(?i)(🟢 直连)"}
 PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', interval: 180}, filter: '^(?!.*(拒绝|直连|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|提示|特别|访问|支持|教程|关注|更新|作者|加入|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author|traffic))'}
 
 ##############################################
