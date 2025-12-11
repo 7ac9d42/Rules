@@ -72,11 +72,11 @@ mixed-port: 7890
 ipv6: true
 allow-lan: true
 unified-delay: true
-tcp-concurrent: true
+tcp-concurrent: false
 # interface-name: eth0  （路由器下根据情况指定出站接口）
-# authentication:
+authentication:
 #  密码设置选项默认无
-# - ""
+- ""
 skip-auth-prefixes:
 - 127.0.0.1/8
 - ::1/128
@@ -430,7 +430,13 @@ rules:
 
 rule-anchor:
   ip: &ip {type: http, interval: 86400, behavior: ipcidr, format: mrs}
+  ip_text: &ip_text {type: http, interval: 86400, behavior: ipcidr, format: text}
+  ip_yaml: &ip_yaml {type: http, interval: 86400, behavior: ipcidr, format: yaml}
   domain: &domain {type: http, interval: 86400, behavior: domain, format: mrs}
+  domain_text: &domain_text {type: http, interval: 86400, behavior: domain, format: text}
+  domain_yaml: &domain_yaml {type: http, interval: 86400, behavior: domain, format: yaml}
+  class: &class {type: http, interval: 86400, behavior: classical, format: text}
+  class_yaml: &class_yaml {type: http, interval: 86400, behavior: classical, format: yaml}
 rule-providers: 
   # 自定义TG依照DC分流规则
   telegram_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs" }
