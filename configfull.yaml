@@ -94,7 +94,7 @@ geox-url:
 
 # 控制面板(警告：开启后请务必设置密码以防他人控制，按需关闭外部访问)
 external-controller: 0.0.0.0:9090
-secret: "7a13b88333760a18574d3b32"
+secret: "" # 7a13b88333760a18574d3b32
 #  密码设置选项默认无
 external-ui: ui
 external-ui-url: "https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip"
