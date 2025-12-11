@@ -17,7 +17,7 @@ lowrate_mitm: &lowrate_mitm "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰|日本
 exclude_ap4: &exclude_ap4 "(?i)(机场名称4)"
 
 ## 代理锚点
-Urltest_Base: &Urltest_Base {type: url-test, include-all: true, url: "https://www.gstatic.com/generate_204", timeout: 3, tolerance: 30, interval: 60, max-failed-times: 2, hidden: true}
+Urltest_Base: &Urltest_Base {type: url-test, include-all: true, url: "https://www.gstatic.com/generate_204", tolerance: 30, interval: 60, max-failed-times: 2, hidden: true}
 PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', interval: 180}, filter: '^(?!.*(拒绝|直连|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|提示|特别|访问|支持|教程|关注|更新|作者|加入|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author|traffic))'}
 
 ##############################################
@@ -73,10 +73,10 @@ mixed-port: 7890
 ipv6: true
 allow-lan: true
 unified-delay: true
-tcp-concurrent: true
+tcp-concurrent: false
 # interface-name: eth0  （路由器下根据情况指定出站接口）
-# authentication:
-#   - "user:password"
+authentication:
+- ""
 skip-auth-prefixes:
 - 127.0.0.1/8
 - ::1/128
@@ -228,16 +228,16 @@ proxy-groups:
   - {name: 机场名称3-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
   # 按机场名称分组
-  - {name: 机场名称1地区优先, type: fallback, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡, 机场名称1-美国], url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-  - {name: 机场名称2地区优先, type: fallback, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-  - {name: 机场名称3地区优先, type: fallback, proxies: [机场名称3-香港, 机场名称3-日本, 机场名称3-新加坡, 机场名称3-美国], url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-  - {name: 多机场优先级转移(<-直接选这个), type: fallback, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先], url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称1地区优先, type: fallback, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡, 机场名称1-美国], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称2地区优先, type: fallback, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称3地区优先, type: fallback, proxies: [机场名称3-香港, 机场名称3-日本, 机场名称3-新加坡, 机场名称3-美国], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 多机场优先级转移(<-直接选这个), type: fallback, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
   # 多地区优先转移
-  - {name: 香港-机场优先, type: fallback, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港], url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 新加坡-机场优先, type: fallback, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡], url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 美国-机场优先, type: fallback, proxies: [机场名称1-美国, 机场名称2-美国, 机场名称3-美国], url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-  - {name: 日本-机场优先, type: fallback, proxies: [机场名称1-日本, 机场名称2-日本, 机场名称3-日本], url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  - {name: 香港-机场优先, type: fallback, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 新加坡-机场优先, type: fallback, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 美国-机场优先, type: fallback, proxies: [机场名称1-美国, 机场名称2-美国, 机场名称3-美国], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 日本-机场优先, type: fallback, proxies: [机场名称1-日本, 机场名称2-日本, 机场名称3-日本], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   #- {name: 多地区优先转移(<-地区优先), type: fallback, proxies: [香港-机场优先, 新加坡-机场优先, 美国-机场优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/failover.png"}
 
   # 低倍率/MITM节点组
@@ -247,7 +247,7 @@ proxy-groups:
   - {name: TelegramSG, type: select, proxies: [新加坡-机场优先, 香港-机场优先, 日本-机场优先, 节点选择, 自建/家宽节点, 新加坡节点, 香港节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
   - {name: TelegramUS, type: select, proxies: [美国-机场优先, 新加坡-机场优先, 香港-机场优先, 日本-机场优先, 节点选择, 自建/家宽节点, 美国节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
 
-  - {name: 自建/家宽节点, type: fallback, include-all: true, filter: *home_only, url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
+  - {name: 自建/家宽节点, type: fallback, include-all: true, filter: *home_only, url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
   - {name: YouTube, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/youtube.png"}
   - {name: FCM, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fcm.png"}
   - {name: GoogleVPN, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/googlevpn.png"}
@@ -297,11 +297,11 @@ proxy-groups:
   - {name: 台湾自动, <<: *Urltest_Base, filter: *region_tw, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
 
   # Load balance组
-  - {name: 香港均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_hk, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
-  - {name: 新加坡均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_sg, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
-  - {name: 日本均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_jp, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
-  - {name: 台湾均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_tw, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
-  - {name: 美国均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_us, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|plus|traffic)", url: "https://www.gstatic.com/generate_204", timeout: 4, interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+  - {name: 香港均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_hk, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+  - {name: 新加坡均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_sg, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+  - {name: 日本均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_jp, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+  - {name: 台湾均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_tw, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+  - {name: 美国均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_us, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|plus|traffic)", url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 全部节点, type: select, include-all: true, exclude-filter: "(?i)(🟢 直连)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/all.png"}
 
 # 功能型代理组默认隐藏
