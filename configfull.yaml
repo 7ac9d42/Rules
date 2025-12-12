@@ -1,5 +1,6 @@
 # 锚点区
 Proxy_first: &Proxy_first {type: select, proxies: [节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点]}
+
 Direct_first: &Direct_first {type: select, proxies: [全球直连, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全部节点]}
 
 ## 正则锚点（减少重复）
@@ -17,7 +18,8 @@ lowrate_mitm: &lowrate_mitm "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰|日本
 exclude_ap4: &exclude_ap4 "(?i)(机场名称4)"
 
 ## 代理锚点
-Urltest_Base: &Urltest_Base {type: url-test, include-all: true, tolerance: 30, interval: 60, max-failed-times: 2, hidden: true}
+Urltest_Base: &Urltest_Base {type: url-test, tolerance: 30, interval: 60, max-failed-times: 2, hidden: true}
+
 PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', interval: 180}, filter: '^(?!.*(拒绝|直连|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|提示|特别|访问|支持|教程|关注|更新|作者|加入|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author|traffic))'}
 
 ##############################################
@@ -94,7 +96,7 @@ geox-url:
 
 # 控制面板(警告：开启后请务必设置密码以防他人控制，按需关闭外部访问)
 external-controller: 0.0.0.0:9090
-secret: "" # 7a13b88333760a18574d3b32
+secret: "7a13b88333760a18574d3b32" # 7a13b88333760a18574d3b32
 #  密码设置选项默认无
 external-ui: ui
 external-ui-url: "https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip"
@@ -212,20 +214,20 @@ proxy-groups:
   - {name: 节点选择, type: select, proxies: [多机场优先级转移(<-直接选这个), 自建/家宽节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, 🟢 直连], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
 
   # 按机场URL_Test区域
-  - {name: 机场名称1-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?i)(BETA|机场名称4)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 机场名称1-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  - {name: 机场名称1-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称1-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称1\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 机场名称1-香港, <<: *Urltest_Base, use: [Airport_01], filter: "(?i)(港|hk|hongkong|Hong Kong|🇭🇰)", exclude-filter: "(?i)(BETA|机场名称4)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 机场名称1-日本, <<: *Urltest_Base, use: [Airport_01], filter: "(?i)(日本|🇯🇵|JP|Japan)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  - {name: 机场名称1-新加坡, <<: *Urltest_Base, use: [Airport_01], filter: "(?i)(新|🇸🇬|SG|Singapore)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 机场名称1-美国, <<: *Urltest_Base, use: [Airport_01], filter: "(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
-  - {name: 机场名称2-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?i)(BETA|机场名称4)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 机场名称2-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  - {name: 机场名称2-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称2-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称2\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 机场名称2-香港, <<: *Urltest_Base, use: [Airport_02], filter: "(?i)(港|hk|hongkong|Hong Kong|🇭🇰)", exclude-filter: "(?i)(BETA|机场名称4)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 机场名称2-日本, <<: *Urltest_Base, use: [Airport_02], filter: "(?i)(日本|🇯🇵|JP|Japan)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  - {name: 机场名称2-新加坡, <<: *Urltest_Base, use: [Airport_02], filter: "(?i)(新|🇸🇬|SG|Singapore)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 机场名称2-美国, <<: *Urltest_Base, use: [Airport_02], filter: "(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
-  - {name: 机场名称3-香港, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))", exclude-filter: "(?i)(BETA|机场名称4)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 机场名称3-日本, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(日本|🇯🇵|JP|Japan))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  - {name: 机场名称3-新加坡, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(新|🇸🇬|SG|Singapore))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称3-美国, <<: *Urltest_Base, filter: "(?=.*(?i)\\[机场名称3\\])(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 机场名称3-香港, <<: *Urltest_Base, use: [Airport_03], filter: "(?i)(港|hk|hongkong|Hong Kong|🇭🇰)", exclude-filter: "(?i)(BETA|机场名称4)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 机场名称3-日本, <<: *Urltest_Base, use: [Airport_03], filter: "(?i)(日本|🇯🇵|JP|Japan)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  - {name: 机场名称3-新加坡, <<: *Urltest_Base, use: [Airport_03], filter: "(?i)(新|🇸🇬|SG|Singapore)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 机场名称3-美国, <<: *Urltest_Base, use: [Airport_03], filter: "(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)", exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 
   # 按机场名称分组
   - {name: 机场名称1地区优先, type: fallback, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡, 机场名称1-美国], url: "https://www.gstatic.com/generate_204", interval: 45, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
@@ -294,7 +296,7 @@ proxy-groups:
   - {name: 欧洲节点, type: select, include-all: true, filter: *region_eu, exclude-filter: *exclude_ap4, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/European.png"}
 
   # 额外的URL test组
-  - {name: 台湾自动, <<: *Urltest_Base, filter: *region_tw, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
+  - {name: 台湾自动, <<: *Urltest_Base, include-all: true, filter: *region_tw, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
 
   # Load balance组
   - {name: 香港均衡, type: load-balance, include-all: true, strategy: consistent-hashing, hidden: true, filter: *region_hk, exclude-filter: "(?i)(机场名称4|wcloud|0倍|0\\.1倍|0\\.01倍|0\\.3X|0\\.2x|0\\.5x|3X|2x|1\\.5x|traffic|plus)", icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
@@ -426,6 +428,7 @@ rules:
   - DOMAIN-SUFFIX,bsbsb.top,全球直连
   - DOMAIN-SUFFIX,3ct.2ndtool.top,全球直连
   - DOMAIN-SUFFIX,kejiweixun.com,全球直连
+  - DOMAIN-KEYWORD,packyapi,全球直连
   - MATCH,Final
 
 rule-anchor:
