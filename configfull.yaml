@@ -8,15 +8,15 @@ PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: tru
 
 ## 正则锚点（减少重复）
 # 地区筛选
-region_hk: &region_hk "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰))"
-region_sg: &region_sg "(?=.*(?i)(新|🇸🇬|SG|Singapore))"
-region_jp: &region_jp "(?=.*(?i)(日本|🇯🇵|JP|Japan))"
-region_us: &region_us "(?=.*(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas))"
-region_tw: &region_tw "(?=.*(?i)(台|🇹🇼|TW|Taiwan))"
-region_eu: &region_eu "(?=.*(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦))"
+region_hk: &region_hk "(?i)(港|hk|hongkong|Hong Kong|🇭🇰)"
+region_sg: &region_sg "(?i)(新|🇸🇬|SG|Singapore)"
+region_jp: &region_jp "(?i)(日本|🇯🇵|JP|Japan)"
+region_us: &region_us "(?i)(美|🇺🇲|US|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)"
+region_tw: &region_tw "(?i)(台|🇹🇼|TW|Taiwan)"
+region_eu: &region_eu "(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦)"
 # 特殊节点筛选
-home_only: &home_only "(?=.*(?i)(自建|CF|The_house|private|home|家宽|Self_Back|hgc|HKT|HKBN|icable|Hinet|att|机场名称4))"
-lowrate_mitm: &lowrate_mitm "(?=.*(?i)(港|hk|hongkong|Hong Kong|🇭🇰|日本|🇯🇵|JP|Japan|新|🇸🇬|SG|Singapore))(?=.*(?i)(0\\.01|0\\.1|0\\.2|0\\.3|0\\.5|MITM|pornhub))"
+home_only: &home_only "(?i)(自建|CF|The_house|private|home|家宽|Self_Back|hgc|HKT|HKBN|icable|Hinet|att|机场名称4)"
+lowrate_mitm: &lowrate_mitm "(?i)(?:(?:港|hk|hongkong|Hong Kong|🇭🇰|日本|🇯🇵|JP|Japan|新|🇸🇬|SG|Singapore).*(?:0\\.01|0\\.1|0\\.2|0\\.3|0\\.5|MITM|pornhub)|(?:0\\.01|0\\.1|0\\.2|0\\.3|0\\.5|MITM|pornhub).*(?:港|hk|hongkong|Hong Kong|🇭🇰|日本|🇯🇵|JP|Japan|新|🇸🇬|SG|Singapore))"
 # 排除筛选
 exclude_ap4: &exclude_ap4 "(?i)(机场名称4)"
 # 倍率/低质节点统一排除（用于自动选择与均衡组）
