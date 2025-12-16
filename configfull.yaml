@@ -401,7 +401,7 @@ rules:
   - RULE-SET,media!cn_domain,Global-Media
   - RULE-SET,twitter_ip,节点选择,no-resolve
   - RULE-SET,steam_domain,STEAM
-  - RULE-SET,Epic_domain,游戏平台
+  - RULE-SET,Epic_domain,机场名称2地区优先
   - RULE-SET,EA_domain,游戏平台
   - RULE-SET,Blizzard_domain,游戏平台
   - RULE-SET,UBI_domain,游戏平台
