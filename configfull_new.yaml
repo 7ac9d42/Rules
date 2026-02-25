@@ -155,6 +155,8 @@ tun:
   auto-route: true
   auto-redirect: true
   auto-detect-interface: true
+  #include-interface:
+  #  - br-lan2
 
 # DNS模块
 dns:
