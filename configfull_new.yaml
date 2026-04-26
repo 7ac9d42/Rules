@@ -250,18 +250,18 @@ proxy-groups:
   - {name: 机场名称2地区优先, type: fallback, hidden: true, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   - {name: 机场名称3地区优先, type: fallback, hidden: true, proxies: [机场名称3-香港, 机场名称3-日本, 机场名称3-新加坡, 机场名称3-美国], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   - {name: 机场名称4地区优先, type: fallback, hidden: true, proxies: [机场名称4-香港, 机场名称4-日本, 机场名称4-新加坡, 机场名称4-美国], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-  - {name: 机场名称1+2地区择优, <<: *Urltest_Base, proxies: [机场名称1地区优先, 机场名称2地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
-  - {name: "多机场优先级转移(<-直接选这个)", type: fallback, proxies: [机场名称1+2地区择优, 机场名称3地区优先, 机场名称4地区优先], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称1+机场名称2地区择优, <<: *Urltest_Base, proxies: [机场名称1地区优先, 机场名称2地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
+  - {name: "多机场优先级转移(<-直接选这个)", type: fallback, proxies: [机场名称1+机场名称2地区择优, 机场名称3地区优先, 机场名称4地区优先], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
   # 多地区优先转移
-  - {name: 香港-机场名称1+2择优, <<: *Urltest_Base, proxies: [机场名称1-香港, 机场名称2-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 新加坡-机场名称1+2择优, <<: *Urltest_Base, proxies: [机场名称1-新加坡, 机场名称2-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 美国-机场名称1+2择优, <<: *Urltest_Base, proxies: [机场名称1-美国, 机场名称2-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-  - {name: 日本-机场名称1+2择优, <<: *Urltest_Base, proxies: [机场名称1-日本, 机场名称2-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  - {name: 香港-机场优先, type: fallback, hidden: true, proxies: [香港-机场名称1+2择优, 机场名称3-香港, 机场名称4-香港], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 新加坡-机场优先, type: fallback, hidden: true, proxies: [新加坡-机场名称1+2择优, 机场名称3-新加坡, 机场名称4-新加坡], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 美国-机场优先, type: fallback, hidden: true, proxies: [美国-机场名称1+2择优, 机场名称3-美国, 机场名称4-美国], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-  - {name: 日本-机场优先, type: fallback, hidden: true, proxies: [日本-机场名称1+2择优, 机场名称3-日本, 机场名称4-日本], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  - {name: 香港-机场名称1+机场名称2择优, <<: *Urltest_Base, proxies: [机场名称1-香港, 机场名称2-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 新加坡-机场名称1+机场名称2择优, <<: *Urltest_Base, proxies: [机场名称1-新加坡, 机场名称2-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 美国-机场名称1+机场名称2择优, <<: *Urltest_Base, proxies: [机场名称1-美国, 机场名称2-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 日本-机场名称1+机场名称2择优, <<: *Urltest_Base, proxies: [机场名称1-日本, 机场名称2-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  - {name: 香港-机场优先, type: fallback, hidden: true, proxies: [香港-机场名称1+机场名称2择优, 机场名称3-香港, 机场名称4-香港], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 新加坡-机场优先, type: fallback, hidden: true, proxies: [新加坡-机场名称1+机场名称2择优, 机场名称3-新加坡, 机场名称4-新加坡], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 美国-机场优先, type: fallback, hidden: true, proxies: [美国-机场名称1+机场名称2择优, 机场名称3-美国, 机场名称4-美国], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 日本-机场优先, type: fallback, hidden: true, proxies: [日本-机场名称1+机场名称2择优, 机场名称3-日本, 机场名称4-日本], url: "https://www.gstatic.com/generate_204", interval: 30, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   #- {name: 多地区优先转移(<-地区优先), type: fallback, proxies: [香港-机场优先, 新加坡-机场优先, 美国-机场优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/failover.png"}
 
   # 低倍率/MITM节点组
