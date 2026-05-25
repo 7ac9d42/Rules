@@ -161,7 +161,7 @@ sniffer:
 # 代理模式
 tun:
   enable: true
-  stack: mixed
+  stack: system
   device: tun0
   mtu: 1500
   dns-hijack:
