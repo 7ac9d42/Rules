@@ -5,7 +5,6 @@ payload:
   - +.2mdn-cn.net
   - +.2mdn.net
   - +.466453.com
-  - +.abc.xyz
   - +.adgoogle.net
   - +.admeld.com
   - +.admob-cn.com
@@ -500,7 +499,6 @@ payload:
   - +.gstaticcnapps.cn
   - +.gsuite.com
   - +.guge
-  - +.gv.com
   - +.gvt0.com
   - +.gvt1-cn.com
   - +.gvt1.com
@@ -616,6 +614,7 @@ payload:
   - +.stxmosquitoproject.net
   - +.stxmosquitoproject.org
   - +.synergyse.com
+  - +.tenor.com
   - +.tensorflow.org
   - +.tfhub.dev
   - +.thecleversense.com
@@ -634,13 +633,11 @@ payload:
   - +.v8.dev
   - +.v8project.org
   - +.velostrata.com
-  - +.verily.com
   - +.verilylifesciences.com
   - +.verilystudyhub.com
   - +.verilystudywatch.com
   - +.verilystudywatch.org
   - +.wallet.com
-  - +.waymo.com
   - +.waze.com
   - +.web.app
   - +.web.dev
