@@ -189,27 +189,30 @@ dns:
   # rule 模式使用 rules 语法；匹配 real-ip 时不返回 Fake-IP，未命中则继续返回 Fake-IP
   fake-ip-filter-mode: rule
   fake-ip-filter:
-    - "RULE-SET,fakeip_filter_domain,real-ip"
-    - "RULE-SET,game_cn_domain,real-ip"
-    - "RULE-SET,bank_cn_domain,real-ip"
-    - "RULE-SET,wechat_domain,real-ip"
-    - "RULE-SET,ai_cn_domain,real-ip"
-    - "RULE-SET,NetEaseMusic_domain,real-ip"
-    - "RULE-SET,alibaba_domain,real-ip"
-    - "RULE-SET,media_cn_domain,real-ip"
-    - "RULE-SET,xiaomi_domain,real-ip"
-    - "RULE-SET,steam_cn_domain,real-ip"
-    - "RULE-SET,pt_cn_domain,real-ip"
-    - "RULE-SET,public-tracker_domain,real-ip"
-    - "RULE-SET,115_domain,real-ip"
-    - "RULE-SET,aliyun_domain,real-ip"
-    - "RULE-SET,direct_domain,real-ip"
-    - "RULE-SET,apple_cn_domain,real-ip"
-    - "RULE-SET,apple_firmware_domain,real-ip"
-    - "RULE-SET,iptv_domain,real-ip"
+    # 1. 局域网、本地解析与常见路由器后台 (最高频且匹配快，最先拦截，避免经过下方海量规则池)
+    - "DOMAIN-SUFFIX,local,real-ip"
+    - "DOMAIN-SUFFIX,lan,real-ip"
+    - "DOMAIN-SUFFIX,localdomain,real-ip"
+    - "DOMAIN-SUFFIX,localhost,real-ip"
+    - "DOMAIN-SUFFIX,home.arpa,real-ip"
+    - "DOMAIN-SUFFIX,router.asus.com,real-ip"
+    - "DOMAIN-SUFFIX,linksyssmartwifi.com,real-ip"
+    - "DOMAIN-SUFFIX,local.adguard.org,real-ip"
     - "RULE-SET,private_domain,real-ip"
-    - "RULE-SET,cn_domain,real-ip"
-    # 自定义直连规则同步排除 Fake-IP
+
+    # 2. STUN 及 穿透服务 (高频 UDP 打洞)
+    - "DOMAIN-KEYWORD,stun,real-ip"
+    - "DOMAIN-KEYWORD,turn,real-ip"
+
+    # 3. 系统探测与时间同步 (确保开机和连网时的基础网络正常)
+    - "DOMAIN-SUFFIX,msftconnecttest.com,real-ip"
+    - "DOMAIN-SUFFIX,msftncsi.com,real-ip"
+    - "DOMAIN-SUFFIX,pool.ntp.org,real-ip"
+    - "DOMAIN-SUFFIX,time.windows.com,real-ip"
+    - "DOMAIN-SUFFIX,time.apple.com,real-ip"
+    - "DOMAIN-SUFFIX,ntp.org.cn,real-ip"
+
+    # 4. 自定义直连规则同步排除 Fake-IP (明确指定的域名，优先级最高)
     - "DOMAIN-SUFFIX,kuapt.top,real-ip"
     - "DOMAIN-SUFFIX,catxxp123.top,real-ip"
     - "DOMAIN-SUFFIX,c4lm0n.top,real-ip"
@@ -221,21 +224,60 @@ dns:
     - "DOMAIN-SUFFIX,3ct.2ndtool.top,real-ip"
     - "DOMAIN-SUFFIX,kejiweixun.com,real-ip"
     - "DOMAIN-SUFFIX,yunmu.xiercloud.uk,real-ip"
+    - "DOMAIN-SUFFIX,argotunnel.com,real-ip"
+    - "DOMAIN-SUFFIX,cftunnel.com,real-ip"
+    - "DOMAIN-SUFFIX,trycloudflare.com,real-ip"
     - "DOMAIN-KEYWORD,packyapi,real-ip"
+
+    # 5. 专属 Fake-IP 过滤规则集与直连规则集
+    - "RULE-SET,fakeip_filter_domain,real-ip"
+    - "RULE-SET,direct_domain,real-ip"
+
+    # 6. 特殊服务、主机游戏与 P2P (对 Fake-IP 敏感)
+    - "DOMAIN-SUFFIX,srv.nintendo.net,real-ip"
+    - "DOMAIN-SUFFIX,stun.playstation.net,real-ip"
+    - "DOMAIN-SUFFIX,xboxlive.com,real-ip"
+    - "DOMAIN-SUFFIX,xbox.microsoft.com,real-ip"
+    - "DOMAIN-SUFFIX,sandai.net,real-ip"
+    - "DOMAIN-SUFFIX,n0808.com,real-ip"
+    - "DOMAIN-SUFFIX,mcdn.bilivideo.cn,real-ip"
+    - "DOMAIN-SUFFIX,proxy.golang.org,real-ip"
+    - "RULE-SET,game_cn_domain,real-ip"
+    - "RULE-SET,steam_cn_domain,real-ip"
+    - "RULE-SET,pt_cn_domain,real-ip"
+    - "RULE-SET,public-tracker_domain,real-ip"
+    - "RULE-SET,115_domain,real-ip"
+
+    # 7. 常见国内服务规则集 (中频，服务类)
+    - "RULE-SET,wechat_domain,real-ip"
+    - "RULE-SET,bank_cn_domain,real-ip"
+    - "RULE-SET,alibaba_domain,real-ip"
+    - "RULE-SET,xiaomi_domain,real-ip"
+    - "RULE-SET,apple_cn_domain,real-ip"
+    - "RULE-SET,apple_firmware_domain,real-ip"
+    - "RULE-SET,aliyun_domain,real-ip"
+    - "RULE-SET,ai_cn_domain,real-ip"
+
+    # 8. 国内媒体与大规则集 (词库极其庞大，放最后以提升整体匹配性能)
+    - "RULE-SET,NetEaseMusic_domain,real-ip"
+    - "RULE-SET,media_cn_domain,real-ip"
+    - "RULE-SET,iptv_domain,real-ip"
+    - "RULE-SET,cn_domain,real-ip"
+
     # 显式兜底（未命中以上规则的域名继续返回 Fake-IP）
     - "MATCH,fake-ip"
   default-nameserver:
     - 223.5.5.5
     - 119.29.29.29
   proxy-server-nameserver:
-    - https://doh.pub/dns-query
     - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
   direct-nameserver:
-    - https://doh.pub/dns-query
     - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
   nameserver:
-    - https://dns.google/dns-query
     - https://dns.cloudflare.com/dns-query
+    - https://dns.google/dns-query
 
 proxies:
   - name: "🟢 直连"
@@ -349,7 +391,7 @@ proxy-groups:
   - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, GitHub, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, 巴哈姆特, Spotify, Global-TV, Global-Media, 游戏平台, Speedtest, PayPal, Wise, 国外电商, STEAM, 全球直连, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
 
 rules:
-# === 用户自定义优先（最高优先级，不被任何后续规则遮蔽） ===
+# === 用户自定义优先 ===
   - DOMAIN,hk.tv.global.mi.com,节点选择
   - DOMAIN-SUFFIX,linux.do,节点选择
   - DOMAIN,ykk.emby.moe,Emby
@@ -365,6 +407,9 @@ rules:
   - DOMAIN-SUFFIX,kejiweixun.com,全球直连
   - DOMAIN-SUFFIX,yunmu.xiercloud.uk,全球直连
   - DOMAIN-KEYWORD,packyapi,全球直连
+  - DOMAIN-SUFFIX,argotunnel.com,全球直连
+  - DOMAIN-SUFFIX,cftunnel.com,全球直连
+  - DOMAIN-SUFFIX,trycloudflare.com,全球直连
 
 # === 国内服务直连白名单（先于广告/代理避免误伤） ===
   - RULE-SET,wechat_domain,全球直连
@@ -397,13 +442,13 @@ rules:
 # === 广告拦截 ===
   - RULE-SET,banAd_domain,隐私拦截
 
-# === Telegram DC 分流（提前避免被 Cloudflare 等通用规则遮蔽） ===
+# === Telegram DC 分流（提前避免被通用规则遮蔽） ===
   - RULE-SET,telegram_domain,TelegramSG
   - RULE-SET,TelegramSG_ip,TelegramSG,no-resolve
   - RULE-SET,TelegramUS_ip,TelegramUS,no-resolve
   - RULE-SET,TelegramEU_ip,TelegramEU,no-resolve
 
-# === 具体服务策略组（子集规则必须在父集之前） ===
+# === 具体服务策略组（子集规则在父集之前以优化性能） ===
   # 哔哩（biliintl 在 bilibili 之前）
   - RULE-SET,biliintl_domain,哔哩东南亚
   - RULE-SET,bilibili_domain,哔哩哔哩
