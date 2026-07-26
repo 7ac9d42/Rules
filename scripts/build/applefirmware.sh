@@ -2,21 +2,15 @@
 set -euo pipefail
 echo "=== Building applefirmware ==="
 
-# Smart skip check: if git status shows no modification on source files and output exists
-if [ -f "rules/Domain/applefirmware.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
-  echo "Sources for applefirmware unchanged, skipping build."
-  exit 0
-fi
-
 # Fetch AppleFirmware Rules
 mkdir -p rules/Domain  # 确保目录存在
 
 # 下载 AppleFirmware 规则文件
-curl -sL "https://raw.githubusercontent.com/LM-Firefly/Rules/refs/heads/master/Apple/AppleFirmware.list" -o rules/Domain/applefirmware.list
+curl --fail --show-error --silent --location "https://raw.githubusercontent.com/LM-Firefly/Rules/refs/heads/master/Apple/AppleFirmware.list" -o rules/Domain/applefirmware.list
 
 # Extract DOMAIN and DOMAIN-SUFFIX rules from applefirmware.list
 # 提取 DOMAIN 和 DOMAIN-SUFFIX 规则，并处理成需要的格式
-grep -E 'DOMAIN-SUFFIX|DOMAIN' rules/Domain/applefirmware.list | sed -E 's/DOMAIN-SUFFIX,/*./g; s/DOMAIN,//g' > rules/Domain/applefirmware-domain.list
+grep -E 'DOMAIN-SUFFIX|DOMAIN' rules/Domain/applefirmware.list | sed -E 's/DOMAIN-SUFFIX,/+./g; s/DOMAIN,//g' > rules/Domain/applefirmware-domain.list
 
 # Convert AppleFirmware Rules to YAML
 echo "payload:" > rules/Domain/applefirmware.yaml

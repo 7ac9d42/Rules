@@ -2,17 +2,11 @@
 set -euo pipefail
 echo "=== Building amazon-ip ==="
 
-# Smart skip check: if git status shows no modification on source files and output exists
-if [ -f "rules/IP/amazon-ip.mrs" ] && git diff --quiet HEAD -- "rules/IP/" 2>/dev/null; then
-  echo "Sources for amazon-ip unchanged, skipping build."
-  exit 0
-fi
-
 # Fetch Amazon IP Rule
 mkdir -p rules/IP  # 确保目录存在
 
 # 下载 Amazon IP 规则文件
-curl -sL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AmazonIP/AmazonIP.list" -o rules/IP/amazon-ip.list
+curl --fail --show-error --silent --location "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AmazonIP/AmazonIP.list" -o rules/IP/amazon-ip.list
 
 # Convert Amazon IP Rules to YAML
 # 将 IP 规则文件转换为 YAML 格式

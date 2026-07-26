@@ -2,21 +2,17 @@
 set -euo pipefail
 echo "=== Building GoogleVPN ==="
 
-# Smart skip check: if git status shows no modification on source files and output exists
-if [ -f "rules/Domain/GoogleVPN.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
-  echo "Sources for GoogleVPN unchanged, skipping build."
-  exit 0
+source_file="rules/Domain/googleVPN.list"
+if [[ ! -s "$source_file" ]]; then
+  echo "Missing Google VPN source: $source_file" >&2
+  exit 1
 fi
 
-# Fetch Google VPN Rules
-mkdir -p rules/Domain  # 确保目录存在
-
-# 下载 Google VPN 规则文件
-curl -sL "https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/googleVPN.list" -o rules/Domain/googleVPN.list
-
 # Extract DOMAIN-SUFFIX rules from googleVPN.list
-# 提取 googleVPN.list 中的 DOMAIN-SUFFIX 规则，并添加 *.
-grep -Eo 'DOMAIN-SUFFIX,[^,]+' rules/Domain/googleVPN.list | sed 's/DOMAIN-SUFFIX,//' | awk '{print "*." $0}' > rules/Domain/googleVPN-domain.list
+# 提取 googleVPN.list 中的 DOMAIN-SUFFIX 规则，并添加 +.
+grep -Eo 'DOMAIN-SUFFIX,[^,]+' "$source_file" |
+  sed 's/DOMAIN-SUFFIX,//' |
+  awk '{print "+." $0}' > rules/Domain/googleVPN-domain.list
 
 # Convert Google VPN Rules to YAML
 echo "payload:" > rules/Domain/googleVPN.yaml
@@ -29,4 +25,3 @@ mihomo convert-ruleset domain yaml rules/Domain/googleVPN.yaml rules/Domain/goog
 # Clean up the source files
 # 删除中间文件，但保留 googleVPN.list 和 googleVPN.yaml
 rm -f rules/Domain/googleVPN-domain.list
-

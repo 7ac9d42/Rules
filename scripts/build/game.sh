@@ -2,115 +2,172 @@
 set -euo pipefail
 echo "=== Building game ==="
 
-# Smart skip check: if git status shows no modification on source files and output exists
-if [ -f "rules/Game/game.mrs" ] && git diff --quiet HEAD -- "rules/Game/" 2>/dev/null; then
-  echo "Sources for game unchanged, skipping build."
-  exit 0
-fi
+work_dir=$(mktemp -d)
+source_dir="$work_dir/source"
+build_dir="$work_dir/build"
+trap 'rm -rf -- "$work_dir"' EXIT
 
-# Install node dependencies if not present
-npm list fs-extra >/dev/null 2>&1 || npm install fs-extra yaml --no-save
+git clone --depth=1 --filter=blob:none --sparse \
+  https://github.com/FQrabbit/SSTap-Rule.git "$source_dir"
+git -C "$source_dir" sparse-checkout set rules
+mkdir -p "$build_dir"
 
-# Fetch Game Rules
-mkdir -p tmp_repo
-git clone --depth=1 --filter=blob:none --sparse https://github.com/FQrabbit/SSTap-Rule.git tmp_repo
-cd tmp_repo
-git sparse-checkout set rules
-cp -r rules/* ../rules/Game/
-cd ..
-rm -rf tmp_repo
-
-# Convert Rules to YAML with Fixed IPv4
-node <<'EOF'
-const fs = require('fs-extra');
+# Only preserve syntactically valid CIDRs. The old code guessed how malformed
+# addresses should look and also rewrote valid /24 and /32 networks.
+node - "$source_dir/rules" "$build_dir" <<'EOF'
+const fs = require('fs');
+const net = require('net');
 const path = require('path');
 
-const inDir = 'rules/Game';
-const outDir = 'rules/Game';
+const [sourceDir, buildDir] = process.argv.slice(2);
+const MIN_IPV4_PREFIX = 16;
+const invalidSamples = [];
+const broadSamples = [];
+let invalidCount = 0;
+let privateCount = 0;
+let broadCount = 0;
+let repairedCount = 0;
 
-function isPrivateIP(ip) {
-  return /^(10\..*|172\.(1[6-9]|2[0-9]|3[01])\..*|192\.168\..*|169\.254\..*|22[4-9]\..*|2[3-5][0-9]\..*)$/.test(ip);
+function walk(dir) {
+  return fs.readdirSync(dir, {withFileTypes: true}).flatMap((entry) => {
+    const fullPath = path.join(dir, entry.name);
+    return entry.isDirectory() ? walk(fullPath) : [fullPath];
+  });
 }
 
-function fixIPv4(line) {
-  const cidrMatch = line.match(/\/(\d+)$/);
-  const cidr = cidrMatch ? parseInt(cidrMatch[1],10) : 32;
+function isPrivateIPv4(address) {
+  const octets = address.split('.').map(Number);
+  return octets[0] === 10 ||
+    (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+    (octets[0] === 192 && octets[1] === 168) ||
+    (octets[0] === 169 && octets[1] === 254) ||
+    octets[0] >= 224;
+}
 
-  const parts = line.split('/');
-  let ip = parts[0];
-  const suffix = parts[1] || '';
+function parseCidr(line) {
+  const match = line.match(/^([^/]+)\/(\d{1,3})$/);
+  if (!match) return null;
 
-  let octets = ip.split('.').map(n => n.trim());
-  while(octets.length < 4) octets.push('0');
+  const address = match[1];
+  const prefix = Number(match[2]);
+  const version = net.isIP(address);
+  if (!version || prefix > (version === 4 ? 32 : 128)) return null;
 
-  for (let i=0;i<octets.length;i++) {
-    let num = parseInt(octets[i],10);
-    if (isNaN(num)) num = 0;
-    octets[i] = num.toString();
+  return {address, cidr: `${address}/${prefix}`, prefix, version};
+}
+
+function repairKnownUpstreamError(file, line) {
+  let repaired = line;
+
+  // Maplestory-us.rules contains valid CIDRs followed by CSV delimiters.
+  if (repaired.endsWith(',')) {
+    repaired = repaired.slice(0, -1).trim();
   }
 
-  if (cidr === 24) {
-    // 第四段置0，第三段截取不超过三位
-    let third = parseInt(octets[2],10);
-    let thirdStr = third.toString();
-    if (thirdStr.length > 3) {
-      octets[2] = thirdStr.slice(0,3);
-    } else if (thirdStr.length > 2) {
-      octets[2] = thirdStr.slice(0,2);
-    } else {
-      octets[2] = thirdStr;
+  // Commit 50a046e6 accidentally removed the dot before the final zero from
+  // 72 /24 networks in this file. Its parent commit provides an exact mapping.
+  if (path.basename(file) === 'Call-Of-Duty-4-Modern-Warfare.rules') {
+    const match = repaired.match(/^(\d+\.\d+\.)(\d+)0\/24$/);
+    if (match) repaired = `${match[1]}${Number(match[2])}.0/24`;
+  }
+
+  // This source has one otherwise valid IPv4 address with an extra trailing dot.
+  if (path.basename(file) === 'Microsoft-Srote.rules') {
+    repaired = repaired.replace(/\.(\/\d+)$/, '$1');
+  }
+
+  // KuGou-cn has a duplicated leading "61." before a network that already
+  // exists in the same source file. Repairing it is safe; Set removes it.
+  if (
+    path.basename(file) === 'KuGou-cn.rules' &&
+    repaired === '61.61.164.210.0/24'
+  ) {
+    repaired = '61.164.210.0/24';
+  }
+
+  if (repaired !== line) repairedCount++;
+  return repaired;
+}
+
+const outputNames = new Set();
+const files = walk(sourceDir).filter((file) => file.endsWith('.rules')).sort();
+if (files.length === 0) {
+  throw new Error(`No .rules files found in ${sourceDir}`);
+}
+
+for (const file of files) {
+  const outputName = `${path.basename(file, '.rules')}.yaml`;
+  if (outputNames.has(outputName)) {
+    throw new Error(`Duplicate output name: ${outputName}`);
+  }
+  outputNames.add(outputName);
+
+  const payload = new Set();
+  for (const rawLine of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const input = rawLine.trim();
+    if (!input || input.startsWith('#')) continue;
+    const line = repairKnownUpstreamError(file, input);
+
+    const parsed = parseCidr(line);
+    if (!parsed) {
+      invalidCount++;
+      if (invalidSamples.length < 20) invalidSamples.push(`${file}: ${line}`);
+      continue;
     }
-    octets[3] = '0';
-  } else if (cidr === 32) {
-    // 第三段末两位为第三段，剩余为第四段，如果第四段为空就1
-    let third = parseInt(octets[2],10);
-    let thirdStr = third.toString();
-    if (thirdStr.length <= 2) {
-      octets[2] = thirdStr;
-      octets[3] = '1';
-    } else {
-      octets[2] = thirdStr.slice(0,2);
-      octets[3] = thirdStr.slice(2) || '1';
+    if (parsed.version === 4 && isPrivateIPv4(parsed.address)) {
+      privateCount++;
+      continue;
     }
-  }
-
-  return octets.join('.') + '/' + cidr;
-}
-
-async function walk(dir) {
-  let files = [];
-  for (const f of await fs.readdir(dir)) {
-    const fullPath = path.join(dir, f);
-    const stat = await fs.stat(fullPath);
-    if (stat.isDirectory()) {
-      files = files.concat(await walk(fullPath));
-    } else if (f.endsWith('.rules')) {
-      files.push(fullPath);
+    // SSTap's own authoring guide discourages prefixes below /16. Those
+    // ranges are too broad to identify one game reliably and include known
+    // crawler mistakes such as 3.0.0.0/4.
+    if (parsed.version === 4 && parsed.prefix < MIN_IPV4_PREFIX) {
+      broadCount++;
+      if (broadSamples.length < 20) broadSamples.push(`${file}: ${line}`);
+      continue;
     }
+    payload.add(parsed.cidr);
   }
-  return files;
+
+  const yaml = ['payload:', ...[...payload].map((cidr) => `  - '${cidr}'`), ''].join('\n');
+  fs.writeFileSync(path.join(buildDir, outputName), yaml);
 }
 
-async function main() {
-  await fs.ensureDir(outDir);
-  const files = await walk(inDir);
-
-  for (const file of files) {
-    const content = await fs.readFile(file, 'utf8');
-    const lines = content.split(/\r?\n/).filter(l => l && !l.startsWith('#'));
-
-    const payload = lines
-      .map(fixIPv4)
-      .filter(line => !isPrivateIP(line));
-
-    const baseName = path.basename(file, '.rules') + '.yaml';
-    const outPath = path.join(outDir, baseName);
-
-    await fs.writeFile(outPath, 'payload:\n' + payload.map(l => `  - '${l}'`).join('\n'));
-    console.log(`Generated YAML: ${outPath}`);
-  }
+for (const sample of invalidSamples) {
+  console.error(`Skipping malformed CIDR: ${sample}`);
 }
-
-main().catch(e => { console.error(e); process.exit(1); });
+for (const sample of broadSamples) {
+  console.error(`Skipping unsafe broad game CIDR: ${sample}`);
+}
+console.log(
+  `Generated ${files.length} YAML files; repaired ${repairedCount} known ` +
+  `upstream formatting errors; skipped ${invalidCount} malformed and ` +
+  `${privateCount} private/reserved IPv4 entries; filtered ${broadCount} ` +
+  `IPv4 entries broader than /${MIN_IPV4_PREFIX}.`
+);
 EOF
 
+# Compile from the YAML generated in this run, so YAML and MRS cannot come from
+# different snapshots.
+for yaml_file in "$build_dir"/*.yaml; do
+  output="${yaml_file%.yaml}.mrs"
+  echo "Converting $(basename "$yaml_file")"
+  if ! conversion_output=$(
+    mihomo convert-ruleset ipcidr yaml "$yaml_file" "$output" 2>&1
+  ); then
+    printf '%s\n' "$conversion_output" >&2
+    exit 1
+  fi
+  if [[ -n "$conversion_output" ]]; then
+    printf 'mihomo rejected entries in %s:\n%s\n' \
+      "$yaml_file" "$conversion_output" >&2
+    exit 1
+  fi
+done
+
+# Publish only after every conversion succeeds. Remove stale source and generated
+# files owned by this builder, including names left URL-encoded by the old script.
+mkdir -p rules/Game
+find rules/Game -maxdepth 1 -type f \
+  \( -name '*.rules' -o -name '*.yaml' -o -name '*.mrs' \) -delete
+cp -a "$build_dir"/. rules/Game/

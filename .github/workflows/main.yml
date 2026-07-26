@@ -1,40 +1,105 @@
-name: Sync Upstream Rules
+name: Sync and Build Rules
 
 permissions:
   contents: write
 
+concurrency:
+  group: rules-write
+  cancel-in-progress: false
+
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * *"  # 每天北京时间 08:00 执行
   workflow_dispatch:
 
 jobs:
-  sync_upstream_rules:
-    name: Sync New Rules from Upstream
+  sync_and_build:
+    name: Sync upstream and build all rules
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Sync rules directory from upstream
+      - name: Set up Git and sync upstream rules
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote add upstream https://github.com/Lanlan13-14/Rules.git || git remote set-url upstream https://github.com/Lanlan13-14/Rules.git
-          # 禁用对 upstream 的 push 权限，确保绝不影响上游
+          git remote add upstream https://github.com/Lanlan13-14/Rules.git ||
+            git remote set-url upstream https://github.com/Lanlan13-14/Rules.git
           git remote set-url --push upstream PUSH_DISABLED
           git fetch upstream main
 
-          # 仅精准同步上游 rules/ 目录，绝不触碰根目录及 configfull_new.yaml 等配置文件
+          # 精准镜像上游 rules/，包括上游删除；不触碰根目录及配置文件。
+          git rm -r --ignore-unmatch rules/
           git checkout upstream/main -- rules/
 
-          # 仅在 rules/ 目录有更新时提交
-          if ! git diff --quiet HEAD -- rules/; then
-            git commit -m "sync: update rules from upstream"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Resolve latest stable mihomo release
+        id: mihomo-version
+        run: |
+          set -euo pipefail
+          release_url=$(curl --fail --show-error --silent --location \
+            --output /dev/null --write-out '%{url_effective}' \
+            https://github.com/MetaCubeX/mihomo/releases/latest)
+          version=${release_url##*/}
+          if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unexpected mihomo release tag: $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Cache mihomo binary
+        id: cache-mihomo
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/mihomo
+          key: mihomo-bin-${{ runner.os }}-${{ steps.mihomo-version.outputs.version }}
+
+      - name: Install dependencies and mihomo
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+          if [[ "${{ steps.cache-mihomo.outputs.cache-hit }}" != "true" ]]; then
+            version="${{ steps.mihomo-version.outputs.version }}"
+            asset="mihomo-linux-amd64-v1-${version}.gz"
+            curl --fail --show-error --silent --location \
+              "https://github.com/MetaCubeX/mihomo/releases/download/${version}/${asset}" \
+              -o mihomo.gz
+            gunzip -c mihomo.gz > mihomo
+            chmod +x mihomo
+            sudo mv mihomo /usr/local/bin/
+          else
+            sudo chmod +x /usr/local/bin/mihomo
+          fi
+
+          mihomo -v
+
+      - name: Build all rules
+        run: |
+          set -euo pipefail
+          for script in scripts/build/*.sh; do
+            [[ -f "$script" ]] || continue
+            echo "Running $script ..."
+            bash "$script"
+          done
+
+      - name: Commit and push rule changes
+        run: |
+          set -euo pipefail
+          git add rules/
+          if ! git diff-index --quiet HEAD -- rules/; then
+            git commit -m "build: sync upstream and update generated rules"
             git push origin main
           else
-            echo "No new rules from upstream."
+            echo "No rule changes detected."
           fi

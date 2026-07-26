@@ -2,21 +2,15 @@
 set -euo pipefail
 echo "=== Building wechat ==="
 
-# Smart skip check: if git status shows no modification on source files and output exists
-if [ -f "rules/Domain/wechat.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
-  echo "Sources for wechat unchanged, skipping build."
-  exit 0
-fi
-
 # Fetch WeChat Rules
 mkdir -p rules/Domain  # 确保目录存在
 
 # 下载 WeChat 规则文件
-curl -sL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/WeChat/WeChat.list" -o rules/Domain/WeChat.list
+curl --fail --show-error --silent --location "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/WeChat/WeChat.list" -o rules/Domain/WeChat.list
 
 # Extract DOMAIN rules from WeChat.list
 # 提取 WeChat.list 中的 DOMAIN 和 DOMAIN-SUFFIX 规则，忽略注释行，并处理格式
-grep -E '^(DOMAIN-SUFFIX|DOMAIN),' rules/Domain/WeChat.list | grep -v '^#' | sed -E 's/DOMAIN-SUFFIX,/*./g; s/DOMAIN,//g' > rules/Domain/WeChat-domain.list
+grep -E '^(DOMAIN-SUFFIX|DOMAIN),' rules/Domain/WeChat.list | grep -v '^#' | sed -E 's/DOMAIN-SUFFIX,/+./g; s/DOMAIN,//g' > rules/Domain/WeChat-domain.list
 
 # Convert WeChat Rules to YAML
 echo "payload:" > rules/Domain/WeChat.yaml

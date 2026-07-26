@@ -2,82 +2,27 @@
 set -euo pipefail
 echo "=== Building asn-mrs ==="
 
-# Smart skip check: if git status shows no modification on source files and output exists
-if [ -f "rules/IP/asn-mrs.mrs" ] && git diff --quiet HEAD -- "rules/IP/" 2>/dev/null; then
-  echo "Sources for asn-mrs unchanged, skipping build."
-  exit 0
-fi
+# These are the only ASN providers referenced by configfull_new.yaml.
+asns=(AS24424 AS49544 AS132203)
+work_dir=$(mktemp -d)
+trap 'rm -rf -- "$work_dir"' EXIT
 
-# Create temporary folders
-mkdir -p rules/IP/asn rules/IP/asn-yaml
+for asn in "${asns[@]}"; do
+  source_file="$work_dir/$asn.list"
+  yaml_file="$work_dir/$asn.yaml"
+  mrs_file="$work_dir/$asn.mrs"
 
-# Get total number of .list files
-response=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-  "https://api.github.com/repos/MetaCubeX/meta-rules-dat/contents/asn?ref=meta")
-total_files=$(echo "$response" | jq -r '[.[] | select(.name | test(".list$"))] | length')
-echo "Total .list files: $total_files"
-echo "TOTAL_FILES=$total_files" >> $GITHUB_ENV
+  curl --fail --show-error --silent --location \
+    "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/asn/$asn.list" \
+    -o "$source_file"
 
-# Download .list files via GitHub API
-cd rules/IP/asn
-total_files=$TOTAL_FILES
-per_page=1000
+  {
+    echo "payload:"
+    awk 'NF { print "  - \047" $0 "\047" }' "$source_file"
+  } > "$yaml_file"
 
-if [ $total_files -le $per_page ]; then
-  response=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-    "https://api.github.com/repos/MetaCubeX/meta-rules-dat/contents/asn?ref=meta")
-  files=$(echo "$response" | jq -r '.[].download_url' | grep '\.list$')
-else
-  total_pages=$((($total_files + $per_page - 1) / $per_page))
-  files=""
-  for ((page=1; page<=$total_pages; page++)); do
-    response=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-      "https://api.github.com/repos/MetaCubeX/meta-rules-dat/contents/asn?ref=meta&page=$page&per_page=$per_page")
-    files+=$(echo "$response" | jq -r '.[].download_url' | grep '\.list$')$'\n'
-  done
-fi
-
-for url in $files; do
-  echo "Downloading $url"
-  curl -sL "$url" -O
-done
-cd -
-
-# Convert .list files to .yaml (filter out private IPs)
-for file in rules/IP/asn/*.list; do
-  [ -f "$file" ] || continue
-  base=$(basename "$file" .list)
-  output="rules/IP/asn-yaml/${base}.yaml"
-  echo "Converting $file to $output"
-  echo "payload:" > "$output"
-
-  valid=false
-  while IFS= read -r line; do
-    if [[ -n "$line" && ! "$line" =~ ^(10\..*|172\.(1[6-9]|2[0-9]|3[01])\..*|192\.168\..*|169\.254\..*|22[4-9]\..*|2[3-5][0-9]\..*)$ ]]; then
-      echo "  - '$line'" >> "$output"
-      valid=true
-    fi
-  done < "$file"
-
-  # 如果 YAML 文件内容为空（只包含 "payload:"），则删除该文件
-  if ! $valid; then
-    echo "Deleting empty YAML file: $output"
-    rm -f "$output"
-  fi
+  mihomo convert-ruleset ipcidr yaml "$yaml_file" "$mrs_file"
 done
 
-# Convert .yaml files to .mrs
-for file in rules/IP/asn-yaml/*.yaml; do
-  [ -f "$file" ] || continue
-  base=$(basename "$file" .yaml)
-  output="rules/IP/${base}.mrs"
-  echo "Converting $file to $output"
-  mihomo convert-ruleset ipcidr yaml "$file" "$output"
-done
-
-# Move YAML files to rules/IP
-mv rules/IP/asn-yaml/*.yaml rules/IP/
-
-# Remove temporary folders
-rm -rf rules/IP/asn rules/IP/asn-yaml
-
+# Publish only after every required ASN has downloaded and compiled.
+cp "$work_dir"/AS*.yaml "$work_dir"/AS*.mrs rules/IP/

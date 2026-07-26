@@ -2,21 +2,15 @@
 set -euo pipefail
 echo "=== Building appletv ==="
 
-# Smart skip check: if git status shows no modification on source files and output exists
-if [ -f "rules/Domain/appletv.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
-  echo "Sources for appletv unchanged, skipping build."
-  exit 0
-fi
-
 # Fetch AppleTV Rules
 mkdir -p rules/Domain  # 确保目录存在
 
 # 下载 AppleTV 规则文件
-curl -sL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AppleTV/AppleTV.list" -o rules/Domain/appletv.list
+curl --fail --show-error --silent --location "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AppleTV/AppleTV.list" -o rules/Domain/appletv.list
 
 # Extract DOMAIN and DOMAIN-SUFFIX rules from appletv.list
 # 提取 DOMAIN 和 DOMAIN-SUFFIX 规则，并过滤掉以 # 开头的注释行
-grep -E '^(DOMAIN-SUFFIX|DOMAIN),' rules/Domain/appletv.list | sed -E 's/DOMAIN-SUFFIX,/*./g; s/DOMAIN,//g' > rules/Domain/appletv-domain.list
+grep -E '^(DOMAIN-SUFFIX|DOMAIN),' rules/Domain/appletv.list | sed -E 's/DOMAIN-SUFFIX,/+./g; s/DOMAIN,//g' > rules/Domain/appletv-domain.list
 
 # Convert AppleTV Rules to YAML
 echo "payload:" > rules/Domain/appletv.yaml

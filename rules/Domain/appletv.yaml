@@ -1,5 +1,5 @@
 payload:
-  - '*.tv.apple.com'
+  - '+.tv.apple.com'
   - 'hls-amt.itunes.apple.com'
   - 'hls.itunes.apple.com'
   - 'np-edge.itunes.apple.com'

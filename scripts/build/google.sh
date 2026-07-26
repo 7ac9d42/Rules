@@ -2,18 +2,12 @@
 set -euo pipefail
 echo "=== Building google ==="
 
-# Smart skip check: if git status shows no modification on source files and output exists
-if [ -f "rules/Domain/google.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
-  echo "Sources for google unchanged, skipping build."
-  exit 0
-fi
-
 # Fetch and Merge Google Rules
 mkdir -p rules/Domain  # 确保目录存在
 
 # 下载 Google 规则文件
-curl -sL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/google-play.list" -o rules/Domain/google-play.list
-curl -sL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/google.list" -o rules/Domain/google.list
+curl --fail --show-error --silent --location "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/google-play.list" -o rules/Domain/google-play.list
+curl --fail --show-error --silent --location "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/google.list" -o rules/Domain/google.list
 
 # 合并去重
 cat rules/Domain/google-play.list rules/Domain/google.list | grep -v '^#' | sort -u > rules/Domain/merged_google.list
