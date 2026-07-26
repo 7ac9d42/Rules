@@ -201,6 +201,7 @@ dns:
     - "DOMAIN-SUFFIX,linksyssmartwifi.com,real-ip"
     - "DOMAIN-SUFFIX,local.adguard.org,real-ip"
     - "RULE-SET,private_domain,real-ip"
+    - "RULE-SET,fakeip_filter_domain,real-ip"
 
     # 2. STUN 及 穿透服务 (高频 UDP 打洞)
     - "DOMAIN-KEYWORD,stun,real-ip"
@@ -427,6 +428,7 @@ rules:
   - RULE-SET,apple_cn_domain,全球直连
   - RULE-SET,apple_firmware_domain,Apple
   - RULE-SET,steam_cn_domain,全球直连
+  - RULE-SET,game_cn_domain,全球直连
   - RULE-SET,steamcdn_domain,全球直连
   - RULE-SET,steamcdn_ip,全球直连,no-resolve
   - RULE-SET,NetEaseMusic_domain,全球直连
