@@ -1,4 +1,4 @@
-name: Upstream Sync
+name: Sync Upstream Rules
 
 permissions:
   contents: write
@@ -9,28 +9,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync_with_upstream:
-    name: Sync with Upstream
+  sync_upstream_rules:
+    name: Sync New Rules from Upstream
     runs-on: ubuntu-latest
-    if: ${{ github.event.repository.fork }}
 
     steps:
-      - name: Checkout target repo
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Sync Upstream (Prefer Local Modifications)
+      - name: Sync rules directory from upstream
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/Lanlan13-14/Rules.git || git remote set-url upstream https://github.com/Lanlan13-14/Rules.git
-          # 禁用对 upstream 的 push 权限，防止反向推送到上游
+          # 禁用对 upstream 的 push 权限，确保绝不影响上游
           git remote set-url --push upstream PUSH_DISABLED
           git fetch upstream main
-          # 使用 -X ours 策略：发生冲突时优先采纳本地修改，未冲突部分正常合并上游修改
-          git merge upstream/main -X ours -m "sync: merge upstream main with local priority (-X ours)" || {
-            echo "[Error] Merge with upstream failed."
-            exit 1
-          }
-          git push origin main
+
+          # 仅精准同步上游 rules/ 目录，绝不触碰根目录及 configfull_new.yaml 等配置文件
+          git checkout upstream/main -- rules/
+
+          # 仅在 rules/ 目录有更新时提交
+          if ! git diff --quiet HEAD -- rules/; then
+            git commit -m "sync: update rules from upstream"
+            git push origin main
+          else
+            echo "No new rules from upstream."
+          fi
