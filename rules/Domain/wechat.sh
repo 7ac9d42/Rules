@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building wechat ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/Domain/wechat.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
+  echo "Sources for wechat unchanged, skipping build."
+  exit 0
+fi
+
 # Fetch WeChat Rules
 mkdir -p rules/Domain  # 确保目录存在
 

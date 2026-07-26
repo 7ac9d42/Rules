@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building banAd ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/Domain/banAd.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
+  echo "Sources for banAd unchanged, skipping build."
+  exit 0
+fi
+
 # Ensure mihomo executable
 chmod +x /usr/local/bin/mihomo || true
 

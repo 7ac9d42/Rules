@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building emby ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/Domain/emby.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
+  echo "Sources for emby unchanged, skipping build."
+  exit 0
+fi
+
 # Fetch and Merge Emby Rules
 mkdir -p rules/Domain  # 确保目录存在
 

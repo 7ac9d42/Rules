@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building streaming ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/Domain/streaming.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
+  echo "Sources for streaming unchanged, skipping build."
+  exit 0
+fi
+
 # Fetch and Process streaming_hk
 mkdir -p rules/Domain
 

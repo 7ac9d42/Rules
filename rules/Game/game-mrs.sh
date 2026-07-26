@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building game-mrs ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/Game/game-mrs.mrs" ] && git diff --quiet HEAD -- "rules/Game/" 2>/dev/null; then
+  echo "Sources for game-mrs unchanged, skipping build."
+  exit 0
+fi
+
 # Create temporary folder for YAML files
 mkdir -p rules/Game/action2
 

@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building game ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/Game/game.mrs" ] && git diff --quiet HEAD -- "rules/Game/" 2>/dev/null; then
+  echo "Sources for game unchanged, skipping build."
+  exit 0
+fi
+
 # Install node dependencies if not present
 npm list fs-extra >/dev/null 2>&1 || npm install fs-extra yaml --no-save
 

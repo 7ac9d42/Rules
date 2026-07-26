@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building appletv ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/Domain/appletv.mrs" ] && git diff --quiet HEAD -- "rules/Domain/" 2>/dev/null; then
+  echo "Sources for appletv unchanged, skipping build."
+  exit 0
+fi
+
 # Fetch AppleTV Rules
 mkdir -p rules/Domain  # 确保目录存在
 

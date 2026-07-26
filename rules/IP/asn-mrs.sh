@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building asn-mrs ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/IP/asn-mrs.mrs" ] && git diff --quiet HEAD -- "rules/IP/" 2>/dev/null; then
+  echo "Sources for asn-mrs unchanged, skipping build."
+  exit 0
+fi
+
 # Create temporary folders
 mkdir -p rules/IP/asn rules/IP/asn-yaml
 

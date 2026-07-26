@@ -2,6 +2,12 @@
 set -euo pipefail
 echo "=== Building emby-ip ==="
 
+# Smart skip check: if git status shows no modification on source files and output exists
+if [ -f "rules/IP/emby-ip.mrs" ] && git diff --quiet HEAD -- "rules/IP/" 2>/dev/null; then
+  echo "Sources for emby-ip unchanged, skipping build."
+  exit 0
+fi
+
 # Fetch Emby IP Rules
 mkdir -p rules/IP  # 确保目录存在
 
