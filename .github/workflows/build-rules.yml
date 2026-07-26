@@ -1,0 +1,69 @@
+name: Unified Rules Build
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '0 18 * * *'  # 每天北京时间 02:00 执行
+  workflow_dispatch:
+
+jobs:
+  build_all_rules:
+    name: Build All Rules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache mihomo binary
+        id: cache-mihomo
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/mihomo
+          key: mihomo-bin-${{ runner.os }}
+
+      - name: Install dependencies & mihomo
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq perl
+          npm install fs-extra yaml
+
+          if [ "${{ steps.cache-mihomo.outputs.cache-hit }}" != "true" ]; then
+            version=$(curl -sL https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt)
+            curl -sL "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/mihomo-linux-amd64-${version}.gz" | gunzip -c > mihomo
+            chmod +x mihomo
+            sudo mv mihomo /usr/local/bin/
+          else
+            sudo chmod +x /usr/local/bin/mihomo
+          fi
+
+      - name: Execute all separate rule build scripts
+        run: |
+          for script in scripts/build/*.sh; do
+            if [ -f "$script" ]; then
+              echo "--------------------------------------------------"
+              echo "Running $script ..."
+              bash "$script"
+            fi
+          done
+
+      - name: Commit and Push All Rule Changes (Single Commit)
+        run: |
+          git add rules/
+          if ! git diff-index --quiet HEAD -- rules/; then
+            git commit -m "build: auto-update all rules (.mrs/.yaml)"
+            git push origin main
+          else
+            echo "No changes detected across any rules."
+          fi
