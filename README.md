@@ -47,8 +47,6 @@
 
 #### Substore部署使用教程，高级玩法请将Substore更新至最新版本，注意更新前请先备份以防止配置丢失，另外注意请确保有文件页面后再进行操作
 
-<a href="https://github.com/Lanlan13-14/Rules/blob/main/Others/Substore.md"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/Sub-Store.png" width="32" style="vertical-align:middle;"/> Sub-store结合教程</a>
->
 <a href="https://github.com/sub-store-org/Sub-Store"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/Sub-Store.png" width="32" style="vertical-align:middle;"/> Sub-store直达链接</a>
 >
 若无所需游戏规则，可以向该项目提交请求或者自己抓包获取后给该项目提交请求
