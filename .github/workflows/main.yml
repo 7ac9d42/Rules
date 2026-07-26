@@ -25,6 +25,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/Lanlan13-14/Rules.git || git remote set-url upstream https://github.com/Lanlan13-14/Rules.git
+          # 禁用对 upstream 的 push 权限，防止反向推送到上游
+          git remote set-url --push upstream PUSH_DISABLED
           git fetch upstream main
           # 使用 -X ours 策略：发生冲突时优先采纳本地修改，未冲突部分正常合并上游修改
           git merge upstream/main -X ours -m "sync: merge upstream main with local priority (-X ours)" || {

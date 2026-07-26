@@ -23,11 +23,23 @@ jobs:
         git config user.name "github-actions[bot]"  
         git config user.email "github-actions[bot]@users.noreply.github.com"  
   
-    - name: Install mihomo  
-      run: |  
+    - name: Cache mihomo binary
+      id: cache-mihomo
+      uses: actions/cache@v4
+      with:
+        path: /usr/local/bin/mihomo
+        key: mihomo-bin-${{ runner.os }}
+
+    - name: Install mihomo
+      if: steps.cache-mihomo.outputs.cache-hit != 'true'
+      run: |
         version=$(curl -sL https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt)
         curl -sL "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/mihomo-linux-amd64-${version}.gz" | \
           gunzip -c > /usr/local/bin/mihomo && chmod +x /usr/local/bin/mihomo
+
+    - name: Ensure mihomo executable
+      run: chmod +x /usr/local/bin/mihomo || true
+
   
     - name: Fetch BanAd Rules  
       run: |  

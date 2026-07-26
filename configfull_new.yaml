@@ -201,7 +201,6 @@ dns:
     - "DOMAIN-SUFFIX,linksyssmartwifi.com,real-ip"
     - "DOMAIN-SUFFIX,local.adguard.org,real-ip"
     - "RULE-SET,private_domain,real-ip"
-    - "RULE-SET,fakeip_filter_domain,real-ip"
 
     # 2. STUN 及 穿透服务 (高频 UDP 打洞)
     - "DOMAIN-KEYWORD,stun,real-ip"

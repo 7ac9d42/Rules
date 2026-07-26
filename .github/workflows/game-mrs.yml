@@ -22,15 +22,25 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Cache mihomo binary
+        id: cache-mihomo
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/mihomo
+          key: mihomo-bin-${{ runner.os }}
+
       - name: Install dependencies and mihomo
         run: |
           sudo apt-get update
           sudo apt-get install -y jq perl
-          # 下载并安装 mihomo
-          version=$(curl -sL https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt)
-          curl -sL "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/mihomo-linux-amd64-${version}.gz" | gunzip -c > mihomo
-          chmod +x mihomo
-          sudo mv mihomo /usr/local/bin/
+          if [ "${{ steps.cache-mihomo.outputs.cache-hit }}" != "true" ]; then
+            version=$(curl -sL https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt)
+            curl -sL "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/mihomo-linux-amd64-${version}.gz" | gunzip -c > mihomo
+            chmod +x mihomo
+            sudo mv mihomo /usr/local/bin/
+          else
+            sudo chmod +x /usr/local/bin/mihomo
+          fi
 
       - name: Create temporary folder for YAML files
         run: |
