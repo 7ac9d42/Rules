@@ -48,14 +48,12 @@ jobs:
             sudo chmod +x /usr/local/bin/mihomo
           fi
 
-      - name: Execute all separate rule build scripts
+      - name: Execute all separate rule build scripts in rules/
         run: |
-          for script in scripts/build/*.sh; do
-            if [ -f "$script" ]; then
-              echo "--------------------------------------------------"
-              echo "Running $script ..."
-              bash "$script"
-            fi
+          find rules/ -type f -name "*.sh" | sort | while read -r script; do
+            echo "--------------------------------------------------"
+            echo "Running $script ..."
+            bash "$script"
           done
 
       - name: Commit and Push All Rule Changes (Single Commit)
