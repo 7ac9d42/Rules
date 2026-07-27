@@ -396,6 +396,7 @@ rules:
   - DOMAIN,hk.tv.global.mi.com,节点选择
   - DOMAIN-SUFFIX,linux.do,节点选择
   - DOMAIN,ykk.emby.moe,Emby
+  - IP-CIDR,189.24.106.132/32,全球直连,no-resolve
   - DOMAIN-SUFFIX,kuapt.top,全球直连
   - DOMAIN-SUFFIX,catxxp123.top,全球直连
   - DOMAIN-SUFFIX,c4lm0n.top,全球直连
