@@ -1,26 +1,52 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
+
 echo "=== Building wechat ==="
 
-# Fetch WeChat Rules
-mkdir -p rules/Domain  # 确保目录存在
+work_dir=$(mktemp -d)
+trap 'rm -rf -- "$work_dir"' EXIT
 
-# 下载 WeChat 规则文件
-curl --fail --show-error --silent --location "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/WeChat/WeChat.list" -o rules/Domain/WeChat.list
+curl --fail --show-error --silent --location \
+  "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/WeChat/WeChat.list" \
+  -o "$work_dir/WeChat.list"
 
-# Extract DOMAIN rules from WeChat.list
-# 提取 WeChat.list 中的 DOMAIN 和 DOMAIN-SUFFIX 规则，忽略注释行，并处理格式
-grep -E '^(DOMAIN-SUFFIX|DOMAIN),' rules/Domain/WeChat.list | grep -v '^#' | sed -E 's/DOMAIN-SUFFIX,/+./g; s/DOMAIN,//g' > rules/Domain/WeChat-domain.list
+# This domain builder intentionally ignores the one declared IP-ASN record, but
+# rejects any future rule type instead of silently publishing a partial source.
+if ! awk -F, '
+  /^[[:space:]]*(#|$)/ { next }
+  ($1 == "DOMAIN" || $1 == "DOMAIN-SUFFIX") && NF >= 2 && $2 != "" { next }
+  $1 == "IP-ASN" && NF >= 2 && $2 != "" { next }
+  { exit 1 }
+' "$work_dir/WeChat.list"; then
+  echo "WeChat source contains an unknown or malformed rule" >&2
+  exit 1
+fi
 
-# Convert WeChat Rules to YAML
-echo "payload:" > rules/Domain/WeChat.yaml
-sort -u rules/Domain/WeChat-domain.list | awk '{print "  - \047" $0 "\047"}' >> rules/Domain/WeChat.yaml
+awk -F, '
+  $1 == "DOMAIN" { print $2 }
+  $1 == "DOMAIN-SUFFIX" { print "+." $2 }
+' "$work_dir/WeChat.list" |
+  awk '$0 != "apd-pcdnwxlogin.teg.tencent-cloud.net"' |
+  sort -u > "$work_dir/domains.list"
 
-# Convert WeChat DOMAIN rules to MRS
-# 使用 mihomo 转换为 MRS 格式
-mihomo convert-ruleset domain yaml rules/Domain/WeChat.yaml rules/Domain/WeChat.mrs
+if [[ $(wc -l < "$work_dir/domains.list") -lt 20 ]]; then
+  echo "WeChat source shrank below the reviewed minimum" >&2
+  exit 1
+fi
+for required_domain in '+.wechat.com' '+.weixin.qq.com' '+.servicewechat.com'; do
+  if ! grep -Fxq "$required_domain" "$work_dir/domains.list"; then
+    echo "WeChat source is missing expected domain: $required_domain" >&2
+    exit 1
+  fi
+done
 
-# Clean up the source files
-# 删除中间步骤文件，只保留 WeChat.yaml 和 WeChat.mrs
-rm -f rules/Domain/WeChat.list rules/Domain/WeChat-domain.list
+{
+  echo "payload:"
+  awk '{ print "  - \047" $0 "\047" }' "$work_dir/domains.list"
+} > "$work_dir/WeChat.yaml"
 
+mihomo convert-ruleset domain yaml \
+  "$work_dir/WeChat.yaml" "$work_dir/WeChat.mrs"
+mkdir -p rules/Domain
+cp "$work_dir/WeChat.yaml" "$work_dir/WeChat.mrs" rules/Domain/

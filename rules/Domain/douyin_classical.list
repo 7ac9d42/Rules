@@ -1,0 +1,6 @@
+DOMAIN-REGEX,(?i)(^|\.)[^.]*core-c-lq([.-]|$)
+DOMAIN-REGEX,(?i)(^|\.)[^.]*core-lq([.-]|$)
+DOMAIN-REGEX,(?i)(^|\.)[^.]*normal-c-lq([.-]|$)
+DOMAIN-REGEX,(?i)(^|\.)[^.]*normal-lq([.-]|$)
+DOMAIN-REGEX,(?i)(^|\.)[^.]*search-lq([.-]|$)
+DOMAIN-REGEX,(?i)(^|\.)[^.]*search-quic-lq([.-]|$)

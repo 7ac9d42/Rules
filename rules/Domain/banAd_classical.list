@@ -1,0 +1,13 @@
+DOMAIN-REGEX,^(.*-pcdn-.*\.biliapi\.net)$
+DOMAIN-REGEX,^(.*pcdn.*\.xxpkg\.com)$
+DOMAIN-REGEX,^(.+)-p2p-pull\.(video|live)-voip\.com$
+DOMAIN-REGEX,^(.+)-p2p\.pull\.yximgs\.com$
+DOMAIN-REGEX,^(config-p2p-.*\.vcloud\.ks-live\.com)$
+DOMAIN-REGEX,^(dyp2p-.*\.douyucdn2\.cn)$
+DOMAIN-REGEX,^(p2pable-.*\.douyucdn\.cn)$
+DOMAIN-REGEX,^(p2pchunk-.*\.douyucdn\.cn)$
+DOMAIN-REGEX,^(seeds.*-darwin\.xycdn\.com)$
+DOMAIN-REGEX,^(stun.*\.chat\.bilibili\.com)$
+DOMAIN-REGEX,^(stun.*\.douyucdn\.cn)$
+DOMAIN-REGEX,^(stun.*\.qvb\.qcloud\.com)$
+DOMAIN-REGEX,^(trk-([0-9\-]+)\.douyucdn\.cn)$

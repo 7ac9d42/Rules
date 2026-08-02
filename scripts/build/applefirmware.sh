@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
-echo "=== Building applefirmware ==="
+export LC_ALL=C
 
-# Fetch AppleFirmware Rules
-mkdir -p rules/Domain  # 确保目录存在
+echo "=== Building Apple software updates ==="
 
-# 下载 AppleFirmware 规则文件
-curl --fail --show-error --silent --location "https://raw.githubusercontent.com/LM-Firefly/Rules/refs/heads/master/Apple/AppleFirmware.list" -o rules/Domain/applefirmware.list
+mkdir -p rules/Domain
+work_dir=$(mktemp -d)
+trap 'rm -rf -- "$work_dir"' EXIT
+yaml_file="$work_dir/applefirmware.yaml"
+mrs_file="$work_dir/applefirmware.mrs"
 
-# Extract DOMAIN and DOMAIN-SUFFIX rules from applefirmware.list
-# 提取 DOMAIN 和 DOMAIN-SUFFIX 规则，并处理成需要的格式
-grep -E 'DOMAIN-SUFFIX|DOMAIN' rules/Domain/applefirmware.list | sed -E 's/DOMAIN-SUFFIX,/+./g; s/DOMAIN,//g' > rules/Domain/applefirmware-domain.list
+# MetaCubeX apple-update 跟踪 Apple 官方企业网络文档中的软件更新端点。
+curl --fail --show-error --silent --location \
+  "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/apple-update.yaml" \
+  -o "$yaml_file"
 
-# Convert AppleFirmware Rules to YAML
-echo "payload:" > rules/Domain/applefirmware.yaml
-sort -u rules/Domain/applefirmware-domain.list | awk '{print "  - \047" $0 "\047"}' >> rules/Domain/applefirmware.yaml
+if ! grep -q '^payload:' "$yaml_file" ||
+   [[ $(grep -Ec "^[[:space:]]*-[[:space:]]*'?\+\." "$yaml_file") -lt 10 ]]; then
+  echo "Apple update source is malformed or unexpectedly small" >&2
+  exit 1
+fi
 
-# Convert AppleFirmware Rules to MRS
-# 使用 mihomo 转换为 MRS 格式
-mihomo convert-ruleset domain yaml rules/Domain/applefirmware.yaml rules/Domain/applefirmware.mrs
-rm -f rules/Domain/applefirmware-domain.list rules/Domain/applefirmware.list
-
+mihomo convert-ruleset domain yaml "$yaml_file" "$mrs_file"
+cp "$yaml_file" "$mrs_file" rules/Domain/

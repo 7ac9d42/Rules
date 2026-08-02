@@ -21,6 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Set up Git and sync upstream rules
@@ -67,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y jq
+          sudo apt-get install -y jq ruby
 
           if [[ "${{ steps.cache-mihomo.outputs.cache-hit }}" != "true" ]]; then
             version="${{ steps.mihomo-version.outputs.version }}"
@@ -92,6 +93,9 @@ jobs:
             echo "Running $script ..."
             bash "$script"
           done
+
+      - name: Validate generated rules and configuration
+        run: ruby scripts/validate-rules.rb
 
       - name: Commit and push rule changes
         run: |

@@ -52,32 +52,17 @@
 若无所需游戏规则，可以向该项目提交请求或者自己抓包获取后给该项目提交请求
 [游戏规则相关内容](https://github.com/FQrabbit/SSTap-Rule)
 
-### 标准版/Standard
+### 配置模板/Configuration template
 ###### For Mihomo and Stash
 
-[![Mihomo](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo-mini.png)](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull.yaml)
-**[configfull.yaml](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull.yaml)**
+[![Mihomo](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo-mini.png)](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_new.yaml)
+**[configfull_new.yaml](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_new.yaml)**
 
+当前分支只发布这一份配置模板；NoAd 和 Lite 变体暂未随本分支发布。使用前请按模板说明填写订阅链接，并检查规则组和本地节点配置。
 
-##### 无广告拦截版/No ad blocking version
-###### For Mihomo and Stash
-[![Mihomo](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo-mini.png)](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_NoAd.yaml)
+This branch currently publishes this configuration template only. NoAd and Lite variants are not published in this branch.
 
-**[configfull_NoAd.yaml](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_NoAd.yaml)**
-
-### Lite版本/Lite version
-###### 该版本高度依赖Geo数据库，请及时更新您的数据库/This version is highly dependent on the Geo database, please update your database in time.
-###### For Mihomo and Stash
-[![Mihomo](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo-mini.png)](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_lite.yaml)
-
-**[configfull_lite.yaml](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_lite.yaml)**
-
-
-##### 无广告拦截版/No ad blocking version
-###### For Mihomo and Stash 
-[![Mihomo](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo-mini.png)](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_NoAd_lite.yaml)
-
-**[configfull_NoAd_lite.yaml](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_NoAd_lite.yaml)**
+详细的破坏性更新和迁移影响见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 客户端推荐/Client Recommendation
 •Windows/MacOS/Linux

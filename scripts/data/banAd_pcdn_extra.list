@@ -1,0 +1,28 @@
+# AWAvenue issue #125 经维护者筛选收录，但 DDCH 当前规则未覆盖
+DOMAIN,ali-p2p-v2.pull.yximgs.com
+DOMAIN,dyp2p-ali.douyucdn.cn
+DOMAIN,dyp2p-hw.douyucdn.cn
+DOMAIN,ks-p2p-v2.pull.yximgs.com
+DOMAIN,livewebbs2pcdn.msstatic.com
+DOMAIN,p2plive-ali.douyucdn.cn
+DOMAIN,qn-cdnfile1pcdn.msstatic.com
+DOMAIN,tx-p2p-v2.pull.yximgs.com
+DOMAIN-SUFFIX,uhabo.com
+DOMAIN-SUFFIX,xycdn.com
+
+# AWAvenue Unwelcome 中语义明确的微信 PCDN 控制端点，必须先于微信直连规则
+DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net
+DOMAIN,apd-pcdnwxnat.teg.tencent-cloud.net
+DOMAIN,apd-pcdnwxstat.teg.tencent-cloud.net
+
+# AWAvenue Unwelcome 中被 DDCH PCDN 正则覆盖的具体实例，提升到 PCDN 层避免后置失效
+DOMAIN,hw-p2p-pull.video-voip.com
+DOMAIN,hw-p2p.pull.yximgs.com
+DOMAIN,ks-p2p.pull.yximgs.com
+DOMAIN,tx-p2p-pull.live-voip.com
+
+# AWAvenue Unwelcome 与独立 PCDN 主表共同确认
+DOMAIN-SUFFIX,pcdn.xmcdn.com
+DOMAIN-SUFFIX,pkoplink.com
+DOMAIN-SUFFIX,saxysec.com
+DOMAIN-SUFFIX,tpa-hcdn.iqiyi.com

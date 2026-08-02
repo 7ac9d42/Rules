@@ -1,0 +1,5 @@
+DOMAIN-REGEX,(?i)(^|\.)[^.]*-ad\.sm\.cn$
+DOMAIN-REGEX,(?i)(^|\.)[^.]*-ad\.video\.yximgs\.com$
+DOMAIN-REGEX,(?i)(^|\.)[^.]*-ad\.wtzw\.com$
+DOMAIN-REGEX,(?i)(^|\.)[^.]*-be-pack-sign\.pglstatp-toutiao\.com$
+DOMAIN-REGEX,(?i)(^|\.)[^.]*-normal\.zijieapi\.com$

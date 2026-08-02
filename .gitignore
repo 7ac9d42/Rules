@@ -2,3 +2,9 @@
 .codex
 .claude
 .gemini
+
+# Temporary game-rule publish/rollback directories. Generated rule sources and
+# artifacts remain tracked; only interrupted-build scratch directories are
+# ignored.
+/rules/.Game.publish.*/
+/rules/.Game.backup.*/

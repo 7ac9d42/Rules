@@ -2,8 +2,8 @@
 set -euo pipefail
 echo "=== Building asn-mrs ==="
 
-# These are the only ASN providers referenced by configfull_new.yaml.
-asns=(AS24424 AS49544 AS132203)
+# 仅保留配置实际使用的 Google 中国网络；共享云 ASN 不冒充具体应用。
+asns=(AS24424)
 work_dir=$(mktemp -d)
 trap 'rm -rf -- "$work_dir"' EXIT
 

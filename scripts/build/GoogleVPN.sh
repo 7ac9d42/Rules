@@ -1,27 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
+
 echo "=== Building GoogleVPN ==="
 
-source_file="rules/Domain/googleVPN.list"
+source_file="scripts/data/googleVPN.list"
 if [[ ! -s "$source_file" ]]; then
   echo "Missing Google VPN source: $source_file" >&2
   exit 1
 fi
 
-# Extract DOMAIN-SUFFIX rules from googleVPN.list
-# 提取 googleVPN.list 中的 DOMAIN-SUFFIX 规则，并添加 +.
-grep -Eo 'DOMAIN-SUFFIX,[^,]+' "$source_file" |
-  sed 's/DOMAIN-SUFFIX,//' |
-  awk '{print "+." $0}' > rules/Domain/googleVPN-domain.list
+work_dir=$(mktemp -d)
+trap 'rm -rf -- "$work_dir"' EXIT
+yaml_file="$work_dir/googleVPN.yaml"
+mrs_file="$work_dir/googleVPN.mrs"
 
-# Convert Google VPN Rules to YAML
-echo "payload:" > rules/Domain/googleVPN.yaml
-sort -u rules/Domain/googleVPN-domain.list | awk '{print "  - \047" $0 "\047"}' >> rules/Domain/googleVPN.yaml
+if ! awk -F, '
+  /^[[:space:]]*(#|$)/ { next }
+  NF != 2 || $1 != "DOMAIN-SUFFIX" || $2 == "" { exit 1 }
+' "$source_file"; then
+  echo "Google VPN source contains an unsupported rule: $source_file" >&2
+  exit 1
+fi
 
-# Convert Google VPN Rules to MRS
-# 使用 mihomo 转换为 MRS 格式
-mihomo convert-ruleset domain yaml rules/Domain/googleVPN.yaml rules/Domain/googleVPN.mrs
+{
+  echo "payload:"
+  awk -F, '$1 == "DOMAIN-SUFFIX" { print "+." $2 }' "$source_file" |
+    sort -u |
+    awk 'NF { print "  - \047" $0 "\047" }'
+} > "$yaml_file"
 
-# Clean up the source files
-# 删除中间文件，但保留 googleVPN.list 和 googleVPN.yaml
-rm -f rules/Domain/googleVPN-domain.list
+if [[ $(wc -l < "$yaml_file") -ne 2 ]]; then
+  echo "Google VPN source must contain exactly one dedicated suffix" >&2
+  exit 1
+fi
+
+mihomo convert-ruleset domain yaml "$yaml_file" "$mrs_file"
+cp "$source_file" rules/Domain/googleVPN.list
+cp "$yaml_file" "$mrs_file" rules/Domain/
