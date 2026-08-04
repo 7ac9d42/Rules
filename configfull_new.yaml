@@ -1,4 +1,6 @@
 # ===== 锚点定义区 =====
+# 解析兼容下限为 Mihomo v1.19.19；此前版本不支持 fake-ip-filter-mode: rule。
+# empty-fallback 在 v1.19.27 前会被忽略；完整拒绝语义及推荐运行版本为 v1.19.27+。
 
 # ── 1. 服务策略组通用 proxies 列表 ──
 # 代理优先
@@ -17,20 +19,20 @@ Fallback_Base: &Fallback_Base {type: fallback, url: "https://www.gstatic.com/gen
 Loadbalance_Base: &Loadbalance_Base {type: load-balance, strategy: consistent-hashing, url: "https://www.gstatic.com/generate_204", expected-status: 204, interval: 180, max-failed-times: 3, lazy: true, empty-fallback: REJECT}
 
 # ── 3. 机场订阅 provider 模板 ──
-# health-check 单次失败即标记 alive=false；filter 排除订阅中的提示信息
-PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', expected-status: 204, interval: 60, lazy: false}, filter: '^(?!.*(拒绝|直连|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|提示|特别|访问|支持|教程|关注|更新|作者|加入|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author|traffic))'}
+# health-check 单次失败即标记 alive=false；仅排除高置信订阅信息，避免宽关键词误删真实节点
+PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', expected-status: 204, interval: 60, lazy: false}, exclude-filter: '(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\s\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\s*[:：]\s*(?:[0-9]|∞|Unlimited)|(?:^|[\s\[【(（_|｜丨-])Email\s*[:：]\s*\S+@|(?:^|[\s\[【(（_|｜丨-])Panel\s*[:：]|(?:^|[\s\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\s\]】)）|｜丨:：_-]))'}
 
 # ── 4. 规则提供者基础（mrs 格式，24h 更新） ──
-Ruleset_Domain_Base: &domain {type: http, interval: 86400, behavior: domain, format: mrs}
-Ruleset_IP_Base: &ip {type: http, interval: 86400, behavior: ipcidr, format: mrs}
+Ruleset_Domain_Base: &domain {type: http, interval: 86400, behavior: domain, format: mrs, proxy: 规则更新}
+Ruleset_IP_Base: &ip {type: http, interval: 86400, behavior: ipcidr, format: mrs, proxy: 规则更新}
 
 # ── 5. 节点名筛选：地区 ──
 region_hk: &region_hk "(?i)(香港|港|🇭🇰|\\bHK\\b|Hong ?Kong)"
 region_sg: &region_sg "(?i)(新加坡|狮城|🇸🇬|\\bSG\\b|Singapore)"
 region_jp: &region_jp "(?i)(日本|🇯🇵|\\bJP\\b|Japan)"
 region_us: &region_us "(?i)(美国|🇺🇸|🇺🇲|\\bUS\\b|\\bUSA\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)"
-region_tw: &region_tw "(?i)(台湾|臺灣|台|臺|🇹🇼|\\bTW\\b|Taiwan)"
-region_eu: &region_eu "(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦)"
+region_tw: &region_tw "(?i)(台湾|台灣|臺灣|🇹🇼|\\bTW\\b|\\bTWN\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE\\b|Taichung|台中|臺中|\\bRMQ\\b|Tainan|台南|臺南|\\bTNN\\b|Kaohsiung|高雄|\\bKHH\\b)"
+region_eu: &region_eu "(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦|欧洲|歐洲|欧盟|歐盟|英国|英國|德国|德國|法国|法國|荷兰|荷蘭|瑞士|瑞典|挪威|芬兰|芬蘭|丹麦|丹麥|意大利|義大利|西班牙|葡萄牙|波兰|波蘭|奥地利|奧地利|爱尔兰|愛爾蘭|比利时|比利時|\\b(?:United ?Kingdom|Britain|England|London|Germany|Frankfurt|Berlin|Munich|France|Paris|Netherlands|Amsterdam|Switzerland|Zurich|Sweden|Stockholm|Norway|Oslo|Finland|Helsinki|Denmark|Copenhagen|Italy|Milan|Rome|Spain|Madrid|Portugal|Lisbon|Poland|Warsaw|Austria|Vienna|Ireland|Dublin|Belgium|Brussels|Romania|Bucharest|Czech(?:ia| Republic)?|Prague|Hungary|Budapest|Greece|Athens|Iceland|Luxembourg|Russia|Moscow|Turkey|Istanbul|Ukraine|Kyiv|Kiev|UK|GB|DE|FR|NL|CH|SE|NO|FI|DK|IT|ES|PT|PL|AT|IE|BE|RO|CZ|HU|GR|IS|LU|RU|TR|UA)\\b)"
 
 # ── 6. 节点名筛选：特殊用途 ──
 # 自建/家宽节点
@@ -193,27 +195,10 @@ dns:
     - "DOMAIN-SUFFIX,time.apple.com,real-ip"
     - "DOMAIN-SUFFIX,ntp.org.cn,real-ip"
 
-    # 4. 自定义直连规则同步排除 Fake-IP (明确指定的域名，优先级最高)
-    - "DOMAIN-SUFFIX,kuapt.top,real-ip"
-    - "DOMAIN-SUFFIX,catxxp123.top,real-ip"
-    - "DOMAIN-SUFFIX,c4lm0n.top,real-ip"
-    - "DOMAIN-SUFFIX,maj-soul.com,real-ip"
-    - "DOMAIN-SUFFIX,catmajsoul.com,real-ip"
-    - "DOMAIN-SUFFIX,catmjstudio.com,real-ip"
-    - "DOMAIN-SUFFIX,homdgcat.wiki,real-ip"
-    - "DOMAIN-SUFFIX,bsbsb.top,real-ip"
-    - "DOMAIN-SUFFIX,3ct.2ndtool.top,real-ip"
-    - "DOMAIN-SUFFIX,kejiweixun.com,real-ip"
-    - "DOMAIN-SUFFIX,yunmu.xiercloud.uk,real-ip"
-    - "DOMAIN-SUFFIX,argotunnel.com,real-ip"
-    - "DOMAIN-SUFFIX,cftunnel.com,real-ip"
-    - "DOMAIN-SUFFIX,trycloudflare.com,real-ip"
-
-    # 5. 专属 Fake-IP 过滤规则集与直连规则集
+    # 4. 专属 Fake-IP 过滤规则集（集合内容混合，不绑定固定解析器）
     - "RULE-SET,fakeip_filter_domain,real-ip"
-    - "RULE-SET,direct_domain,real-ip"
 
-    # 6. 特殊服务、主机游戏与 P2P (对 Fake-IP 敏感)
+    # 5. 特殊服务、主机游戏与 P2P (对 Fake-IP 敏感)
     - "DOMAIN-SUFFIX,srv.nintendo.net,real-ip"
     - "DOMAIN-SUFFIX,stun.playstation.net,real-ip"
     - "DOMAIN-SUFFIX,xboxlive.com,real-ip"
@@ -222,23 +207,22 @@ dns:
     - "DOMAIN-SUFFIX,n0808.com,real-ip"
     - "DOMAIN-SUFFIX,mcdn.bilivideo.cn,real-ip"
     - "DOMAIN-SUFFIX,proxy.golang.org,real-ip"
+    - "DOMAIN-SUFFIX,steamserver.net,real-ip"
     - "RULE-SET,game_cn_domain,real-ip"
     - "RULE-SET,steam_cn_domain,real-ip"
-    - "RULE-SET,pt_cn_domain,real-ip"
+    - "RULE-SET,pt_domain,real-ip"
     - "RULE-SET,public-tracker_domain,real-ip"
     - "RULE-SET,115_domain,real-ip"
 
-    # 7. 常见国内服务规则集 (中频，服务类)
+    # 6. 常见国内服务规则集 (中频，服务类)
     - "RULE-SET,wechat_domain,real-ip"
     - "RULE-SET,bank_cn_domain,real-ip"
     - "RULE-SET,alibaba_domain,real-ip"
     - "RULE-SET,xiaomi_domain,real-ip"
     - "RULE-SET,apple_cn_domain,real-ip"
-    - "RULE-SET,apple_update_domain,real-ip"
-    - "RULE-SET,aliyun_domain,real-ip"
     - "RULE-SET,ai_cn_domain,real-ip"
 
-    # 8. 国内媒体与大规则集 (词库极其庞大，放最后以提升整体匹配性能)
+    # 7. 国内媒体与大规则集 (词库极其庞大，放最后以提升整体匹配性能)
     - "RULE-SET,NetEaseMusic_domain,real-ip"
     - "RULE-SET,media_cn_domain,real-ip"
     - "RULE-SET,iptv_domain,real-ip"
@@ -266,7 +250,17 @@ dns:
     "rule-set:cn_domain":
       - "https://dns.alidns.com/dns-query#🟢 直连"
       - "https://doh.pub/dns-query#🟢 直连"
-  # 直连目标也必须遵守 private/CN 策略，不能绕回默认解析器
+    # 返回 Real-IP 且固定全球直连的规则集，必须在初次查询时显式使用国内解析器。
+    "rule-set:game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain":
+      - "https://dns.alidns.com/dns-query#🟢 直连"
+      - "https://doh.pub/dns-query#🟢 直连"
+    "rule-set:wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain":
+      - "https://dns.alidns.com/dns-query#🟢 直连"
+      - "https://doh.pub/dns-query#🟢 直连"
+    "rule-set:NetEaseMusic_domain,media_cn_domain,iptv_domain":
+      - "https://dns.alidns.com/dns-query#🟢 直连"
+      - "https://doh.pub/dns-query#🟢 直连"
+  # 直连目标也必须遵守以上显式策略，不能绕回默认解析器
   direct-nameserver-follow-policy: true
   nameserver:
     - https://cloudflare-dns.com/dns-query
@@ -309,7 +303,7 @@ proxy-groups:
 #  - {name: "多机场优先级转移(<-直接选这个)", <<: *Fallback_Base, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   - {name: "多机场优先级转移(<-直接选这个)", <<: *Fallback_Base, proxies: [机场名称1地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
-  # 多地区优先转移（机场1>2>3>4 严格优先级）
+  # 多地区优先转移（机场1>3>4 严格优先级）
 #  - {name: 香港-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
 #  - {name: 新加坡-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
 #  - {name: 美国-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-美国, 机场名称2-美国, 机场名称3-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
@@ -319,6 +313,9 @@ proxy-groups:
   - {name: 美国-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-美国, 机场名称3-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
   - {name: 日本-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-日本, 机场名称3-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   #- {name: 多地区优先转移(<-地区优先), type: fallback, proxies: [香港-机场优先, 新加坡-机场优先, 美国-机场优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/failover.png"}
+
+  # 规则提供者更新：机场3优先，依次回退机场1、机场4，最终直连
+  - {name: 规则更新, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称4地区优先, "🟢 直连"]}
 
   # 低倍率/MITM节点组
   - {name: 低倍率/MITM节点, type: select, use: *use_ap_all, filter: *lowrate_mitm, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
@@ -394,6 +391,8 @@ proxy-groups:
 
 rules:
 # === 用户自定义优先 ===
+  # Android 内核源码拉取与 GitHub 使用同一策略（机场3优先）
+  - DOMAIN-SUFFIX,android.googlesource.com,GitHub
   - DOMAIN,hk.tv.global.mi.com,节点选择
   - DOMAIN-SUFFIX,linux.do,节点选择
   - DOMAIN,ykk.emby.moe,Emby
@@ -438,7 +437,6 @@ rules:
   - RULE-SET,wechat_domain,全球直连
   - RULE-SET,bank_cn_domain,全球直连
   - RULE-SET,alibaba_domain,全球直连
-  - RULE-SET,aliyun_domain,全球直连
   - RULE-SET,115_domain,全球直连
   - RULE-SET,ifast_domain,全球直连
   - RULE-SET,ai_cn_domain,全球直连
@@ -453,7 +451,7 @@ rules:
   - RULE-SET,steamcdn_ip,全球直连,no-resolve
   - RULE-SET,NetEaseMusic_domain,全球直连
   - RULE-SET,NetEaseMusic_ip,全球直连,no-resolve
-  - RULE-SET,pt_cn_domain,全球直连
+  - RULE-SET,pt_domain,全球直连
   - RULE-SET,public-tracker_domain,全球直连
   - RULE-SET,media_cn_domain,全球直连
 
@@ -553,8 +551,8 @@ rule-providers:
   banAd_core_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core.mrs" }
   banAd_pcdn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn.mrs" }
   banAd_low_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_low.mrs" }
-  banAd_core_classical: { type: http, interval: 86400, behavior: classical, format: text, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core_classical.list" }
-  banAd_pcdn_classical: { type: http, interval: 86400, behavior: classical, format: text, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn_classical.list" }
+  banAd_core_classical: { type: http, interval: 86400, behavior: classical, format: text, proxy: 规则更新, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core_classical.list" }
+  banAd_pcdn_classical: { type: http, interval: 86400, behavior: classical, format: text, proxy: 规则更新, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn_classical.list" }
   private_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs" }
   stun_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/category-stun.mrs" }
   bank_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-bank-cn.mrs" }
@@ -615,11 +613,10 @@ rule-providers:
   discord_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/discord.mrs" }
   fcm_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/googlefcm.mrs" }
   emby_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/emby.mrs" }
-  emby_classical: { type: http, interval: 86400, behavior: classical, format: text, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/emby_classical.list" }
-  pt_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-pt.mrs" }
+  emby_classical: { type: http, interval: 86400, behavior: classical, format: text, proxy: 规则更新, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/emby_classical.list" }
+  pt_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-pt.mrs" }
   public-tracker_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-public-tracker.mrs" }
   115_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/115.mrs" }
-  aliyun_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/aliyun.mrs" }
   twitch_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/twitch.mrs" }
   porn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-porn.mrs" }
   iptv_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/iptv.mrs" }

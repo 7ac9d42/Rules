@@ -64,6 +64,13 @@ jobs:
           path: /usr/local/bin/mihomo
           key: mihomo-bin-${{ runner.os }}-${{ steps.mihomo-version.outputs.version }}
 
+      - name: Cache mihomo v1.19.19 compatibility binary
+        id: cache-mihomo-compat
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.tool_cache }}/mihomo/v1.19.19/mihomo
+          key: mihomo-bin-${{ runner.os }}-${{ runner.arch }}-v1.19.19
+
       - name: Install dependencies and mihomo
         run: |
           set -euo pipefail
@@ -85,6 +92,31 @@ jobs:
 
           mihomo -v
 
+      - name: Install mihomo v1.19.19 compatibility binary
+        env:
+          MIHOMO_COMPAT_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.19/mihomo
+          MIHOMO_COMPAT_VERSION: v1.19.19
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.cache-mihomo-compat.outputs.cache-hit }}" != "true" ]]; then
+            compat_dir="${MIHOMO_COMPAT_BIN%/*}"
+            archive="${RUNNER_TEMP}/mihomo-${MIHOMO_COMPAT_VERSION}.gz"
+            asset="mihomo-linux-amd64-${MIHOMO_COMPAT_VERSION}.gz"
+            mkdir -p "$compat_dir"
+            curl --fail --show-error --silent --location \
+              "https://github.com/MetaCubeX/mihomo/releases/download/${MIHOMO_COMPAT_VERSION}/${asset}" \
+              -o "$archive"
+            gunzip -c "$archive" > "$MIHOMO_COMPAT_BIN"
+          fi
+
+          chmod +x "$MIHOMO_COMPAT_BIN"
+          version_output=$("$MIHOMO_COMPAT_BIN" -v)
+          printf '%s\n' "$version_output"
+          if [[ "$version_output" != *"Mihomo Meta ${MIHOMO_COMPAT_VERSION} "* ]]; then
+            echo "Unexpected compatibility mihomo version" >&2
+            exit 1
+          fi
+
       - name: Build all rules
         run: |
           set -euo pipefail
@@ -95,7 +127,16 @@ jobs:
           done
 
       - name: Validate generated rules and configuration
-        run: ruby scripts/validate-rules.rb
+        run: |
+          set -euo pipefail
+          ruby scripts/validate-rules.rb
+
+      - name: Validate with mihomo v1.19.19
+        env:
+          MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.19/mihomo
+        run: |
+          set -euo pipefail
+          ruby scripts/validate-rules.rb
 
       - name: Commit and push rule changes
         run: |

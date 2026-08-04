@@ -8,7 +8,80 @@ require "tmpdir"
 require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
+MIHOMO_BIN = ENV.fetch("MIHOMO_BIN", "mihomo")
 errors = []
+
+def duplicate_mapping_keys(path)
+  # Inspect the source AST: merged anchors stay aliases, so a valid explicit override is not a duplicate.
+  document = Psych.parse_file(path)
+  duplicates = []
+
+  walk = lambda do |node, location|
+    case node
+    when Psych::Nodes::Mapping
+      seen = {}
+      node.children.each_slice(2) do |key_node, value_node|
+        if key_node.is_a?(Psych::Nodes::Scalar)
+          key = key_node.value
+          key_location = key_node.start_line + 1
+          if seen.key?(key)
+            duplicates << "#{location}: duplicate mapping key #{key.inspect} " \
+                          "at lines #{seen[key]} and #{key_location}"
+          else
+            seen[key] = key_location
+          end
+          child_location = "#{location}.#{key}"
+        else
+          child_location = "#{location}.<complex-key>"
+        end
+        walk.call(value_node, child_location)
+      end
+    when Psych::Nodes::Sequence
+      node.children.each_with_index { |child, index| walk.call(child, "#{location}[#{index}]") }
+    end
+  end
+
+  walk.call(document.root, "$")
+  duplicates
+end
+
+def add_duplicate_value_errors(errors, label, values)
+  duplicates = values.tally.select { |_value, count| count > 1 }.keys
+  errors << "#{label}: duplicate entries: #{duplicates.first(3).join(', ')}" unless duplicates.empty?
+end
+
+def add_single_final_match_error(errors, label, rules)
+  match_indexes = rules.each_index.select do |index|
+    rules[index].split(",", 2).first.strip.upcase == "MATCH"
+  end
+  unless match_indexes.length == 1
+    errors << "#{label}: must contain exactly one MATCH rule (found #{match_indexes.length})"
+    return
+  end
+
+  errors << "#{label}: MATCH must be the final rule" unless match_indexes.first == rules.length - 1
+end
+
+def add_regex_sample_errors(errors, label, source, required:, forbidden:)
+  pattern = Regexp.new(source)
+  required.each { |value| errors << "config: #{label} misses #{value}" unless pattern.match?(value) }
+  forbidden.each { |value| errors << "config: #{label} overmatches #{value}" if pattern.match?(value) }
+rescue RegexpError => e
+  errors << "config: invalid #{label}: #{e.message}"
+end
+
+def add_domain_provider_errors(errors, label, name, providers)
+  provider = providers[name]
+  unless provider
+    errors << "#{label} references missing provider #{name}"
+    return
+  end
+
+  behavior = provider["behavior"]
+  return if %w[domain classical].include?(behavior)
+
+  errors << "#{label} provider #{name} has behavior #{behavior.inspect}; expected domain or classical"
+end
 
 def payload_for(path)
   document = YAML.load_file(path)
@@ -35,14 +108,14 @@ yaml_files = Dir.glob(File.join(ROOT, "rules", "**", "*.yaml")).sort
 yaml_files.each do |path|
   relative = path.delete_prefix("#{ROOT}/")
   begin
+    duplicate_mapping_keys(path).each { |error| errors << "#{relative}: #{error}" }
     payload = payload_for(path)
     unless payload.is_a?(Array) && !payload.empty? && payload.all? { |item| item.is_a?(String) && !item.empty? }
       errors << "#{relative}: payload must be a non-empty string array"
       next
     end
 
-    duplicates = payload.tally.select { |_item, count| count > 1 }.keys
-    errors << "#{relative}: duplicate entries: #{duplicates.first(3).join(', ')}" unless duplicates.empty?
+    add_duplicate_value_errors(errors, relative, payload)
     yaml_payloads[path] = payload
 
     if relative.start_with?("rules/Domain/")
@@ -101,7 +174,7 @@ Dir.mktmpdir("rules-validate") do |tmp_dir|
     actual_path = File.join(tmp_dir, "#{index}-actual.list")
 
     stdout, stderr, status = Open3.capture3(
-      "mihomo", "convert-ruleset", behavior, "yaml", yaml_path, rebuilt_mrs
+      MIHOMO_BIN, "convert-ruleset", behavior, "yaml", yaml_path, rebuilt_mrs
     )
     unless status.success?
       detail = stderr.strip.empty? ? stdout.strip : stderr.strip
@@ -111,7 +184,7 @@ Dir.mktmpdir("rules-validate") do |tmp_dir|
 
     [[rebuilt_mrs, expected_path], [mrs_path, actual_path]].each do |source, output|
       stdout, stderr, status = Open3.capture3(
-        "mihomo", "convert-ruleset", behavior, "mrs", source, output
+        MIHOMO_BIN, "convert-ruleset", behavior, "mrs", source, output
       )
       next if status.success?
 
@@ -141,16 +214,45 @@ end
 
 config_path = File.join(ROOT, "configfull_new.yaml")
 begin
+  duplicate_mapping_keys(config_path).each { |error| errors << "config: #{error}" }
   config = YAML.load_file(config_path, aliases: true)
   groups = config.fetch("proxy-groups")
   group_names = groups.map { |group| group.fetch("name") }
   proxy_names = Array(config["proxies"]).map { |proxy| proxy.fetch("name") }
-  provider_names = config.fetch("rule-providers").keys.to_set
-  proxy_provider_names = config.fetch("proxy-providers").keys.to_set
+  providers = config.fetch("rule-providers")
+  proxy_providers = config.fetch("proxy-providers")
+  provider_names = providers.keys.to_set
+  proxy_provider_names = proxy_providers.keys.to_set
   known_targets = (group_names + proxy_names + %w[DIRECT REJECT REJECT-DROP PASS COMPATIBLE]).to_set
+
+  if providers.any? { |_name, provider| provider["type"] == "http" } && !known_targets.include?("规则更新")
+    errors << "config: missing 规则更新 proxy group"
+  end
+  providers.each do |name, provider|
+    next unless provider["type"] == "http"
+
+    unless provider["proxy"] == "规则更新"
+      errors << "config: HTTP rule provider #{name} must use proxy 规则更新"
+    end
+  end
+  proxy_providers.each do |name, provider|
+    next unless provider["type"] == "http"
+
+    errors << "config: proxy provider #{name} must use proxy 🟢 直连" unless provider["proxy"] == "🟢 直连"
+  end
 
   duplicate_groups = group_names.tally.select { |_name, count| count > 1 }.keys
   errors << "config: duplicate proxy groups: #{duplicate_groups.join(', ')}" unless duplicate_groups.empty?
+
+  rule_update_group = groups.find { |group| group["name"] == "规则更新" }
+  expected_rule_update_proxies = ["机场名称3地区优先", "机场名称1地区优先", "机场名称4地区优先", "🟢 直连"]
+  if rule_update_group
+    errors << "config: 规则更新 must be a fallback group" unless rule_update_group["type"] == "fallback"
+    errors << "config: 规则更新 must be hidden" unless rule_update_group["hidden"] == true
+    unless rule_update_group["proxies"] == expected_rule_update_proxies
+      errors << "config: 规则更新 proxies must be #{expected_rule_update_proxies.inspect}"
+    end
+  end
 
   groups.each do |group|
     Array(group["use"]).each do |provider|
@@ -163,6 +265,12 @@ begin
 
   referenced_providers = Set.new
   rules = config.fetch("rules")
+  unless rules.is_a?(Array) && !rules.empty? && rules.all? { |rule| rule.is_a?(String) && !rule.empty? }
+    raise "rules must be a non-empty string array"
+  end
+  add_duplicate_value_errors(errors, "config rules", rules)
+  add_single_final_match_error(errors, "config rules", rules)
+
   rules.each_with_index do |rule, index|
     fields = rule.split(",")
     if fields.first == "RULE-SET"
@@ -176,17 +284,64 @@ begin
     errors << "config: rule #{index + 1} has missing target #{target}" unless known_targets.include?(target)
   end
 
-  Array(config.dig("dns", "fake-ip-filter")).each do |rule|
-    fields = rule.split(",")
-    next unless fields.first == "RULE-SET"
-    referenced_providers << fields[1]
-    errors << "config: fake-ip-filter references missing provider #{fields[1]}" unless provider_names.include?(fields[1])
+  fake_ip_mode = config.dig("dns", "fake-ip-filter-mode")
+  errors << "config: dns.fake-ip-filter-mode must be rule" unless fake_ip_mode == "rule"
+  fake_ip_rules = config.dig("dns", "fake-ip-filter")
+  unless fake_ip_rules.is_a?(Array) && !fake_ip_rules.empty? &&
+         fake_ip_rules.all? { |rule| rule.is_a?(String) && !rule.empty? }
+    raise "dns.fake-ip-filter must be a non-empty string array"
   end
-  (config.dig("dns", "nameserver-policy") || {}).each_key do |key|
-    next unless key.start_with?("rule-set:")
-    provider = key.delete_prefix("rule-set:")
+  add_duplicate_value_errors(errors, "config fake-ip-filter", fake_ip_rules)
+  add_single_final_match_error(errors, "config fake-ip-filter", fake_ip_rules)
+
+  fake_ip_rule_types = %w[DOMAIN DOMAIN-SUFFIX DOMAIN-KEYWORD DOMAIN-REGEX DOMAIN-WILDCARD GEOSITE RULE-SET MATCH]
+  fake_ip_rules.each_with_index do |rule, index|
+    fields = rule.split(",").map(&:strip)
+    type = fields.first.to_s.upcase
+    unless fake_ip_rule_types.include?(type)
+      errors << "config: fake-ip-filter rule #{index + 1} has unsupported type #{type.inspect}"
+      next
+    end
+
+    if type == "MATCH"
+      unless fields.length == 2
+        errors << "config: fake-ip-filter rule #{index + 1} MATCH must have exactly one action"
+        next
+      end
+      action = fields[1]
+    elsif type == "DOMAIN-REGEX"
+      if fields.length < 3 || fields[1...-1].join(",").empty?
+        errors << "config: fake-ip-filter rule #{index + 1} is malformed"
+        next
+      end
+      action = fields.last
+    else
+      if fields.length != 3 || fields[1].to_s.empty?
+        errors << "config: fake-ip-filter rule #{index + 1} is malformed"
+        next
+      end
+      action = fields[2]
+    end
+    unless %w[fake-ip real-ip].include?(action.downcase)
+      errors << "config: fake-ip-filter rule #{index + 1} has invalid action #{action.inspect}"
+    end
+
+    next unless type == "RULE-SET"
+
+    provider = fields[1]
     referenced_providers << provider
-    errors << "config: nameserver-policy references missing provider #{provider}" unless provider_names.include?(provider)
+    add_domain_provider_errors(errors, "config: fake-ip-filter", provider, providers)
+  end
+
+  (config.dig("dns", "nameserver-policy") || {}).each_key do |key|
+    next unless key.downcase.start_with?("rule-set:")
+
+    names = key.split(":", 2).last.split(",").map(&:strip)
+    errors << "config: nameserver-policy has empty rule-set reference in #{key.inspect}" if names.any?(&:empty?)
+    names.reject(&:empty?).each do |provider|
+      referenced_providers << provider
+      add_domain_provider_errors(errors, "config: nameserver-policy", provider, providers)
+    end
   end
 
   unused_providers = provider_names - referenced_providers
@@ -206,6 +361,75 @@ begin
   end
   ["香港0.4x", "日本4.99倍", "美国10.5节点"].each do |name|
     errors << "config: exclude_lowrate overmatches #{name}" if excluded_rate.match?(name)
+  end
+
+  region_samples = {
+    "region_hk" => {
+      required: ["香港 01", "HK 01", "Hong Kong 01"],
+      forbidden: ["SHK 01", "Singapore 01"],
+    },
+    "region_sg" => {
+      required: ["新加坡 01", "SG 01", "Singapore 01"],
+      forbidden: ["SGP 01", "消息更新节点"],
+    },
+    "region_jp" => {
+      required: ["日本 01", "JP 01", "Japan 01"],
+      forbidden: ["JPN 01", "jupiter 01"],
+    },
+    "region_us" => {
+      required: ["美国 01", "US 01", "United States 01", "Seattle 01"],
+      forbidden: ["BUS 01", "Russia Moscow 01"],
+    },
+    "region_tw" => {
+      required: ["台湾 01", "台灣 01", "臺灣 01", "TW 01", "Taiwan 01", "Taipei 01", "新北 01", "台中 01"],
+      forbidden: ["后台维护节点", "电视台专线", "舞台节点"],
+    },
+    "region_eu" => {
+      required: ["德国 法兰克福", "Germany Frankfurt", "DE Frankfurt", "UK London",
+                 "GB London", "France Paris", "Berlin 01", "Madrid 01", "Warsaw 01"],
+      forbidden: ["UPDATE 01", "GUIDE 01", "US Seattle", "台湾 Taipei",
+                  "Chrome Optimized", "Latency Comparison", "CyberLink Relay"],
+    },
+  }
+  region_samples.each do |name, samples|
+    add_regex_sample_errors(
+      errors,
+      name,
+      config.fetch(name),
+      required: samples[:required],
+      forbidden: samples[:forbidden]
+    )
+  end
+
+  provider_template = config.fetch("PProviders")
+  information_nodes = [
+    "Traffic: 100 GB", "traffic: 100 GB", "Expire: 2026-12-31", "EXPIRED",
+    "Used: 20 GB", "TOTAL: 100 GB", "Email: user@example.com", "Panel: status",
+    "Panel Notice", "剩余流量：100 GB", "已用流量：20 GB", "套餐到期：2026-12-31",
+  ]
+  real_nodes = [
+    "香港备用 01", "日本支持流媒体 02", "美国更新线路 03",
+    "机场专线 新加坡 04", "香港直连优化 05", "Traffic Optimized 香港 06",
+    "Remaining Fast 日本 07", "Total Freedom 美国 08", "Email Relay 香港 09", "Panel Pro 新加坡 10",
+  ]
+  if provider_template["exclude-filter"]
+    add_regex_sample_errors(
+      errors,
+      "PProviders.exclude-filter",
+      provider_template["exclude-filter"],
+      required: information_nodes,
+      forbidden: real_nodes
+    )
+  elsif provider_template["filter"]
+    pattern = Regexp.new(provider_template["filter"])
+    information_nodes.each do |name|
+      errors << "config: PProviders.filter keeps subscription information #{name}" if pattern.match?(name)
+    end
+    real_nodes.each do |name|
+      errors << "config: PProviders.filter excludes real node #{name}" unless pattern.match?(name)
+    end
+  else
+    errors << "config: PProviders must define filter or exclude-filter"
   end
 
   # Providers served by this repository must exist in the just-built tree.
@@ -257,9 +481,8 @@ begin
   ordering.each do |before, after|
     errors << "config: #{before} must precede #{after}" unless order.call(before) < order.call(after)
   end
-  errors << "config: MATCH must be the final rule" unless rules.last.start_with?("MATCH,")
 
-  stdout, stderr, status = Open3.capture3("mihomo", "-t", "-f", config_path)
+  stdout, stderr, status = Open3.capture3(MIHOMO_BIN, "-t", "-f", config_path)
   errors << "config: mihomo test failed: #{stderr.strip}\n#{stdout.strip}" unless status.success?
 rescue StandardError => e
   errors << "config: #{e.message}"
