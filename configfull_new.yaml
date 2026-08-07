@@ -412,6 +412,7 @@ rules:
   - DOMAIN-SUFFIX,cftunnel.com,全球直连
   - DOMAIN-SUFFIX,trycloudflare.com,全球直连
   - DOMAIN,www.csgraduates.com,全球直连
+  - DOMAIN,www.cxyonly.fans,全球直连
   # 自维护的代理补充属于显式覆盖，不能放到厂商大集合之后
   - RULE-SET,proxy_domain,节点选择
 
