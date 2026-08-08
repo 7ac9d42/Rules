@@ -244,14 +244,152 @@ begin
   duplicate_groups = group_names.tally.select { |_name, count| count > 1 }.keys
   errors << "config: duplicate proxy groups: #{duplicate_groups.join(', ')}" unless duplicate_groups.empty?
 
+  airport2_enabled = proxy_provider_names.include?("Airport_02")
+  airport_numbers = airport2_enabled ? %w[1 2 3 4] : %w[1 3 4]
+  expected_airport_providers = airport_numbers.map { |number| "Airport_0#{number}" }
+  unless config["use_ap_all"] == expected_airport_providers
+    errors << "config: use_ap_all must be #{expected_airport_providers.inspect}"
+  end
+
+  provider_prefixes = {}
+  expected_airport_providers.each do |provider_name|
+    provider = proxy_providers[provider_name]
+    unless provider
+      errors << "config: missing proxy provider #{provider_name}"
+      next
+    end
+
+    errors << "config: proxy provider #{provider_name} must be http" unless provider["type"] == "http"
+    errors << "config: proxy provider #{provider_name} must use proxy 🟢 直连" unless provider["proxy"] == "🟢 直连"
+    url = provider["url"]
+    unless url.is_a?(String) && !url.strip.empty?
+      errors << "config: proxy provider #{provider_name} must have a non-empty string url"
+    end
+    prefix_value = provider.dig("override", "additional-prefix")
+    prefix = prefix_value.strip if prefix_value.is_a?(String)
+    if prefix.nil? || prefix.empty?
+      errors << "config: proxy provider #{provider_name} must have a non-empty additional-prefix"
+    elsif provider_prefixes.key?(prefix)
+      errors << "config: proxy providers #{provider_prefixes[prefix]} and #{provider_name} share additional-prefix #{prefix.inspect}"
+    else
+      provider_prefixes[prefix] = provider_name
+    end
+    unless provider.dig("override", "skip-cert-verify") == true
+      errors << "config: proxy provider #{provider_name} must enable skip-cert-verify"
+    end
+    errors << "config: proxy provider #{provider_name} must enable udp" unless provider.dig("override", "udp") == true
+  end
+
+  airport3_first_numbers = ["3"] + airport_numbers.reject { |number| number == "3" }
+  expected_airport3_fallback_proxies = airport3_first_numbers.map { |number| "机场名称#{number}地区优先" }
+  expected_airport3_fallback_proxies << "🟢 直连"
+  airport3_fallback_group = groups.find { |group| group["name"] == "机场3优先自动回退" }
+  if airport3_fallback_group
+    errors << "config: 机场3优先自动回退 must be a fallback group" unless airport3_fallback_group["type"] == "fallback"
+    errors << "config: 机场3优先自动回退 must be hidden" unless airport3_fallback_group["hidden"] == true
+    unless airport3_fallback_group["proxies"] == expected_airport3_fallback_proxies
+      errors << "config: 机场3优先自动回退 proxies must be #{expected_airport3_fallback_proxies.inspect}"
+    end
+  else
+    errors << "config: missing 机场3优先自动回退 proxy group"
+  end
+
+  airport_numbers.each do |number|
+    fallback_name = "机场名称#{number}地区优先"
+    provider_name = "Airport_0#{number}"
+    region_order = number == "3" ? %w[日本 新加坡 香港 美国] : %w[香港 日本 新加坡 美国]
+    expected_children = region_order.map { |region| "机场名称#{number}-#{region}" }
+    region_fallback = groups.find { |group| group["name"] == fallback_name }
+    unless region_fallback
+      errors << "config: missing #{fallback_name} proxy group"
+      next
+    end
+
+    errors << "config: #{fallback_name} must be a fallback group" unless region_fallback["type"] == "fallback"
+    unless region_fallback["proxies"] == expected_children
+      errors << "config: #{fallback_name} proxies must be #{expected_children.inspect}"
+    end
+    expected_children.each do |region_name|
+      region_group = groups.find { |group| group["name"] == region_name }
+      unless region_group && region_group["type"] == "url-test" && Array(region_group["use"]) == [provider_name]
+        errors << "config: #{fallback_name} child #{region_name} must be a url-test using only #{provider_name}"
+      end
+    end
+  end
+
+  multi_airport_group = groups.find { |group| group["name"] == "多机场优先级转移(<-直接选这个)" }
+  expected_multi_airport_proxies = airport_numbers.map { |number| "机场名称#{number}地区优先" }
+  if multi_airport_group
+    errors << "config: 多机场优先级转移 must be a fallback group" unless multi_airport_group["type"] == "fallback"
+    unless multi_airport_group["proxies"] == expected_multi_airport_proxies
+      errors << "config: 多机场优先级转移 proxies must be #{expected_multi_airport_proxies.inspect}"
+    end
+  else
+    errors << "config: missing 多机场优先级转移 proxy group"
+  end
+
+  %w[香港 日本 新加坡 美国].each do |region|
+    cross_airport_name = "#{region}-机场优先"
+    cross_airport_group = groups.find { |group| group["name"] == cross_airport_name }
+    expected_cross_airport_proxies = airport_numbers.map { |number| "机场名称#{number}-#{region}" }
+    if cross_airport_group
+      errors << "config: #{cross_airport_name} must be a fallback group" unless cross_airport_group["type"] == "fallback"
+      unless cross_airport_group["proxies"] == expected_cross_airport_proxies
+        errors << "config: #{cross_airport_name} proxies must be #{expected_cross_airport_proxies.inspect}"
+      end
+    else
+      errors << "config: missing #{cross_airport_name} proxy group"
+    end
+
+    region_selector_name = "#{region}节点"
+    region_selector = groups.find { |group| group["name"] == region_selector_name }
+    expected_region_selector_proxies = [cross_airport_name] + expected_cross_airport_proxies + ["#{region}均衡"]
+    if region_selector
+      errors << "config: #{region_selector_name} must be a select group" unless region_selector["type"] == "select"
+      unless region_selector["proxies"] == expected_region_selector_proxies
+        errors << "config: #{region_selector_name} proxies must be #{expected_region_selector_proxies.inspect}"
+      end
+      unless Array(region_selector["use"]) == expected_airport_providers
+        errors << "config: #{region_selector_name} use must be #{expected_airport_providers.inspect}"
+      end
+    else
+      errors << "config: missing #{region_selector_name} proxy group"
+    end
+  end
+
   rule_update_group = groups.find { |group| group["name"] == "规则更新" }
-  expected_rule_update_proxies = ["机场名称3地区优先", "机场名称1地区优先", "机场名称4地区优先", "🟢 直连"]
+  expected_rule_update_proxies = expected_airport3_fallback_proxies
   if rule_update_group
     errors << "config: 规则更新 must be a fallback group" unless rule_update_group["type"] == "fallback"
     errors << "config: 规则更新 must be hidden" unless rule_update_group["hidden"] == true
     unless rule_update_group["proxies"] == expected_rule_update_proxies
       errors << "config: 规则更新 proxies must be #{expected_rule_update_proxies.inspect}"
     end
+  end
+
+  %w[GitHub HuggingFace Docker 开发下载].each do |name|
+    group = groups.find { |candidate| candidate["name"] == name }
+    unless group
+      errors << "config: missing #{name} proxy group"
+      next
+    end
+
+    errors << "config: #{name} must be a select group" unless group["type"] == "select"
+    unless Array(group["proxies"]).first == "机场3优先自动回退"
+      errors << "config: #{name} must prefer 机场3优先自动回退"
+    end
+    if Array(group["proxies"]).include?("机场名称3地区优先")
+      errors << "config: #{name} must not retain the stale airport-3 direct selection"
+    end
+  end
+
+  global_group = groups.find { |group| group["name"] == "GLOBAL" }
+  if global_group
+    %w[GitHub HuggingFace Docker 开发下载].each do |name|
+      errors << "config: GLOBAL must expose #{name}" unless Array(global_group["proxies"]).include?(name)
+    end
+  else
+    errors << "config: missing GLOBAL proxy group"
   end
 
   groups.each do |group|
@@ -282,6 +420,58 @@ begin
       target = fields[-2] if fields[-1] == "no-resolve"
     end
     errors << "config: rule #{index + 1} has missing target #{target}" unless known_targets.include?(target)
+  end
+
+  priority_download_rules = [
+    "DOMAIN-SUFFIX,huggingface.co,HuggingFace",
+    "DOMAIN-SUFFIX,hf.co,HuggingFace",
+    "DOMAIN-SUFFIX,docker.io,Docker",
+    "DOMAIN,production.cloudfront.docker.com,Docker",
+    "DOMAIN,docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com,Docker",
+    "DOMAIN,download.docker.com,Docker",
+    "DOMAIN,desktop.docker.com,Docker",
+    "DOMAIN,get.docker.com,Docker",
+    "DOMAIN-SUFFIX,googlesource.com,开发下载",
+    "DOMAIN,storage.googleapis.com,开发下载",
+    "DOMAIN-SUFFIX,dl.google.com,开发下载",
+    "RULE-SET,dev_download_domain,开发下载",
+  ]
+  priority_download_rules.each do |rule|
+    errors << "config: missing priority download rule #{rule}" unless rules.include?(rule)
+
+    predicate = rule.split(",").first(2)
+    first_same_predicate = rules.find { |candidate| candidate.split(",").first(2) == predicate }
+    unless first_same_predicate == rule
+      errors << "config: #{predicate.join(',')} is first routed by #{first_same_predicate.inspect}, expected #{rule}"
+    end
+  end
+
+  order = lambda do |prefix|
+    rules.index { |rule| rule.start_with?(prefix) } || raise("missing ordered rule #{prefix}")
+  end
+  download_precedence = [
+    ["DOMAIN-SUFFIX,huggingface.co,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN-SUFFIX,huggingface.co,", "RULE-SET,ai!cn_domain,"],
+    ["DOMAIN-SUFFIX,hf.co,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN-SUFFIX,hf.co,", "RULE-SET,ai!cn_domain,"],
+    ["DOMAIN-SUFFIX,docker.io,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN,production.cloudfront.docker.com,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN,docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com,", "RULE-SET,Cloudflare_domain,"],
+    ["DOMAIN,download.docker.com,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN,desktop.docker.com,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN,get.docker.com,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN-SUFFIX,googlesource.com,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN-SUFFIX,googlesource.com,", "RULE-SET,google_domain,"],
+    ["DOMAIN,storage.googleapis.com,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN,storage.googleapis.com,", "RULE-SET,google_domain,"],
+    ["DOMAIN-SUFFIX,dl.google.com,", "RULE-SET,proxy_domain,"],
+    ["DOMAIN-SUFFIX,dl.google.com,", "RULE-SET,google_domain,"],
+    ["RULE-SET,dev_download_domain,", "RULE-SET,proxy_domain,"],
+    ["RULE-SET,dev_download_domain,", "RULE-SET,google_domain,"],
+    ["RULE-SET,dev_download_domain,", "RULE-SET,Cloudflare_domain,"],
+  ]
+  download_precedence.each do |before, after|
+    errors << "config: #{before} must precede #{after}" unless order.call(before) < order.call(after)
   end
 
   fake_ip_mode = config.dig("dns", "fake-ip-filter-mode")
@@ -461,9 +651,6 @@ begin
     end
   end
 
-  order = lambda do |prefix|
-    rules.index { |rule| rule.start_with?(prefix) } || raise("missing ordered rule #{prefix}")
-  end
   ordering = [
     ["RULE-SET,banAd_core_domain,", "RULE-SET,banAd_pcdn_domain,"],
     ["RULE-SET,banAd_pcdn_domain,", "RULE-SET,wechat_domain,"],
@@ -487,6 +674,30 @@ begin
 rescue StandardError => e
   errors << "config: #{e.message}"
 end
+
+dev_source_path = File.join(ROOT, "scripts/data/dev-download.list")
+dev_yaml_path = File.join(ROOT, "rules/Domain/dev-download.yaml")
+dev_builder_path = File.join(ROOT, "scripts/build/dev-download.sh")
+begin
+  source_entries = File.readlines(dev_source_path, chomp: true)
+                       .map(&:strip)
+                       .reject { |line| line.empty? || line.start_with?("#") }
+  duplicate_source_entries = source_entries.tally.select { |_entry, count| count > 1 }.keys
+  unless duplicate_source_entries.empty?
+    errors << "scripts/data/dev-download.list: duplicate entries: #{duplicate_source_entries.join(', ')}"
+  end
+
+  generated_entries = YAML.load_file(dev_yaml_path).fetch("payload")
+  expected_entries = source_entries.uniq.sort
+  unless generated_entries == expected_entries
+    missing = (expected_entries - generated_entries).first(3)
+    extra = (generated_entries - expected_entries).first(3)
+    errors << "rules/Domain/dev-download.yaml: source/generated mismatch missing=#{missing.inspect} extra=#{extra.inspect}"
+  end
+rescue StandardError => e
+  errors << "dev-download source/generated validation: #{e.message}"
+end
+errors << "scripts/build/dev-download.sh: builder must be executable" unless File.executable?(dev_builder_path)
 
 critical_rules = {
   "rules/Domain/tvb.yaml" => {
@@ -513,6 +724,14 @@ critical_rules = {
   "rules/Domain/amazon-commerce.yaml" => {
     forbidden: ["+.amazonaws.com", "+.cloudfront.net", "+.primevideo.com", "+.imdb.com", "+.kindle.com"],
     required: ["+.amazon.com", "+.amazon.co.jp", "+.amazon.co.uk"],
+  },
+  "rules/Domain/dev-download.yaml" => {
+    forbidden: ["+.huggingface.co", "+.hf.co", "+.googlesource.com", "+.dl.google.com",
+                "+.docker.com", "+.docker.io", "+.dockerstatic.com",
+                "+.deno.com", "+.npmjs.com", "+.pypa.io", "+.pythonhosted.org"],
+    required: ["+.gitlab.com", "+.bitbucket.org", "+.deno.land", "+.jsr.io",
+               "+.npmjs.org", "+.pypi.org", "+.files.pythonhosted.org", "+.crates.io",
+               "+.maven.org", "+.nuget.org", "+.jsdelivr.net", "+.registry.k8s.io"],
   },
   "rules/Domain/streaming_hk.yaml" => {
     forbidden: ["+.bootstrapcdn.com", "+.jwpcdn.com", "+.jwplayer.com",

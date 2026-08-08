@@ -1,0 +1,46 @@
+# 公开源码、包注册表、构建工具、设计资源与前端资源 CDN。
+# 共用父域可能同时承载网页或 API；仅收录可稳定按域名识别的入口。
++.apache.org
++.bbuseruploads.com
++.bitbucket.org
++.brew.sh
++.codeberg.org
++.cocoapods.org
++.crates.io
++.deno.land
++.getcomposer.org
++.gitlab.com
++.gitlab-static.net
++.gnu.org
++.go.dev
++.golang.org
++.gradle.org
++.homebrewusercontent.com
++.jsdelivr.net
++.jsr.io
++.kernel.org
++.maven.org
++.nodejs.org
++.npmjs.org
++.nuget.org
++.packagist.org
++.pypi.org
++.files.pythonhosted.org
++.rubygems.org
++.rust-lang.org
++.rustup.rs
++.unpkg.com
++.yarnpkg.com
++.ziglang.org
++.dl.k8s.io
++.downloads.openwrt.org
++.fonts.googleapis.com
++.fonts.gstatic.com
++.registry.terraform.io
++.releases.hashicorp.com
+
+# 以下只保证入口命中；动态第三方镜像不做云厂商整域兜底。
++.pkgs.k8s.io
++.registry.k8s.io
++.sf.net
++.sourceforge.net
