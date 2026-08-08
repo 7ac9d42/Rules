@@ -5,16 +5,16 @@
 # ── 1. 服务策略组通用 proxies 列表 ──
 # 代理优先
 Proxy_first: &Proxy_first {type: select, proxies: [节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点]}
-# 机场名称3优先：默认使用共享自动回退链，同时保留其他手动选路
-Airport3_first: &Airport3_first {type: select, proxies: [机场名称3优先自动回退, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点]}
+# 机场名称3优先：默认使用共享自动回退链，同时保留其他代理选路；不提供直连候选
+Airport3_first: &Airport3_first {type: select, proxies: [机场名称3优先自动回退, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全部节点]}
 # 直连优先（Apple/B站等国内 CDN 服务）
 Direct_first: &Direct_first {type: select, proxies: [全球直连, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全部节点]}
 
 # ── 2. 策略组类型基础参数 ──
 # url-test 空组必须判为不可用；探测频率与 lazy 保持原值
 Urltest_Base: &Urltest_Base {type: url-test, tolerance: 50, interval: 180, max-failed-times: 2, lazy: false, empty-fallback: REJECT, url: "https://www.gstatic.com/generate_204", expected-status: 204, hidden: true}
-# fallback 外层严格按 proxies 顺序转移；多次连接失败后强制复测
-Fallback_Base: &Fallback_Base {type: fallback, url: "https://www.gstatic.com/generate_204", expected-status: 204, interval: 60, max-failed-times: 3, lazy: false}
+# fallback 外层严格按 proxies 顺序转移；空组拒绝连接，多次连接失败后强制复测
+Fallback_Base: &Fallback_Base {type: fallback, url: "https://www.gstatic.com/generate_204", expected-status: 204, interval: 60, max-failed-times: 3, lazy: false, empty-fallback: REJECT}
 # load-balance 同域名走同节点，lazy 仅手动启用时探测
 Loadbalance_Base: &Loadbalance_Base {type: load-balance, strategy: consistent-hashing, url: "https://www.gstatic.com/generate_204", expected-status: 204, interval: 180, max-failed-times: 3, lazy: true, empty-fallback: REJECT}
 
@@ -68,7 +68,7 @@ proxy-providers:
 # 1. 启用 Airport_02 provider，并将 use_ap_all 换为四机场模板。
 # 2. 启用机场名称2的四个地区 url-test 与“机场名称2地区优先”。
 # 3. 将普通多机场、同地区跨机场、地区节点组换为对应四机场模板。
-# 4. 将“机场名称3优先自动回退”和“规则更新”换为机场名称3→机场名称1→机场名称2→机场名称4→直连模板。
+# 4. 将“机场名称3优先自动回退”换为机场名称3→机场名称1→机场名称2→机场名称4模板；“规则更新”另保留末位直连。
 # 5. 完整校验会在检测到 Airport_02 后检查 provider 字段，并要求以上链路全部包含机场名称2。
 #  Airport_02:
 #    <<: *PProviders
@@ -328,10 +328,10 @@ proxy-groups:
   - {name: 日本-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-日本, 机场名称3-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   #- {name: 多地区优先转移(<-地区优先), type: fallback, proxies: [香港-机场优先, 新加坡-机场优先, 美国-机场优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/failover.png"}
 
-  # 四机场模板：机场名称3优先，依次回退机场名称1、机场名称2、机场名称4，最终直连
-#  - {name: 机场名称3优先自动回退, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称2地区优先, 机场名称4地区优先, "🟢 直连"]}
-  # 当前三机场：机场名称3优先，依次回退机场名称1、机场名称4，最终直连
-  - {name: 机场名称3优先自动回退, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称4地区优先, "🟢 直连"]}
+  # 四机场模板：机场名称3优先，依次回退机场名称1、机场名称2、机场名称4；全部不可用时连接失败
+#  - {name: 机场名称3优先自动回退, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称2地区优先, 机场名称4地区优先]}
+  # 当前三机场：机场名称3优先，依次回退机场名称1、机场名称4；全部不可用时连接失败
+  - {name: 机场名称3优先自动回退, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称4地区优先]}
 
   # 四机场模板：规则更新采用相同的机场名称3→机场名称1→机场名称2→机场名称4→直连顺序
 #  - {name: 规则更新, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称2地区优先, 机场名称4地区优先, "🟢 直连"]}
@@ -353,7 +353,7 @@ proxy-groups:
   - {name: Meta, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/meta.png"}
   - {name: AI, type: select, proxies: [日本节点, 节点选择, 美国节点, 自建/家宽节点, 香港节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/ai.png"}
   - {name: HuggingFace, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/ai.png"}
-  - {name: GitHub, type: select, proxies: [机场名称3优先自动回退, 日本节点, 节点选择, 美国节点, 自建/家宽节点, 香港节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/github.png"}
+  - {name: GitHub, type: select, proxies: [机场名称3优先自动回退, 日本节点, 节点选择, 美国节点, 自建/家宽节点, 香港节点, 新加坡节点, 台湾节点, 欧洲节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/github.png"}
   - {name: Docker, <<: *Airport3_first, icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/docker.png"}
   - {name: 开发下载, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation.png"}
   - {name: OneDrive, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/onedrive.png"}
