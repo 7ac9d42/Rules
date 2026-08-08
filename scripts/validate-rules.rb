@@ -283,15 +283,15 @@ begin
   airport3_first_numbers = ["3"] + airport_numbers.reject { |number| number == "3" }
   expected_airport3_fallback_proxies = airport3_first_numbers.map { |number| "机场名称#{number}地区优先" }
   expected_airport3_fallback_proxies << "🟢 直连"
-  airport3_fallback_group = groups.find { |group| group["name"] == "机场3优先自动回退" }
+  airport3_fallback_group = groups.find { |group| group["name"] == "机场名称3优先自动回退" }
   if airport3_fallback_group
-    errors << "config: 机场3优先自动回退 must be a fallback group" unless airport3_fallback_group["type"] == "fallback"
-    errors << "config: 机场3优先自动回退 must be hidden" unless airport3_fallback_group["hidden"] == true
+    errors << "config: 机场名称3优先自动回退 must be a fallback group" unless airport3_fallback_group["type"] == "fallback"
+    errors << "config: 机场名称3优先自动回退 must be hidden" unless airport3_fallback_group["hidden"] == true
     unless airport3_fallback_group["proxies"] == expected_airport3_fallback_proxies
-      errors << "config: 机场3优先自动回退 proxies must be #{expected_airport3_fallback_proxies.inspect}"
+      errors << "config: 机场名称3优先自动回退 proxies must be #{expected_airport3_fallback_proxies.inspect}"
     end
   else
-    errors << "config: missing 机场3优先自动回退 proxy group"
+    errors << "config: missing 机场名称3优先自动回退 proxy group"
   end
 
   airport_numbers.each do |number|
@@ -375,8 +375,8 @@ begin
     end
 
     errors << "config: #{name} must be a select group" unless group["type"] == "select"
-    unless Array(group["proxies"]).first == "机场3优先自动回退"
-      errors << "config: #{name} must prefer 机场3优先自动回退"
+    unless Array(group["proxies"]).first == "机场名称3优先自动回退"
+      errors << "config: #{name} must prefer 机场名称3优先自动回退"
     end
     if Array(group["proxies"]).include?("机场名称3地区优先")
       errors << "config: #{name} must not retain the stale airport-3 direct selection"

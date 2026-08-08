@@ -5,8 +5,8 @@
 # ── 1. 服务策略组通用 proxies 列表 ──
 # 代理优先
 Proxy_first: &Proxy_first {type: select, proxies: [节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点]}
-# 机场3优先：默认使用共享自动回退链，同时保留其他手动选路
-Airport3_first: &Airport3_first {type: select, proxies: [机场3优先自动回退, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点]}
+# 机场名称3优先：默认使用共享自动回退链，同时保留其他手动选路
+Airport3_first: &Airport3_first {type: select, proxies: [机场名称3优先自动回退, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点]}
 # 直连优先（Apple/B站等国内 CDN 服务）
 Direct_first: &Direct_first {type: select, proxies: [全球直连, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全部节点]}
 
@@ -66,10 +66,10 @@ proxy-providers:
 # 启用时必须成套完成；标为“四机场模板”的行要替换当前同名行，不能同时取消注释：
 # 仅对模板代码行删除最前面的 `#`，保留其后的空格与 YAML 层级。
 # 1. 启用 Airport_02 provider，并将 use_ap_all 换为四机场模板。
-# 2. 启用机场 2 的四个地区 url-test 与“机场名称2地区优先”。
+# 2. 启用机场名称2的四个地区 url-test 与“机场名称2地区优先”。
 # 3. 将普通多机场、同地区跨机场、地区节点组换为对应四机场模板。
-# 4. 将“机场3优先自动回退”和“规则更新”换为 3→1→2→4→直连模板。
-# 5. 完整校验会在检测到 Airport_02 后检查 provider 字段，并要求以上链路全部包含机场 2。
+# 4. 将“机场名称3优先自动回退”和“规则更新”换为机场名称3→机场名称1→机场名称2→机场名称4→直连模板。
+# 5. 完整校验会在检测到 Airport_02 后检查 provider 字段，并要求以上链路全部包含机场名称2。
 #  Airport_02:
 #    <<: *PProviders
 #    proxy: "🟢 直连"
@@ -311,31 +311,31 @@ proxy-groups:
 #  - {name: 机场名称2地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   - {name: 机场名称3地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   - {name: 机场名称4地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称4-香港, 机场名称4-日本, 机场名称4-新加坡, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-# 四机场模板：普通多机场链 1→2→3→4
+# 四机场模板：普通多机场链 机场名称1→机场名称2→机场名称3→机场名称4
 #  - {name: "多机场优先级转移(<-直接选这个)", <<: *Fallback_Base, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-# 当前三机场链：1→3→4
+# 当前三机场链：机场名称1→机场名称3→机场名称4
   - {name: "多机场优先级转移(<-直接选这个)", <<: *Fallback_Base, proxies: [机场名称1地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
-  # 四机场模板：同地区跨机场严格按 1→2→3→4 回退
+  # 四机场模板：同地区跨机场严格按机场名称1→机场名称2→机场名称3→机场名称4回退
 #  - {name: 香港-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
 #  - {name: 新加坡-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
 #  - {name: 美国-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-美国, 机场名称2-美国, 机场名称3-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
 #  - {name: 日本-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-日本, 机场名称2-日本, 机场名称3-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  # 当前三机场：同地区跨机场严格按 1→3→4 回退
+  # 当前三机场：同地区跨机场严格按机场名称1→机场名称3→机场名称4回退
   - {name: 香港-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称3-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
   - {name: 新加坡-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-新加坡, 机场名称3-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
   - {name: 美国-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-美国, 机场名称3-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
   - {name: 日本-机场优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-日本, 机场名称3-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   #- {name: 多地区优先转移(<-地区优先), type: fallback, proxies: [香港-机场优先, 新加坡-机场优先, 美国-机场优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/failover.png"}
 
-  # 四机场模板：机场3优先，依次回退机场1、机场2、机场4，最终直连
-#  - {name: 机场3优先自动回退, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称2地区优先, 机场名称4地区优先, "🟢 直连"]}
-  # 当前三机场：机场3优先，依次回退机场1、机场4，最终直连
-  - {name: 机场3优先自动回退, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称4地区优先, "🟢 直连"]}
+  # 四机场模板：机场名称3优先，依次回退机场名称1、机场名称2、机场名称4，最终直连
+#  - {name: 机场名称3优先自动回退, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称2地区优先, 机场名称4地区优先, "🟢 直连"]}
+  # 当前三机场：机场名称3优先，依次回退机场名称1、机场名称4，最终直连
+  - {name: 机场名称3优先自动回退, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称4地区优先, "🟢 直连"]}
 
-  # 四机场模板：规则更新采用相同的 3→1→2→4→直连顺序
+  # 四机场模板：规则更新采用相同的机场名称3→机场名称1→机场名称2→机场名称4→直连顺序
 #  - {name: 规则更新, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称2地区优先, 机场名称4地区优先, "🟢 直连"]}
-  # 当前三机场：规则更新使用独立的 3→1→4→直连回退组
+  # 当前三机场：规则更新使用独立的机场名称3→机场名称1→机场名称4→直连回退组
   - {name: 规则更新, <<: *Fallback_Base, hidden: true, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称4地区优先, "🟢 直连"]}
 
   # 低倍率/MITM节点组
@@ -353,7 +353,7 @@ proxy-groups:
   - {name: Meta, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/meta.png"}
   - {name: AI, type: select, proxies: [日本节点, 节点选择, 美国节点, 自建/家宽节点, 香港节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/ai.png"}
   - {name: HuggingFace, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/ai.png"}
-  - {name: GitHub, type: select, proxies: [机场3优先自动回退, 日本节点, 节点选择, 美国节点, 自建/家宽节点, 香港节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/github.png"}
+  - {name: GitHub, type: select, proxies: [机场名称3优先自动回退, 日本节点, 节点选择, 美国节点, 自建/家宽节点, 香港节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/github.png"}
   - {name: Docker, <<: *Airport3_first, icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/docker.png"}
   - {name: 开发下载, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation.png"}
   - {name: OneDrive, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/onedrive.png"}
@@ -417,7 +417,7 @@ proxy-groups:
 
 rules:
 # === 用户自定义优先 ===
-  # Hugging Face Hub 及其 LFS/Xet/CDN 下载端点（机场3优先）
+  # Hugging Face Hub 及其 LFS/Xet/CDN 下载端点（机场名称3优先）
   - DOMAIN-SUFFIX,huggingface.co,HuggingFace
   - DOMAIN-SUFFIX,hf.co,HuggingFace
   # Docker Hub 拉取与官方安装/更新；账号、Scout、AI 等产品域不纳入
@@ -427,7 +427,7 @@ rules:
   - DOMAIN,download.docker.com,Docker
   - DOMAIN,desktop.docker.com,Docker
   - DOMAIN,get.docker.com,Docker
-  # AOSP/Gitiles、Repo 启动器与 Android SDK/Maven 下载（机场3优先）
+  # AOSP/Gitiles、Repo 启动器与 Android SDK/Maven 下载（机场名称3优先）
   - DOMAIN-SUFFIX,googlesource.com,开发下载
   # Mihomo 无法按 HTTPS 路径分流；此处有意覆盖整个共享 GCS 主机
   - DOMAIN,storage.googleapis.com,开发下载
@@ -542,7 +542,7 @@ rules:
   - RULE-SET,emby_domain,Emby
   - RULE-SET,emby_classical,Emby
   - RULE-SET,spotify_domain,Spotify
-  # 游戏平台（Epic 走机场3降低代理流量消耗）
+  # 游戏平台（Epic 走机场名称3降低代理流量消耗）
   - RULE-SET,steam_domain,STEAM
   - RULE-SET,Epic_domain,机场名称3地区优先
   - RULE-SET,EA_domain,游戏平台

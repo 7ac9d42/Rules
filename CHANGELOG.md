@@ -6,11 +6,11 @@
 
 ### 功能更新
 
-- 新增 `HuggingFace`、`Docker` 与 `开发下载` 策略组，默认使用共享的“机场 3 → 机场 1 → 机场 4 → 直连”自动回退链，同时保留其他手动选路。服务组不再保留旧的机场 3 直选项，避免 `store-selected` 缓存阻止升级后启用自动回退。Docker 使用独立图标和策略，不再与其他开发下载共用切换状态。
+- 新增 `HuggingFace`、`Docker` 与 `开发下载` 策略组，默认使用共享的“机场名称3 → 机场名称1 → 机场名称4 → 直连”自动回退链，同时保留其他手动选路。服务组不再保留旧的机场名称3直选项，避免 `store-selected` 缓存阻止升级后启用自动回退。Docker 使用独立图标和策略，不再与其他开发下载共用切换状态。
 - 开发下载集合补充 JSR，并移除 Deno、npm、PyPA 的明显非下载父域；Python 包体域收窄为 `files.pythonhosted.org`。Kubernetes 与 SourceForge 只保证入口命中，不为动态镜像粗放接管云厂商父域。
-- AOSP 下载规则扩展到全部 `googlesource.com`、Repo 启动器所在的 `storage.googleapis.com`，以及 Android SDK/Maven 使用的 `dl.google.com`，修复此前只有 `android.googlesource.com` 明确走机场 3 的缺口。由于 Mihomo 不能按 HTTPS 路径匹配，`storage.googleapis.com` 是有意接受的整域例外。
+- AOSP 下载规则扩展到全部 `googlesource.com`、Repo 启动器所在的 `storage.googleapis.com`，以及 Android SDK/Maven 使用的 `dl.google.com`，修复此前只有 `android.googlesource.com` 明确走机场名称3的缺口。由于 Mihomo 不能按 HTTPS 路径匹配，`storage.googleapis.com` 是有意接受的整域例外。
 - Docker Hub 拉取链和官方安装/更新端点采用窄规则；账号、Scout、AI 等 Docker 产品域不纳入。共享机场出口仍可能触发 Docker Hub 的按 IP 拉取限额。
-- 补齐已禁用 `Airport_02` 的四机场恢复模板与成套启用说明；恢复时共享服务和规则更新链均按“机场 3 → 机场 1 → 机场 2 → 机场 4 → 直连”回退。
+- 补齐已禁用 `Airport_02` 的四机场恢复模板与成套启用说明；恢复时共享服务和规则更新链均按“机场名称3 → 机场名称1 → 机场名称2 → 机场名称4 → 直连”回退。
 
 ### 破坏性更新
 
