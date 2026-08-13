@@ -356,6 +356,7 @@ proxy-groups:
   - {name: GitHub, type: select, proxies: [机场名称3优先自动回退, 日本节点, 节点选择, 美国节点, 自建/家宽节点, 香港节点, 新加坡节点, 台湾节点, 欧洲节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/github.png"}
   - {name: Docker, <<: *Airport3_first, icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/docker.png"}
   - {name: 开发下载, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation.png"}
+  - {name: Kryptex, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation.png"}
   - {name: OneDrive, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/onedrive.png"}
   - {name: Microsoft, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/microsoft.png"}
   - {name: Discord, <<: *Proxy_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/discord.png"}
@@ -413,7 +414,7 @@ proxy-groups:
 # 功能型代理组默认隐藏
   - {name: "🚫 拒绝", type: select, hidden: true, proxies: [REJECT]}
   - {name: "⚪ 丢弃", type: select, hidden: true, proxies: [REJECT-DROP]}
-  - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, HuggingFace, GitHub, Docker, 开发下载, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, 巴哈姆特, Spotify, Global-TV, Global-Media, 游戏平台, Speedtest, PayPal, Wise, 国外电商, STEAM, 全球直连, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
+  - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, HuggingFace, GitHub, Docker, 开发下载, Kryptex, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, 巴哈姆特, Spotify, Global-TV, Global-Media, 游戏平台, Speedtest, PayPal, Wise, 国外电商, STEAM, 全球直连, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
 
 rules:
 # === 用户自定义优先 ===
@@ -434,6 +435,10 @@ rules:
   - DOMAIN-SUFFIX,dl.google.com,开发下载
   # 公开源码站、包管理器、构建工具、设计资源和前端资源 CDN
   - RULE-SET,dev_download_domain,开发下载
+  # Kryptex 客户端、组件服务与矿池（机场名称3优先）
+  - DOMAIN-SUFFIX,kryptex.com,Kryptex
+  - DOMAIN-SUFFIX,kryptex.org,Kryptex
+  - DOMAIN-SUFFIX,kryptex.network,Kryptex
   - DOMAIN,hk.tv.global.mi.com,节点选择
   - DOMAIN-SUFFIX,linux.do,节点选择
   - DOMAIN,ykk.emby.moe,Emby
