@@ -6,6 +6,7 @@
 
 ### 功能更新
 
+- Mihomo 健康检查改为分层调度：机场 provider 的全量节点刷新从 60 秒放宽到 180 秒，机场内部与主多机场根仍保持 60 秒非 lazy；机场名称3优先、同地区跨机场及规则更新等排序视图改为 lazy，复用主根维护的共享健康状态，减少 VLESS+Reality 的重复握手、流量与设备唤醒，同时保留业务失败强检和黑洞场景的 60 秒级回退兜底。
 - 新增 `HuggingFace`、`Docker` 与 `开发下载` 策略组，默认使用共享的“机场名称3 → 机场名称1 → 机场名称4”自动回退链，同时保留其他代理选路。自动链全部不可用时拒绝连接，服务组也不再提供直连或旧的机场名称3直选项，避免 `store-selected` 缓存阻止升级后启用自动回退。Docker 使用独立图标和策略，不再与其他开发下载共用切换状态。
 - 开发下载集合补充 JSR，并移除 Deno、npm、PyPA 的明显非下载父域；Python 包体域收窄为 `files.pythonhosted.org`。Kubernetes 与 SourceForge 只保证入口命中，不为动态镜像粗放接管云厂商父域。
 - AOSP 下载规则扩展到全部 `googlesource.com`、Repo 启动器所在的 `storage.googleapis.com`，以及 Android SDK/Maven 使用的 `dl.google.com`，修复此前只有 `android.googlesource.com` 明确走机场名称3的缺口。由于 Mihomo 不能按 HTTPS 路径匹配，`storage.googleapis.com` 是有意接受的整域例外。
