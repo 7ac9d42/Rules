@@ -102,6 +102,15 @@ def canonical_cidr(value)
   "#{ip.mask(prefix)}/#{prefix}"
 end
 
+def valid_mihomo_domain_wildcards?(domain)
+  labels = domain.split(".", -1)
+  labels.each_with_index.all? do |label, index|
+    valid_star = !label.include?("*") || label == "*"
+    valid_plus = !label.include?("+") || (label == "+" && index.zero? && labels.length > 1)
+    valid_star && valid_plus
+  end
+end
+
 yaml_payloads = {}
 yaml_files = Dir.glob(File.join(ROOT, "rules", "**", "*.yaml")).sort
 
@@ -119,6 +128,11 @@ yaml_files.each do |path|
     yaml_payloads[path] = payload
 
     if relative.start_with?("rules/Domain/")
+      invalid_wildcards = payload.reject { |rule| valid_mihomo_domain_wildcards?(rule) }
+      unless invalid_wildcards.empty?
+        errors << "#{relative}: invalid Mihomo domain wildcards: #{invalid_wildcards.first(3).join(', ')}"
+      end
+
       payload.each do |rule|
         candidate = rule.delete_prefix("+.")
         begin
