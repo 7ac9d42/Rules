@@ -102,8 +102,9 @@ proxy-providers:
 global-ua: clash.meta
 
 # 全局配置
+mode: rule
 mixed-port: 7890
-ipv6: true
+ipv6: false
 allow-lan: true
 unified-delay: true
 tcp-concurrent: true
@@ -124,9 +125,6 @@ external-ui-url: "https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-p
 # 匹配进程 always/strict/off（rules 中无 PROCESS-NAME 规则，关闭以节省每连接系统调用）
 find-process-mode: "off"
 # global-client-fingerprint:  # 已弃用，如需TLS指纹伪装请在代理节点上单独设置
-# TCP keep-alive（移动网络 NAT 超时偏短，60s 探测可覆盖 98% NAT 场景）
-keep-alive-idle: 60
-keep-alive-interval: 30
 
 # 策略组选择和fakeip缓存
 profile:
@@ -181,12 +179,15 @@ tun:
 # DNS模块
 dns:
   enable: true
+  # Android 私人 DNS 使用 DoT，不会进入此监听；需要完整接管时应在系统中关闭
   listen: 0.0.0.0:1053
-  ipv6: true
+  ipv6: false
   # 只读取 hosts 文件，不调用宿主系统 DNS
   use-system-hosts: true
   prefer-h3: false # 是否开启 DoH 支持 HTTP/3，将并发尝试
   respect-rules: true
+  # LRU 会保留过期项并异步刷新，降低移动网络切换时的解析抖动
+  cache-algorithm: lru
   # 模式切换 redir-host / fake-ip
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.0/15
@@ -203,6 +204,7 @@ dns:
     - "RULE-SET,stun_domain,real-ip"
 
     # 3. 系统探测与时间同步 (确保开机和连网时的基础网络正常)
+    - "DOMAIN,connectivitycheck.gstatic.com,real-ip"
     - "DOMAIN-SUFFIX,msftconnecttest.com,real-ip"
     - "DOMAIN-SUFFIX,msftncsi.com,real-ip"
     - "DOMAIN-SUFFIX,pool.ntp.org,real-ip"
