@@ -519,7 +519,6 @@ begin
     ["DOMAIN-SUFFIX,hf.co,", "RULE-SET,ai!cn_domain,"],
     ["DOMAIN-SUFFIX,docker.io,", "RULE-SET,proxy_domain,"],
     ["DOMAIN,production.cloudfront.docker.com,", "RULE-SET,proxy_domain,"],
-    ["DOMAIN,docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com,", "RULE-SET,Cloudflare_domain,"],
     ["DOMAIN,download.docker.com,", "RULE-SET,proxy_domain,"],
     ["DOMAIN,desktop.docker.com,", "RULE-SET,proxy_domain,"],
     ["DOMAIN,get.docker.com,", "RULE-SET,proxy_domain,"],
@@ -531,7 +530,6 @@ begin
     ["DOMAIN-SUFFIX,dl.google.com,", "RULE-SET,google_domain,"],
     ["RULE-SET,dev_download_domain,", "RULE-SET,proxy_domain,"],
     ["RULE-SET,dev_download_domain,", "RULE-SET,google_domain,"],
-    ["RULE-SET,dev_download_domain,", "RULE-SET,Cloudflare_domain,"],
   ]
   download_precedence.each do |before, after|
     errors << "config: #{before} must precede #{after}" unless order.call(before) < order.call(after)
@@ -735,16 +733,14 @@ begin
     ["RULE-SET,porn_domain,", "RULE-SET,google_domain,"],
     ["RULE-SET,google_asn_cn,", "RULE-SET,cn_ip,"],
     ["RULE-SET,twitter_ip,", "RULE-SET,cn_ip,"],
-    ["RULE-SET,cn_ip,", "RULE-SET,Cloudflare_domain,"],
-    ["RULE-SET,cn_ip,", "RULE-SET,gfw_domain,"],
-    ["RULE-SET,cn_ip,", "RULE-SET,geolocation-!cn,"],
   ]
   ordering.each do |before, after|
     errors << "config: #{before} must precede #{after}" unless order.call(before) < order.call(after)
   end
 
-  unless rules.grep(/\ARULE-SET,cn_ip,/) == ["RULE-SET,cn_ip,全球直连"]
-    errors << "config: cn_ip safety net must resolve unmatched domains"
+  expected_fallback = ["RULE-SET,cn_ip,全球直连", "MATCH,节点选择"]
+  unless rules.last(2) == expected_fallback && rules.grep(/\ARULE-SET,cn_ip,/) == [expected_fallback.first]
+    errors << "config: resolving cn_ip safety net must be followed directly by proxy MATCH"
   end
 
   stdout, stderr, status = Open3.capture3(MIHOMO_BIN, "-t", "-f", config_path)

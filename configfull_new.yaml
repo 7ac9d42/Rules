@@ -24,9 +24,10 @@ Loadbalance_Base: &Loadbalance_Base {type: load-balance, strategy: consistent-ha
 # 180 秒全量刷新叶节点；真实业务失败仍会绕过周期触发强检
 PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', expected-status: 204, interval: 180, lazy: false}, exclude-filter: '(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\s\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\s*[:：]\s*(?:[0-9]|∞|Unlimited)|(?:^|[\s\[【(（_|｜丨-])Email\s*[:：]\s*\S+@|(?:^|[\s\[【(（_|｜丨-])Panel\s*[:：]|(?:^|[\s\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\s\]】)）|｜丨:：_-]))'}
 
-# ── 4. 规则提供者基础（mrs 格式，24h 更新） ──
+# ── 4. 规则提供者基础（24h 更新） ──
 Ruleset_Domain_Base: &domain {type: http, interval: 86400, behavior: domain, format: mrs, proxy: 规则更新}
 Ruleset_IP_Base: &ip {type: http, interval: 86400, behavior: ipcidr, format: mrs, proxy: 规则更新}
+Ruleset_Classical_Base: &classical {type: http, interval: 86400, behavior: classical, format: text, proxy: 规则更新}
 
 # ── 5. 节点名筛选：地区 ──
 region_hk: &region_hk "(?i)(香港|港|🇭🇰|\\bHK\\b|Hong ?Kong)"
@@ -595,12 +596,7 @@ rules:
   # 有意允许解析：为未被 cn_domain 收录、但实际落地中国大陆的域名兜底
   - RULE-SET,cn_ip,全球直连
 
-# === 通用代理兜底（放在具体服务之后避免遮蔽各服务策略组） ===
-  - RULE-SET,Cloudflare_domain,节点选择
-
-# === 地理位置兜底 ===
-  - RULE-SET,gfw_domain,节点选择
-  - RULE-SET,geolocation-!cn,节点选择
+# === 防漏兜底（未命中上述具体策略的流量统一走代理） ===
   - MATCH,节点选择
 
 rule-providers:
@@ -613,8 +609,8 @@ rule-providers:
   banAd_core_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core.mrs" }
   banAd_pcdn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn.mrs" }
   banAd_low_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_low.mrs" }
-  banAd_core_classical: { type: http, interval: 86400, behavior: classical, format: text, proxy: 规则更新, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core_classical.list" }
-  banAd_pcdn_classical: { type: http, interval: 86400, behavior: classical, format: text, proxy: 规则更新, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn_classical.list" }
+  banAd_core_classical: { <<: *classical, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core_classical.list" }
+  banAd_pcdn_classical: { <<: *classical, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn_classical.list" }
   private_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs" }
   stun_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/category-stun.mrs" }
   bank_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-bank-cn.mrs" }
@@ -638,12 +634,9 @@ rule-providers:
   apple_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/apple.mrs" }
   speedtest_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/ookla-speedtest.mrs" }
   tiktok_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/tiktok.mrs" }
-  gfw_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/gfw.mrs" }
-  geolocation-!cn: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/geolocation-!cn.mrs" }
   cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs" }
   media_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-media-cn.mrs" }
   social_media_non_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-social-media-!cn.mrs" }
-  Cloudflare_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/cloudflare.mrs" }
   gitbook_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/gitbook.mrs" }
   dev_download_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/dev-download.mrs" }
   disney_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/disney.mrs" }
@@ -676,7 +669,7 @@ rule-providers:
   discord_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/discord.mrs" }
   fcm_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/googlefcm.mrs" }
   emby_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/emby.mrs" }
-  emby_classical: { type: http, interval: 86400, behavior: classical, format: text, proxy: 规则更新, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/emby_classical.list" }
+  emby_classical: { <<: *classical, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/emby_classical.list" }
   pt_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-pt.mrs" }
   public-tracker_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-public-tracker.mrs" }
   115_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/115.mrs" }
