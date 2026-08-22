@@ -83,6 +83,21 @@ def add_domain_provider_errors(errors, label, name, providers)
   errors << "#{label} provider #{name} has behavior #{behavior.inspect}; expected domain or classical"
 end
 
+def canonical_domain_rules(entries)
+  entries = entries.map(&:downcase).uniq.sort
+  suffixes = entries.select { |entry| entry.start_with?("+.") }
+
+  entries.reject do |entry|
+    domain = entry.delete_prefix("+.")
+    suffixes.any? do |suffix|
+      next false if entry == suffix
+
+      suffix_domain = suffix.delete_prefix("+.")
+      domain == suffix_domain || domain.end_with?(".#{suffix_domain}")
+    end
+  end
+end
+
 def domain_payload_from_classical_source(path)
   entries = []
   File.foreach(path).with_index(1) do |line, line_number|
@@ -96,7 +111,7 @@ def domain_payload_from_classical_source(path)
 
     entries << (type == "DOMAIN-SUFFIX" ? "+.#{value.delete_prefix(".")}" : value)
   end
-  entries.uniq.sort
+  canonical_domain_rules(entries)
 end
 
 def domain_rules_intersect?(left, right)

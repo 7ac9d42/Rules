@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
+
 echo "=== Building direct ==="
 
 source_file="rules/Domain/direct.list"
@@ -8,17 +10,19 @@ if [[ ! -s "$source_file" ]]; then
   exit 1
 fi
 
-# Extract DOMAIN and DOMAIN-SUFFIX rules from direct.list
-# 提取 DOMAIN-SUFFIX 规则并加上 +.
-grep -Eo 'DOMAIN-SUFFIX,[^,]+' "$source_file" | sed 's/DOMAIN-SUFFIX,//' | sed 's/^/+./' > rules/Domain/direct-domain.list
-# 提取 DOMAIN 规则
-grep -Eo 'DOMAIN,[^,]+' "$source_file" | sed 's/DOMAIN,//' >> rules/Domain/direct-domain.list
-
-# Convert Direct Rules to YAML
-echo "payload:" > rules/Domain/direct.yaml
-sort -u rules/Domain/direct-domain.list | awk '{print "  - \047" $0 "\047"}' >> rules/Domain/direct.yaml
+# Convert DOMAIN and DOMAIN-SUFFIX rules to a minimal domain payload.
+{
+  echo "payload:"
+  awk -F, '
+    /^[[:space:]]*(#|$)/ { next }
+    NF != 2 || ($1 != "DOMAIN" && $1 != "DOMAIN-SUFFIX") || $2 == "" { exit 1 }
+    { print ($1 == "DOMAIN-SUFFIX" ? "+." : "") tolower($2) }
+  ' "$source_file" |
+    sort -u |
+    awk -f scripts/canonicalize-domain-rules.awk |
+    awk '{ print "  - \047" $0 "\047" }'
+} > rules/Domain/direct.yaml
 
 # Convert Direct Rules to MRS
 # 使用 mihomo 转换为 MRS 格式
 mihomo convert-ruleset domain yaml rules/Domain/direct.yaml rules/Domain/direct.mrs
-rm -f rules/Domain/direct-domain.list
