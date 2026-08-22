@@ -337,6 +337,17 @@ proxy-groups:
   - {name: 日本-机场名称1优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称1-日本, 机场名称3-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   #- {name: 多地区优先转移(<-地区优先), type: fallback, proxies: [香港-机场名称1优先, 新加坡-机场名称1优先, 美国-机场名称1优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/failover.png"}
 
+  # 四机场模板：Telegram 同地区严格按机场名称3→机场名称1→机场名称2→机场名称4回退
+#  - {name: 香港-机场名称3优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称3-香港, 机场名称1-香港, 机场名称2-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+#  - {name: 新加坡-机场名称3优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称3-新加坡, 机场名称1-新加坡, 机场名称2-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+#  - {name: 美国-机场名称3优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称3-美国, 机场名称1-美国, 机场名称2-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+#  - {name: 日本-机场名称3优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称3-日本, 机场名称1-日本, 机场名称2-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  # 当前三机场：保持 Telegram DC 地区不变，只调整机场成本优先级
+  - {name: 香港-机场名称3优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称3-香港, 机场名称1-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 新加坡-机场名称3优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称3-新加坡, 机场名称1-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 美国-机场名称3优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称3-美国, 机场名称1-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 日本-机场名称3优先, <<: *Fallback_Lazy_Base, hidden: true, proxies: [机场名称3-日本, 机场名称1-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+
   # 四机场模板：机场名称3优先视图复用主根维护的相同机场状态；活跃时自动恢复自身探测
 #  - {name: 机场名称3优先, <<: *Fallback_Lazy_Base, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称2地区优先, 机场名称4地区优先]}
   # 当前三机场：仅调整机场顺序，闲置时不重复探测主根已覆盖的相同成员
@@ -350,9 +361,9 @@ proxy-groups:
   # 低倍率/MITM节点组
   - {name: 低倍率/MITM节点, type: select, use: *use_ap_all, filter: *lowrate_mitm, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
   # TG专用节点组
-  - {name: TelegramEU, type: select, proxies: [新加坡-机场名称1优先, 香港-机场名称1优先, 日本-机场名称1优先, 节点选择, 自建/家宽节点, 欧洲节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
-  - {name: TelegramSG, type: select, proxies: [新加坡-机场名称1优先, 香港-机场名称1优先, 日本-机场名称1优先, 节点选择, 自建/家宽节点, 新加坡节点, 香港节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
-  - {name: TelegramUS, type: select, proxies: [美国-机场名称1优先, 新加坡-机场名称1优先, 香港-机场名称1优先, 日本-机场名称1优先, 节点选择, 自建/家宽节点, 美国节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: TelegramEU, type: select, proxies: [新加坡-机场名称3优先, 香港-机场名称3优先, 日本-机场名称3优先, 机场名称1优先, 自建/家宽节点, 欧洲节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: TelegramSG, type: select, proxies: [新加坡-机场名称3优先, 香港-机场名称3优先, 日本-机场名称3优先, 机场名称1优先, 自建/家宽节点, 新加坡节点, 香港节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: TelegramUS, type: select, proxies: [美国-机场名称3优先, 新加坡-机场名称3优先, 香港-机场名称3优先, 日本-机场名称3优先, 机场名称1优先, 自建/家宽节点, 美国节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
 
   - {name: 自建/家宽节点, type: select, use: *use_ap_all, filter: *home_only, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
   - {name: YouTube, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/youtube.png"}

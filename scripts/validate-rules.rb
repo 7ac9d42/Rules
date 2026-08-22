@@ -422,6 +422,41 @@ begin
     else
       errors << "config: missing #{region_selector_name} proxy group"
     end
+
+    airport3_cross_name = "#{region}-机场名称3优先"
+    airport3_cross_group = groups.find { |group| group["name"] == airport3_cross_name }
+    expected_airport3_cross_proxies = airport3_first_numbers.map { |number| "机场名称#{number}-#{region}" }
+    if airport3_cross_group
+      errors << "config: #{airport3_cross_name} must be a fallback group" unless airport3_cross_group["type"] == "fallback"
+      errors << "config: #{airport3_cross_name} must be hidden" unless airport3_cross_group["hidden"] == true
+      unless airport3_cross_group["proxies"] == expected_airport3_cross_proxies
+        errors << "config: #{airport3_cross_name} proxies must be #{expected_airport3_cross_proxies.inspect}"
+      end
+    else
+      errors << "config: missing #{airport3_cross_name} proxy group"
+    end
+  end
+
+  telegram_region_orders = {
+    "TelegramEU" => %w[新加坡 香港 日本],
+    "TelegramSG" => %w[新加坡 香港 日本],
+    "TelegramUS" => %w[美国 新加坡 香港 日本],
+  }
+  telegram_region_orders.each do |name, regions|
+    group = groups.find { |candidate| candidate["name"] == name }
+    unless group
+      errors << "config: missing #{name} proxy group"
+      next
+    end
+
+    expected_prefix = regions.map { |region| "#{region}-机场名称3优先" }
+    unless Array(group["proxies"]).first(expected_prefix.length) == expected_prefix
+      errors << "config: #{name} must preserve DC order with airport-3-first regional fallbacks"
+    end
+    stale_candidates = Array(group["proxies"]) & (["节点选择"] + regions.map { |region| "#{region}-机场名称1优先" })
+    unless stale_candidates.empty?
+      errors << "config: #{name} retains stale quality-first candidates: #{stale_candidates.inspect}"
+    end
   end
 
   rule_update_group = groups.find { |group| group["name"] == "规则更新" }
