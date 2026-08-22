@@ -510,8 +510,18 @@ rules:
   - RULE-SET,public-tracker_domain,全球直连
   - RULE-SET,media_cn_domain,全球直连
 
-# === 其余不受欢迎业务端点（国内白名单优先，降低误杀） ===
+# === 其余不受欢迎业务端点（具体国内白名单优先，降低误杀） ===
   - RULE-SET,banAd_low_domain,隐私拦截
+
+# === 跨区业务策略（保留独立选路，必须早于国内域名总集合） ===
+  - RULE-SET,apple_domain,Apple
+  # 哔哩（biliintl 在 bilibili 之前）
+  - RULE-SET,biliintl_domain,哔哩东南亚
+  - RULE-SET,bilibili_domain,哔哩哔哩
+  - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
+
+# === 国内域名总兜底（必须早于常规代理服务和宽泛代理集合） ===
+  - RULE-SET,cn_domain,全球直连
 
 # === Telegram DC 分流（提前避免被通用规则遮蔽） ===
   - RULE-SET,telegram_domain,TelegramSG
@@ -520,10 +530,6 @@ rules:
   - RULE-SET,TelegramEU_ip,TelegramEU,no-resolve
 
 # === 具体产品规则（产品边界优先于承载它的厂商云或共享平台） ===
-  # 哔哩（biliintl 在 bilibili 之前）
-  - RULE-SET,biliintl_domain,哔哩东南亚
-  - RULE-SET,bilibili_domain,哔哩哔哩
-  - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
   - RULE-SET,bahamut_domain,巴哈姆特
   # AI（非中国）
   - RULE-SET,ai!cn_domain,AI
@@ -571,7 +577,6 @@ rules:
   - RULE-SET,speedtest_domain,Speedtest
 
 # === 厂商生态兜底（必须晚于使用其共享云/CDN 的具体产品） ===
-  - RULE-SET,apple_domain,Apple
   - RULE-SET,google_domain,Google
   - RULE-SET,google_asn_cn,Google,no-resolve
   - RULE-SET,google_ip,Google,no-resolve
@@ -585,15 +590,17 @@ rules:
   # Twitter/X 域名已包含在境外社交媒体集合中，IP 保持同一策略
   - RULE-SET,twitter_ip,Global-Media,no-resolve
 
+# === 国内 IP 安全网（具体服务之后、宽泛代理集合之前） ===
+  - RULE-SET,private_ip,全球直连,no-resolve
+  # 有意允许解析：为未被 cn_domain 收录、但实际落地中国大陆的域名兜底
+  - RULE-SET,cn_ip,全球直连
+
 # === 通用代理兜底（放在具体服务之后避免遮蔽各服务策略组） ===
   - RULE-SET,Cloudflare_domain,节点选择
 
 # === 地理位置兜底 ===
   - RULE-SET,gfw_domain,节点选择
   - RULE-SET,geolocation-!cn,节点选择
-  - RULE-SET,cn_domain,全球直连
-  - RULE-SET,private_ip,全球直连,no-resolve
-  - RULE-SET,cn_ip,全球直连,no-resolve
   - MATCH,节点选择
 
 rule-providers:

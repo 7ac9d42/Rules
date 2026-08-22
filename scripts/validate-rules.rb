@@ -673,8 +673,13 @@ begin
     ["RULE-SET,banAd_core_domain,", "RULE-SET,banAd_pcdn_domain,"],
     ["RULE-SET,banAd_pcdn_domain,", "RULE-SET,wechat_domain,"],
     ["RULE-SET,wechat_domain,", "RULE-SET,banAd_low_domain,"],
+    ["RULE-SET,banAd_low_domain,", "RULE-SET,cn_domain,"],
     ["RULE-SET,apple_update_domain,", "RULE-SET,apple_cn_domain,"],
     ["RULE-SET,apple_cn_domain,", "RULE-SET,apple_domain,"],
+    ["RULE-SET,apple_domain,", "RULE-SET,cn_domain,"],
+    ["RULE-SET,biliintl_domain,", "RULE-SET,bilibili_domain,"],
+    ["RULE-SET,bilibili_domain,", "RULE-SET,cn_domain,"],
+    ["RULE-SET,cn_domain,", "RULE-SET,telegram_domain,"],
     ["RULE-SET,steam_cn_domain,", "RULE-SET,steam_domain,"],
     ["RULE-SET,proxy_domain,", "RULE-SET,google_domain,"],
     ["RULE-SET,discord_domain,", "RULE-SET,google_domain,"],
@@ -682,9 +687,17 @@ begin
     ["RULE-SET,porn_domain,", "RULE-SET,github_domain,"],
     ["RULE-SET,porn_domain,", "RULE-SET,google_domain,"],
     ["RULE-SET,google_asn_cn,", "RULE-SET,cn_ip,"],
+    ["RULE-SET,twitter_ip,", "RULE-SET,cn_ip,"],
+    ["RULE-SET,cn_ip,", "RULE-SET,Cloudflare_domain,"],
+    ["RULE-SET,cn_ip,", "RULE-SET,gfw_domain,"],
+    ["RULE-SET,cn_ip,", "RULE-SET,geolocation-!cn,"],
   ]
   ordering.each do |before, after|
     errors << "config: #{before} must precede #{after}" unless order.call(before) < order.call(after)
+  end
+
+  unless rules.grep(/\ARULE-SET,cn_ip,/) == ["RULE-SET,cn_ip,全球直连"]
+    errors << "config: cn_ip safety net must resolve unmatched domains"
   end
 
   stdout, stderr, status = Open3.capture3(MIHOMO_BIN, "-t", "-f", config_path)
