@@ -287,20 +287,32 @@ begin
   proxy_providers.each do |name, provider|
     next unless provider["type"] == "http"
 
-    errors << "config: proxy provider #{name} must use proxy 🟢 直连" unless provider["proxy"] == "🟢 直连"
+    errors << "config: proxy provider #{name} must use proxy DIRECT" unless provider["proxy"] == "DIRECT"
   end
 
   duplicate_groups = group_names.tally.select { |_name, count| count > 1 }.keys
   errors << "config: duplicate proxy groups: #{duplicate_groups.join(', ')}" unless duplicate_groups.empty?
 
-  direct_proxy = Array(config["proxies"]).find { |proxy| proxy["name"] == "🟢 直连" }
-  unless direct_proxy && direct_proxy["type"] == "direct"
-    errors << "config: 🟢 直连 must be a direct proxy"
+  custom_direct_proxies = Array(config["proxies"]).select { |proxy| proxy["type"] == "direct" }
+  unless custom_direct_proxies.empty?
+    names = custom_direct_proxies.map { |proxy| proxy["name"] }
+    errors << "config: custom direct proxies are redundant with built-in DIRECT: #{names.join(', ')}"
   end
-  global_direct_group = groups.find { |group| group["name"] == "全球直连" }
-  unless global_direct_group && global_direct_group["type"] == "select" &&
-         global_direct_group["proxies"] == ["🟢 直连"] && Array(global_direct_group["use"]).empty?
-    errors << "config: 全球直连 must select only 🟢 直连"
+
+  redundant_wrapper_groups = group_names & ["全球直连", "🚫 拒绝", "⚪ 丢弃"]
+  unless redundant_wrapper_groups.empty?
+    errors << "config: redundant single-target wrapper groups: #{redundant_wrapper_groups.join(', ')}"
+  end
+
+  privacy_group = groups.find { |group| group["name"] == "隐私拦截" }
+  unless privacy_group && privacy_group["type"] == "select" &&
+         privacy_group["proxies"] == ["REJECT", "REJECT-DROP", "DIRECT", "节点选择"]
+    errors << "config: 隐私拦截 must expose built-in reject/direct targets without wrapper groups"
+  end
+
+  lowrate_group = groups.find { |group| group["name"] == "低倍率/MITM节点" }
+  unless lowrate_group && lowrate_group["hidden"] == true
+    errors << "config: 低倍率/MITM节点 must remain hidden as an Emby-only helper"
   end
 
   airport2_enabled = proxy_provider_names.include?("Airport_02")
@@ -323,7 +335,7 @@ begin
     end
 
     errors << "config: proxy provider #{provider_name} must be http" unless provider["type"] == "http"
-    errors << "config: proxy provider #{provider_name} must use proxy 🟢 直连" unless provider["proxy"] == "🟢 直连"
+    errors << "config: proxy provider #{provider_name} must use proxy DIRECT" unless provider["proxy"] == "DIRECT"
     url = provider["url"]
     unless url.is_a?(String) && !url.strip.empty?
       errors << "config: proxy provider #{provider_name} must have a non-empty string url"
@@ -500,7 +512,7 @@ begin
   end
 
   rule_update_group = groups.find { |group| group["name"] == "规则更新" }
-  expected_rule_update_proxies = expected_airport3_fallback_proxies + ["🟢 直连"]
+  expected_rule_update_proxies = expected_airport3_fallback_proxies + ["DIRECT"]
   if rule_update_group
     errors << "config: 规则更新 must be a fallback group" unless rule_update_group["type"] == "fallback"
     errors << "config: 规则更新 must be hidden" unless rule_update_group["hidden"] == true
@@ -875,7 +887,7 @@ begin
     errors << "config: #{before} must precede #{after}" unless order.call(before) < order.call(after)
   end
 
-  expected_fallback = ["RULE-SET,cn_ip,全球直连", "MATCH,节点选择"]
+  expected_fallback = ["RULE-SET,cn_ip,DIRECT", "MATCH,节点选择"]
   unless rules.last(2) == expected_fallback && rules.grep(/\ARULE-SET,cn_ip,/) == [expected_fallback.first]
     errors << "config: resolving cn_ip safety net must be followed directly by proxy MATCH"
   end
