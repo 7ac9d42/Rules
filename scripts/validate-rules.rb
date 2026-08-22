@@ -395,8 +395,8 @@ begin
 
   node_selector = groups.find { |group| group["name"] == "节点选择" }
   unless node_selector && node_selector["type"] == "select" &&
-         Array(node_selector["proxies"]).first(2) == ["机场名称1优先", "机场名称3优先"]
-    errors << "config: 节点选择 must expose 机场名称1优先 then 机场名称3优先"
+         Array(node_selector["proxies"]).first(2) == ["机场名称3优先", "机场名称1优先"]
+    errors << "config: 节点选择 must expose 机场名称3优先 then 机场名称1优先"
   end
 
   %w[香港 日本 新加坡 美国].each do |region|

@@ -294,7 +294,7 @@ proxies:
     udp: true
 # 策略组
 proxy-groups:
-  - {name: 节点选择, type: select, proxies: [机场名称1优先, 机场名称3优先, 自建/家宽节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, "🟢 直连"], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
+  - {name: 节点选择, type: select, proxies: [机场名称3优先, 机场名称1优先, 自建/家宽节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, "🟢 直连"], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
 
   # 按机场URL_Test区域
   - {name: 机场名称1-香港, <<: *Urltest_Base, use: [Airport_01], filter: *region_hk, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
