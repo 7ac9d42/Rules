@@ -133,7 +133,7 @@ find-process-mode: "off"
 
 # 策略组选择和fakeip缓存
 profile:
-  store-selected: true
+  store-selected: false
   store-fake-ip: true
 
 # 流量嗅探
