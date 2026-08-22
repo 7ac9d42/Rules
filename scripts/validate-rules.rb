@@ -511,7 +511,7 @@ begin
 
   airport1_service_groups = %w[
     GoogleVPN Google Meta Microsoft Discord Talkatone LINE Signal TikTok NETFLIX DisneyPlus HBO
-    Primevideo AppleTV Spotify Global-TV Global-Media 通信服务 金融服务 加密资产 Wise 国外电商
+    Primevideo AppleTV Spotify 境外影音 境外社媒 境外通信 境外金融 加密资产 Wise 境外电商
   ]
   airport1_service_groups.each do |name|
     group = groups.find { |candidate| candidate["name"] == name }
@@ -595,10 +595,10 @@ begin
   end
 
   quality_category_routes = {
-    "finance_domain" => "金融服务",
+    "finance_domain" => "境外金融",
     "cryptocurrency_domain" => "加密资产",
-    "communication_domain" => "通信服务",
-    "ecommerce_domain" => "国外电商",
+    "communication_domain" => "境外通信",
+    "ecommerce_domain" => "境外电商",
   }
   quality_category_routes.each do |provider, target|
     expected = "RULE-SET,#{provider},#{target}"
