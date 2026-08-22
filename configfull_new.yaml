@@ -391,6 +391,7 @@ proxy-groups:
   - {name: Kryptex, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation.png"}
   - {name: OneDrive, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/onedrive.png"}
   - {name: Microsoft, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/microsoft.png"}
+  - {name: 通信服务, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global_media.png"}
   - {name: Discord, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/discord.png"}
   - {name: Talkatone, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/talkatone.png"}
   - {name: LINE, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/line.png"}
@@ -411,6 +412,8 @@ proxy-groups:
   - {name: Global-Media, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global_media.png"}
   - {name: 游戏平台, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/game.png"}
   - {name: Speedtest, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/speedtest.png"}
+  - {name: 金融服务, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/wise.png"}
+  - {name: 加密资产, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
   - {name: PayPal, type: select, proxies: [日本节点, 自建/家宽节点, 节点选择, 美国节点, 香港节点, 新加坡节点, 欧洲节点, 全球直连], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/paypal.png"}
   - {name: Wise, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/wise.png"}
   - {name: 国外电商, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/shopping.png"}
@@ -447,7 +450,7 @@ proxy-groups:
 # 功能型代理组默认隐藏
   - {name: "🚫 拒绝", type: select, hidden: true, proxies: [REJECT]}
   - {name: "⚪ 丢弃", type: select, hidden: true, proxies: [REJECT-DROP]}
-  - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, HuggingFace, GitHub, Docker, 开发下载, Kryptex, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, 巴哈姆特, Spotify, Global-TV, Global-Media, 游戏平台, Speedtest, PayPal, Wise, 国外电商, STEAM, 全球直连, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
+  - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, HuggingFace, GitHub, Docker, 开发下载, Kryptex, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, 通信服务, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, 巴哈姆特, Spotify, Global-TV, Global-Media, 游戏平台, Speedtest, 金融服务, 加密资产, PayPal, Wise, 国外电商, STEAM, 全球直连, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
 
 rules:
 # === 用户自定义优先 ===
@@ -609,9 +612,9 @@ rules:
   - RULE-SET,facebook_ip,Meta,no-resolve
 
 # === 高风控聚合类别（国内与具体厂商策略之后） ===
-  - RULE-SET,finance_domain,机场名称1优先
-  - RULE-SET,cryptocurrency_domain,机场名称1优先
-  - RULE-SET,communication_domain,机场名称1优先
+  - RULE-SET,finance_domain,金融服务
+  - RULE-SET,cryptocurrency_domain,加密资产
+  - RULE-SET,communication_domain,通信服务
   - RULE-SET,social_media_non_cn_domain,Global-Media
   # Twitter/X 域名已包含在境外社交媒体集合中，IP 保持同一策略
   - RULE-SET,twitter_ip,Global-Media,no-resolve
