@@ -309,6 +309,10 @@ begin
   unless config["use_ap_all"] == expected_airport_providers
     errors << "config: use_ap_all must be #{expected_airport_providers.inspect}"
   end
+  expected_primary_providers = expected_airport_providers.reject { |provider| provider == "Airport_04" }
+  unless config["use_ap_primary"] == expected_primary_providers
+    errors << "config: use_ap_primary must be #{expected_primary_providers.inspect}"
+  end
 
   provider_prefixes = {}
   expected_airport_providers.each do |provider_name|
@@ -437,6 +441,42 @@ begin
     end
   end
 
+  expected_taiwan_proxies = airport_numbers.map { |number| "机场名称#{number}-台湾" }
+  airport_numbers.each do |number|
+    group_name = "机场名称#{number}-台湾"
+    group = groups.find { |candidate| candidate["name"] == group_name }
+    unless group && group["type"] == "url-test" && Array(group["use"]) == ["Airport_0#{number}"]
+      errors << "config: #{group_name} must be a url-test using only Airport_0#{number}"
+    end
+  end
+
+  taiwan_quality_group = groups.find { |group| group["name"] == "台湾-机场名称1优先" }
+  if taiwan_quality_group
+    errors << "config: 台湾-机场名称1优先 must be a fallback group" unless taiwan_quality_group["type"] == "fallback"
+    errors << "config: 台湾-机场名称1优先 must be hidden" unless taiwan_quality_group["hidden"] == true
+    unless taiwan_quality_group["proxies"] == expected_taiwan_proxies
+      errors << "config: 台湾-机场名称1优先 proxies must be #{expected_taiwan_proxies.inspect}"
+    end
+  else
+    errors << "config: missing 台湾-机场名称1优先 proxy group"
+  end
+
+  taiwan_selector = groups.find { |group| group["name"] == "台湾节点" }
+  expected_taiwan_selector_proxies = ["台湾-机场名称1优先"] + expected_taiwan_proxies + ["台湾自动", "台湾均衡"]
+  unless taiwan_selector && taiwan_selector["type"] == "select" &&
+         taiwan_selector["proxies"] == expected_taiwan_selector_proxies &&
+         Array(taiwan_selector["use"]) == expected_airport_providers
+    errors << "config: 台湾节点 must prefer 台湾-机场名称1优先 and expose all airport-specific Taiwan groups"
+  end
+
+  primary_automatic_groups = %w[台湾自动 香港均衡 新加坡均衡 日本均衡 台湾均衡 美国均衡]
+  primary_automatic_groups.each do |name|
+    group = groups.find { |candidate| candidate["name"] == name }
+    unless group && Array(group["use"]) == expected_primary_providers
+      errors << "config: #{name} must use primary airports only: #{expected_primary_providers.inspect}"
+    end
+  end
+
   telegram_region_orders = {
     "TelegramEU" => %w[新加坡 香港 日本],
     "TelegramSG" => %w[新加坡 香港 日本],
@@ -469,7 +509,21 @@ begin
     end
   end
 
-  %w[GitHub HuggingFace Docker 开发下载].each do |name|
+  airport1_service_groups = %w[
+    GoogleVPN Google Meta Microsoft Discord Talkatone LINE Signal TikTok NETFLIX DisneyPlus HBO
+    Primevideo AppleTV Spotify Global-TV Global-Media Wise 国外电商
+  ]
+  airport1_service_groups.each do |name|
+    group = groups.find { |candidate| candidate["name"] == name }
+    unless group && group["type"] == "select" && Array(group["proxies"]).first == "机场名称1优先"
+      errors << "config: #{name} must be a select group preferring 机场名称1优先"
+    end
+  end
+
+  airport3_service_groups = %w[
+    YouTube FCM HuggingFace GitHub Docker 开发下载 Kryptex OneDrive 游戏平台 Speedtest STEAM
+  ]
+  airport3_service_groups.each do |name|
     group = groups.find { |candidate| candidate["name"] == name }
     unless group
       errors << "config: missing #{name} proxy group"
@@ -489,9 +543,16 @@ begin
     end
   end
 
+  {"AI" => "日本节点", "PayPal" => "日本节点", "哔哩东南亚" => "机场名称1优先", "巴哈姆特" => "台湾节点"}.each do |name, expected|
+    group = groups.find { |candidate| candidate["name"] == name }
+    unless group && group["type"] == "select" && Array(group["proxies"]).first == expected
+      errors << "config: #{name} must prefer #{expected}"
+    end
+  end
+
   global_group = groups.find { |group| group["name"] == "GLOBAL" }
   if global_group
-    %w[GitHub HuggingFace Docker 开发下载].each do |name|
+    (airport1_service_groups + airport3_service_groups + %w[AI PayPal 哔哩东南亚 巴哈姆特]).uniq.each do |name|
       errors << "config: GLOBAL must expose #{name}" unless Array(global_group["proxies"]).include?(name)
     end
   else
@@ -514,6 +575,11 @@ begin
   end
   add_duplicate_value_errors(errors, "config rules", rules)
   add_single_final_match_error(errors, "config rules", rules)
+
+  expected_epic_rule = "RULE-SET,Epic_domain,游戏平台"
+  unless rules.grep(/\ARULE-SET,Epic_domain,/) == [expected_epic_rule]
+    errors << "config: Epic_domain must route through 游戏平台"
+  end
 
   rules.each_with_index do |rule, index|
     fields = rule.split(",")
