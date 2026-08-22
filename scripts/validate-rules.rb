@@ -639,6 +639,9 @@ begin
     ["DOMAIN-SUFFIX,dl.google.com,", "RULE-SET,google_domain,"],
     ["RULE-SET,dev_download_domain,", "RULE-SET,proxy_domain,"],
     ["RULE-SET,dev_download_domain,", "RULE-SET,google_domain,"],
+    ["RULE-SET,dev_download_domain,", "RULE-SET,github_domain,"],
+    ["RULE-SET,dev_download_domain,", "RULE-SET,onedrive_domain,"],
+    ["RULE-SET,dev_download_domain,", "RULE-SET,microsoft_domain,"],
   ]
   download_precedence.each do |before, after|
     errors << "config: #{before} must precede #{after}" unless order.call(before) < order.call(after)
@@ -939,10 +942,23 @@ critical_rules = {
   "rules/Domain/dev-download.yaml" => {
     forbidden: ["+.huggingface.co", "+.hf.co", "+.googlesource.com", "+.dl.google.com",
                 "+.docker.com", "+.docker.io", "+.dockerstatic.com",
-                "+.deno.com", "+.npmjs.com", "+.pypa.io", "+.pythonhosted.org"],
+                "+.deno.com", "+.npmjs.com", "+.pypa.io", "+.pythonhosted.org",
+                "+.dl.delivery.mp.microsoft.com", "+.download.visualstudio.microsoft.com",
+                "+.download.windowsupdate.com", "+.officecdn.microsoft.com"],
     required: ["+.gitlab.com", "+.bitbucket.org", "+.deno.land", "+.jsr.io",
                "+.npmjs.org", "+.pypi.org", "+.files.pythonhosted.org", "+.crates.io",
-               "+.maven.org", "+.nuget.org", "+.jsdelivr.net", "+.registry.k8s.io"],
+               "+.maven.org", "+.nuget.org", "+.jsdelivr.net", "+.registry.k8s.io",
+               "+.azurecr.io", "+.gcr.io", "+.ghcr.io", "+.mcr.microsoft.com",
+               "+.pkg-containers.githubusercontent.com", "+.pkg.dev", "+.quay.io",
+               "+.archive.ubuntu.com", "+.cdimage.ubuntu.com", "+.conda.anaconda.org",
+               "+.deb.debian.org", "+.dl-cdn.alpinelinux.org", "+.download.fedoraproject.org",
+               "+.download.opensuse.org", "+.download.rockylinux.org", "+.ports.ubuntu.com",
+               "+.prefix.dev", "+.releases.ubuntu.com", "+.repo.anaconda.com",
+               "+.security.debian.org", "+.security.ubuntu.com", "+.packages.microsoft.com",
+               "+.powershellgallery.com", "+.vsassets.io", "+.vscode-cdn.net",
+               "+.cache-redirector.jetbrains.com", "+.download-cdn.jetbrains.com",
+               "+.download.jetbrains.com", "+.download.pytorch.org", "+.plugins.jetbrains.com",
+               "+.registry.ollama.ai", "+.registry.ollama.com"],
   },
   "rules/Domain/streaming_hk.yaml" => {
     forbidden: ["+.bootstrapcdn.com", "+.jwpcdn.com", "+.jwplayer.com",

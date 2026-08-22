@@ -39,6 +39,46 @@
 +.registry.terraform.io
 +.releases.hashicorp.com
 
+# 容器注册表与镜像包体；只收录明确的 registry/blob 域。
++.azurecr.io
++.gcr.io
++.ghcr.io
++.mcr.microsoft.com
++.pkg-containers.githubusercontent.com
++.pkg.dev
++.quay.io
+
+# 常用 Linux 发行版仓库、安装镜像与 Conda 包体。
++.archive.ubuntu.com
++.cdimage.ubuntu.com
++.conda.anaconda.org
++.deb.debian.org
++.dl-cdn.alpinelinux.org
++.download.fedoraproject.org
++.download.opensuse.org
++.download.rockylinux.org
++.ports.ubuntu.com
++.prefix.dev
++.releases.ubuntu.com
++.repo.anaconda.com
++.security.debian.org
++.security.ubuntu.com
+
+# Microsoft 开发包与 VS Code/Visual Studio 资源；大陆直连的系统更新/CDN 不纳入。
++.packages.microsoft.com
++.powershellgallery.com
++.vsassets.io
++.vscode-cdn.net
+
+# IDE、AI 工具链和模型包体。
++.cache-redirector.jetbrains.com
++.download-cdn.jetbrains.com
++.download.jetbrains.com
++.download.pytorch.org
++.plugins.jetbrains.com
++.registry.ollama.ai
++.registry.ollama.com
+
 # 以下只保证入口命中；动态第三方镜像不做云厂商整域兜底。
 +.pkgs.k8s.io
 +.registry.k8s.io
