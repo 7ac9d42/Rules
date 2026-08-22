@@ -102,8 +102,8 @@ end
 def domain_rules_intersect?(left, right)
   left_suffix = left.start_with?("+.")
   right_suffix = right.start_with?("+.")
-  left_domain = left.delete_prefix("+.")
-  right_domain = right.delete_prefix("+.")
+  left_domain = left.delete_prefix("+.").downcase
+  right_domain = right.delete_prefix("+.").downcase
 
   if left_suffix && right_suffix
     left_domain == right_domain ||
