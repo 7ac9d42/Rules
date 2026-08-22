@@ -341,16 +341,16 @@ begin
 
   airport3_first_numbers = ["3"] + airport_numbers.reject { |number| number == "3" }
   expected_airport3_fallback_proxies = airport3_first_numbers.map { |number| "机场名称#{number}地区优先" }
-  airport3_fallback_group = groups.find { |group| group["name"] == "机场名称3优先自动回退" }
+  airport3_fallback_group = groups.find { |group| group["name"] == "机场名称3优先" }
   if airport3_fallback_group
-    errors << "config: 机场名称3优先自动回退 must be a fallback group" unless airport3_fallback_group["type"] == "fallback"
-    errors << "config: 机场名称3优先自动回退 must be hidden" unless airport3_fallback_group["hidden"] == true
-    errors << "config: 机场名称3优先自动回退 empty-fallback must be REJECT" unless airport3_fallback_group["empty-fallback"] == "REJECT"
+    errors << "config: 机场名称3优先 must be a fallback group" unless airport3_fallback_group["type"] == "fallback"
+    errors << "config: 机场名称3优先 must remain visible" if airport3_fallback_group["hidden"] == true
+    errors << "config: 机场名称3优先 empty-fallback must be REJECT" unless airport3_fallback_group["empty-fallback"] == "REJECT"
     unless airport3_fallback_group["proxies"] == expected_airport3_fallback_proxies
-      errors << "config: 机场名称3优先自动回退 proxies must be #{expected_airport3_fallback_proxies.inspect}"
+      errors << "config: 机场名称3优先 proxies must be #{expected_airport3_fallback_proxies.inspect}"
     end
   else
-    errors << "config: missing 机场名称3优先自动回退 proxy group"
+    errors << "config: missing 机场名称3优先 proxy group"
   end
 
   airport_numbers.each do |number|
@@ -376,19 +376,27 @@ begin
     end
   end
 
-  multi_airport_group = groups.find { |group| group["name"] == "多机场优先级转移(<-直接选这个)" }
+  multi_airport_group = groups.find { |group| group["name"] == "机场名称1优先" }
   expected_multi_airport_proxies = airport_numbers.map { |number| "机场名称#{number}地区优先" }
   if multi_airport_group
-    errors << "config: 多机场优先级转移 must be a fallback group" unless multi_airport_group["type"] == "fallback"
+    errors << "config: 机场名称1优先 must be a fallback group" unless multi_airport_group["type"] == "fallback"
+    errors << "config: 机场名称1优先 must remain visible" if multi_airport_group["hidden"] == true
+    errors << "config: 机场名称1优先 empty-fallback must be REJECT" unless multi_airport_group["empty-fallback"] == "REJECT"
     unless multi_airport_group["proxies"] == expected_multi_airport_proxies
-      errors << "config: 多机场优先级转移 proxies must be #{expected_multi_airport_proxies.inspect}"
+      errors << "config: 机场名称1优先 proxies must be #{expected_multi_airport_proxies.inspect}"
     end
   else
-    errors << "config: missing 多机场优先级转移 proxy group"
+    errors << "config: missing 机场名称1优先 proxy group"
+  end
+
+  node_selector = groups.find { |group| group["name"] == "节点选择" }
+  unless node_selector && node_selector["type"] == "select" &&
+         Array(node_selector["proxies"]).first(2) == ["机场名称1优先", "机场名称3优先"]
+    errors << "config: 节点选择 must expose 机场名称1优先 then 机场名称3优先"
   end
 
   %w[香港 日本 新加坡 美国].each do |region|
-    cross_airport_name = "#{region}-机场优先"
+    cross_airport_name = "#{region}-机场名称1优先"
     cross_airport_group = groups.find { |group| group["name"] == cross_airport_name }
     expected_cross_airport_proxies = airport_numbers.map { |number| "机场名称#{number}-#{region}" }
     if cross_airport_group
@@ -434,8 +442,8 @@ begin
     end
 
     errors << "config: #{name} must be a select group" unless group["type"] == "select"
-    unless Array(group["proxies"]).first == "机场名称3优先自动回退"
-      errors << "config: #{name} must prefer 机场名称3优先自动回退"
+    unless Array(group["proxies"]).first == "机场名称3优先"
+      errors << "config: #{name} must prefer 机场名称3优先"
     end
     direct_candidates = Array(group["proxies"]) & ["全球直连", "🟢 直连", "DIRECT"]
     unless direct_candidates.empty?
