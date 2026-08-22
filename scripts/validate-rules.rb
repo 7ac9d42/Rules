@@ -594,6 +594,19 @@ begin
     errors << "config: rule #{index + 1} has missing target #{target}" unless known_targets.include?(target)
   end
 
+  quality_category_routes = {
+    "finance_domain" => "机场名称1优先",
+    "cryptocurrency_domain" => "机场名称1优先",
+    "communication_domain" => "机场名称1优先",
+    "ecommerce_domain" => "国外电商",
+  }
+  quality_category_routes.each do |provider, target|
+    expected = "RULE-SET,#{provider},#{target}"
+    unless rules.grep(/\ARULE-SET,#{Regexp.escape(provider)},/) == [expected]
+      errors << "config: #{provider} must route exactly once through #{target}"
+    end
+  end
+
   priority_download_rules = [
     "DOMAIN-SUFFIX,huggingface.co,HuggingFace",
     "DOMAIN-SUFFIX,hf.co,HuggingFace",
@@ -837,6 +850,18 @@ begin
     ["RULE-SET,bilibili_domain,", "RULE-SET,proxy_domain,"],
     ["RULE-SET,proxy_domain,", "RULE-SET,cn_domain,"],
     ["RULE-SET,cn_domain,", "RULE-SET,telegram_domain,"],
+    ["RULE-SET,cn_domain,", "RULE-SET,finance_domain,"],
+    ["RULE-SET,cn_domain,", "RULE-SET,cryptocurrency_domain,"],
+    ["RULE-SET,cn_domain,", "RULE-SET,communication_domain,"],
+    ["RULE-SET,cn_domain,", "RULE-SET,ecommerce_domain,"],
+    ["RULE-SET,telegram_domain,", "RULE-SET,communication_domain,"],
+    ["RULE-SET,Wise_domain,", "RULE-SET,finance_domain,"],
+    ["RULE-SET,paypal_domain,", "RULE-SET,finance_domain,"],
+    ["RULE-SET,amazon_commerce_domain,", "RULE-SET,ecommerce_domain,"],
+    ["RULE-SET,communication_domain,", "RULE-SET,cn_ip,"],
+    ["RULE-SET,cryptocurrency_domain,", "RULE-SET,cn_ip,"],
+    ["RULE-SET,finance_domain,", "RULE-SET,cn_ip,"],
+    ["RULE-SET,ecommerce_domain,", "RULE-SET,cn_ip,"],
     ["RULE-SET,steam_cn_domain,", "RULE-SET,steam_domain,"],
     ["RULE-SET,proxy_domain,", "RULE-SET,google_domain,"],
     ["RULE-SET,discord_domain,", "RULE-SET,google_domain,"],
