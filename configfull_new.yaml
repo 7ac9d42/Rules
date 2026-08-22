@@ -6,19 +6,19 @@
 # 机场名称1优先：质量敏感业务使用机场名称1→机场名称3→机场名称4主链
 Airport1_first: &Airport1_first {type: select, proxies: [机场名称1优先, 机场名称3优先, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, DIRECT, 全部节点]}
 # 机场名称3优先：成本敏感业务使用机场名称3→机场名称1→机场名称4主链；不提供直连候选
-Airport3_first: &Airport3_first {type: select, proxies: [机场名称3优先, 机场名称1优先, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全部节点]}
+Airport3_first: &Airport3_first {type: select, proxies: [机场名称3优先, 机场名称1优先, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全部节点]}
 # 直连优先（Apple/B站等国内 CDN 服务）
 Direct_first: &Direct_first {type: select, proxies: [DIRECT, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 欧洲节点, 全部节点]}
 
 # ── 2. 策略组类型基础参数 ──
-# use 组与 provider 使用相同测试 URL 时由 provider 统一调度；此处不会额外扫描节点
-Urltest_Base: &Urltest_Base {type: url-test, tolerance: 50, interval: 180, max-failed-times: 2, lazy: false, empty-fallback: REJECT, url: "https://www.gstatic.com/generate_204", expected-status: 204, hidden: true}
+# use 组继承 provider 的测试地址与健康状态；组级失败计数仍可触发 provider 强检
+Urltest_Base: &Urltest_Base {type: url-test, tolerance: 50, max-failed-times: 2, empty-fallback: REJECT, expected-status: 204, hidden: true}
 # 核心 fallback 持续预热备用路径；空组拒绝连接，多次连接失败后强制复测
 Fallback_Base: &Fallback_Base {type: fallback, url: "https://www.gstatic.com/generate_204", expected-status: 204, interval: 60, max-failed-times: 3, lazy: false, empty-fallback: REJECT}
 # 辅助 fallback 复用核心链的共享健康状态，闲置时跳过自身重复探测
 Fallback_Lazy_Base: &Fallback_Lazy_Base {<<: *Fallback_Base, lazy: true}
-# load-balance 同域名走同节点；相同测试 URL 下由 provider 统一调度，不另建节点级任务
-Loadbalance_Base: &Loadbalance_Base {type: load-balance, strategy: consistent-hashing, url: "https://www.gstatic.com/generate_204", expected-status: 204, interval: 180, max-failed-times: 3, lazy: true, empty-fallback: REJECT}
+# load-balance 同域名走同节点；use 节点继续复用 provider 的健康状态
+Loadbalance_Base: &Loadbalance_Base {type: load-balance, strategy: consistent-hashing, expected-status: 204, max-failed-times: 3, empty-fallback: REJECT}
 
 # ── 3. 机场订阅 provider 模板 ──
 # 180 秒全量刷新叶节点；真实业务失败仍会绕过周期触发强检
@@ -402,7 +402,6 @@ proxy-groups:
   - {name: Emby, type: select, proxies: [低倍率/MITM节点, 节点选择, 自建/家宽节点, 香港节点, 日本节点, 新加坡节点, 台湾节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/emby.png"}
   - {name: 哔哩哔哩, <<: *Direct_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/bilibili.png"}
   - {name: 哔哩东南亚, type: select, proxies: [机场名称1优先, 新加坡节点, 全部节点, 自建/家宽节点, DIRECT], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/bilibilit.png"}
-  - {name: 巴哈姆特, type: select, proxies: [台湾节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/bahamut.png"}
   - {name: Spotify, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/spotify.png"}
   - {name: 境外影音, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global_tv.png"}
   - {name: 境外社媒, <<: *Airport1_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global_media.png"}
@@ -443,7 +442,7 @@ proxy-groups:
   - {name: 全部节点, type: select, use: *use_ap_all, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/all.png"}
 
 # 功能型代理组默认隐藏
-  - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, HuggingFace, GitHub, Docker, 开发下载, Kryptex, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, 境外通信, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, 巴哈姆特, Spotify, 境外影音, 境外社媒, 游戏平台, Speedtest, 境外金融, 加密资产, PayPal, Wise, 境外电商, STEAM, DIRECT, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
+  - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, HuggingFace, GitHub, Docker, 开发下载, Kryptex, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, 境外通信, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, Spotify, 境外影音, 境外社媒, 游戏平台, Speedtest, 境外金融, 加密资产, PayPal, Wise, 境外电商, STEAM, DIRECT, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
 
 rules:
 # === 用户自定义优先 ===
@@ -551,7 +550,7 @@ rules:
   - RULE-SET,TelegramEU_ip,TelegramEU,no-resolve
 
 # === 具体产品规则（产品边界优先于承载它的厂商云或共享平台） ===
-  - RULE-SET,bahamut_domain,巴哈姆特
+  - RULE-SET,bahamut_domain,台湾节点
   # AI（非中国）
   - RULE-SET,ai!cn_domain,AI
   # Google 子产品（通用 Google 集合在本层末尾）

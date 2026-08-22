@@ -304,6 +304,14 @@ begin
     errors << "config: redundant single-target wrapper groups: #{redundant_wrapper_groups.join(', ')}"
   end
 
+  single_target_select_groups = groups.select do |group|
+    group["type"] == "select" && Array(group["use"]).empty? && Array(group["proxies"]).one?
+  end
+  unless single_target_select_groups.empty?
+    names = single_target_select_groups.map { |group| group["name"] }
+    errors << "config: single-target select groups add no selection semantics: #{names.join(', ')}"
+  end
+
   privacy_group = groups.find { |group| group["name"] == "隐私拦截" }
   unless privacy_group && privacy_group["type"] == "select" &&
          privacy_group["proxies"] == ["REJECT", "REJECT-DROP", "DIRECT", "节点选择"]
@@ -313,6 +321,13 @@ begin
   lowrate_group = groups.find { |group| group["name"] == "低倍率/MITM节点" }
   unless lowrate_group && lowrate_group["hidden"] == true
     errors << "config: 低倍率/MITM节点 must remain hidden as an Emby-only helper"
+  end
+
+  %w[Urltest_Base Loadbalance_Base].each do |template_name|
+    redundant_health_fields = config.fetch(template_name).keys & %w[url interval lazy]
+    unless redundant_health_fields.empty?
+      errors << "config: #{template_name} must inherit provider health checks instead of defining #{redundant_health_fields.join(', ')}"
+    end
   end
 
   airport2_enabled = proxy_provider_names.include?("Airport_02")
@@ -553,9 +568,12 @@ begin
     if Array(group["proxies"]).include?("机场名称3地区优先")
       errors << "config: #{name} must not retain the stale airport-3 direct selection"
     end
+    unless Array(group["proxies"]).include?("美国节点")
+      errors << "config: #{name} must expose 美国节点 for temporary regional selection"
+    end
   end
 
-  {"AI" => "日本节点", "PayPal" => "日本节点", "哔哩东南亚" => "机场名称1优先", "巴哈姆特" => "台湾节点"}.each do |name, expected|
+  {"AI" => "日本节点", "PayPal" => "日本节点", "哔哩东南亚" => "机场名称1优先"}.each do |name, expected|
     group = groups.find { |candidate| candidate["name"] == name }
     unless group && group["type"] == "select" && Array(group["proxies"]).first == expected
       errors << "config: #{name} must prefer #{expected}"
@@ -564,7 +582,7 @@ begin
 
   global_group = groups.find { |group| group["name"] == "GLOBAL" }
   if global_group
-    (airport1_service_groups + airport3_service_groups + %w[AI PayPal 哔哩东南亚 巴哈姆特]).uniq.each do |name|
+    (airport1_service_groups + airport3_service_groups + %w[AI PayPal 哔哩东南亚]).uniq.each do |name|
       errors << "config: GLOBAL must expose #{name}" unless Array(global_group["proxies"]).include?(name)
     end
   else
@@ -591,6 +609,11 @@ begin
   expected_epic_rule = "RULE-SET,Epic_domain,游戏平台"
   unless rules.grep(/\ARULE-SET,Epic_domain,/) == [expected_epic_rule]
     errors << "config: Epic_domain must route through 游戏平台"
+  end
+
+  expected_bahamut_rule = "RULE-SET,bahamut_domain,台湾节点"
+  unless rules.grep(/\ARULE-SET,bahamut_domain,/) == [expected_bahamut_rule]
+    errors << "config: bahamut_domain must route directly through 台湾节点 without a wrapper group"
   end
 
   rules.each_with_index do |rule, index|
