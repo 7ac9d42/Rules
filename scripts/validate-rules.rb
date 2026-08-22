@@ -83,6 +83,41 @@ def add_domain_provider_errors(errors, label, name, providers)
   errors << "#{label} provider #{name} has behavior #{behavior.inspect}; expected domain or classical"
 end
 
+def domain_payload_from_classical_source(path)
+  entries = []
+  File.foreach(path).with_index(1) do |line, line_number|
+    line = line.strip
+    next if line.empty? || line.start_with?("#")
+
+    type, value, extra = line.split(",", 3)
+    unless extra.nil? && !value.to_s.empty? && %w[DOMAIN DOMAIN-SUFFIX].include?(type)
+      raise "#{path.delete_prefix("#{ROOT}/")}: malformed domain rule at line #{line_number}: #{line}"
+    end
+
+    entries << (type == "DOMAIN-SUFFIX" ? "+.#{value.delete_prefix(".")}" : value)
+  end
+  entries.uniq.sort
+end
+
+def domain_rules_intersect?(left, right)
+  left_suffix = left.start_with?("+.")
+  right_suffix = right.start_with?("+.")
+  left_domain = left.delete_prefix("+.")
+  right_domain = right.delete_prefix("+.")
+
+  if left_suffix && right_suffix
+    left_domain == right_domain ||
+      left_domain.end_with?(".#{right_domain}") ||
+      right_domain.end_with?(".#{left_domain}")
+  elsif left_suffix
+    right_domain == left_domain || right_domain.end_with?(".#{left_domain}")
+  elsif right_suffix
+    left_domain == right_domain || left_domain.end_with?(".#{right_domain}")
+  else
+    left_domain == right_domain
+  end
+end
+
 def payload_for(path)
   document = YAML.load_file(path)
   document.is_a?(Hash) ? document["payload"] : nil
@@ -257,6 +292,16 @@ begin
 
   duplicate_groups = group_names.tally.select { |_name, count| count > 1 }.keys
   errors << "config: duplicate proxy groups: #{duplicate_groups.join(', ')}" unless duplicate_groups.empty?
+
+  direct_proxy = Array(config["proxies"]).find { |proxy| proxy["name"] == "🟢 直连" }
+  unless direct_proxy && direct_proxy["type"] == "direct"
+    errors << "config: 🟢 直连 must be a direct proxy"
+  end
+  global_direct_group = groups.find { |group| group["name"] == "全球直连" }
+  unless global_direct_group && global_direct_group["type"] == "select" &&
+         global_direct_group["proxies"] == ["🟢 直连"] && Array(global_direct_group["use"]).empty?
+    errors << "config: 全球直连 must select only 🟢 直连"
+  end
 
   airport2_enabled = proxy_provider_names.include?("Airport_02")
   airport_numbers = airport2_enabled ? %w[1 2 3 4] : %w[1 3 4]
@@ -673,12 +718,14 @@ begin
     ["RULE-SET,banAd_core_domain,", "RULE-SET,banAd_pcdn_domain,"],
     ["RULE-SET,banAd_pcdn_domain,", "RULE-SET,wechat_domain,"],
     ["RULE-SET,wechat_domain,", "RULE-SET,banAd_low_domain,"],
-    ["RULE-SET,banAd_low_domain,", "RULE-SET,cn_domain,"],
+    ["RULE-SET,direct_domain,", "RULE-SET,banAd_low_domain,"],
+    ["RULE-SET,banAd_low_domain,", "RULE-SET,apple_domain,"],
     ["RULE-SET,apple_update_domain,", "RULE-SET,apple_cn_domain,"],
     ["RULE-SET,apple_cn_domain,", "RULE-SET,apple_domain,"],
-    ["RULE-SET,apple_domain,", "RULE-SET,cn_domain,"],
+    ["RULE-SET,apple_domain,", "RULE-SET,proxy_domain,"],
     ["RULE-SET,biliintl_domain,", "RULE-SET,bilibili_domain,"],
-    ["RULE-SET,bilibili_domain,", "RULE-SET,cn_domain,"],
+    ["RULE-SET,bilibili_domain,", "RULE-SET,proxy_domain,"],
+    ["RULE-SET,proxy_domain,", "RULE-SET,cn_domain,"],
     ["RULE-SET,cn_domain,", "RULE-SET,telegram_domain,"],
     ["RULE-SET,steam_cn_domain,", "RULE-SET,steam_domain,"],
     ["RULE-SET,proxy_domain,", "RULE-SET,google_domain,"],
@@ -729,6 +776,34 @@ rescue StandardError => e
   errors << "dev-download source/generated validation: #{e.message}"
 end
 errors << "scripts/build/dev-download.sh: builder must be executable" unless File.executable?(dev_builder_path)
+
+begin
+  local_domain_sources = {
+    "direct" => File.join(ROOT, "rules", "Domain", "direct.list"),
+    "proxy" => File.join(ROOT, "rules", "Domain", "Proxymini.list"),
+  }
+  local_domain_payloads = local_domain_sources.to_h do |name, source_path|
+    generated_path = File.join(ROOT, "rules", "Domain", "#{name}.yaml")
+    expected = domain_payload_from_classical_source(source_path)
+    generated = yaml_payloads.fetch(generated_path)
+    unless generated == expected
+      missing = (expected - generated).first(3)
+      extra = (generated - expected).first(3)
+      errors << "#{generated_path.delete_prefix("#{ROOT}/")}: source/generated mismatch " \
+                "missing=#{missing.inspect} extra=#{extra.inspect}"
+    end
+    [name, generated]
+  end
+
+  direct_proxy_conflicts = local_domain_payloads.fetch("direct").product(local_domain_payloads.fetch("proxy"))
+                                                .select { |direct, proxy| domain_rules_intersect?(direct, proxy) }
+  unless direct_proxy_conflicts.empty?
+    samples = direct_proxy_conflicts.first(3).map { |direct, proxy| "#{direct} <-> #{proxy}" }
+    errors << "rules/Domain: direct/proxy domain conflicts: #{samples.join(', ')}"
+  end
+rescue StandardError => e
+  errors << "direct/proxy source/generated validation: #{e.message}"
+end
 
 critical_rules = {
   "rules/Domain/tvb.yaml" => {

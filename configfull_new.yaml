@@ -467,9 +467,6 @@ rules:
   - DOMAIN-SUFFIX,trycloudflare.com,全球直连
   - DOMAIN,www.csgraduates.com,全球直连
   - DOMAIN,www.cxyonly.fans,全球直连
-  # 自维护的代理补充属于显式覆盖，不能放到厂商大集合之后
-  - RULE-SET,proxy_domain,节点选择
-
 # === 金融服务走代理（显式业务策略优先于广告规则） ===
   - RULE-SET,Wise_domain,Wise
   - RULE-SET,paypal_domain,PayPal
@@ -519,6 +516,9 @@ rules:
   - RULE-SET,biliintl_domain,哔哩东南亚
   - RULE-SET,bilibili_domain,哔哩哔哩
   - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
+
+# === 人工代理例外（低于广告、国内白名单与跨区策略，但必须早于国内总集合） ===
+  - RULE-SET,proxy_domain,节点选择
 
 # === 国内域名总兜底（必须早于常规代理服务和宽泛代理集合） ===
   - RULE-SET,cn_domain,全球直连
