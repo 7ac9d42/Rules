@@ -373,9 +373,9 @@ proxy-groups:
   # 低倍率/MITM节点组
   - {name: 低倍率/MITM节点, type: select, use: *use_ap_all, filter: *lowrate_mitm, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
   # TG专用节点组
-  - {name: TelegramEU, type: select, proxies: [新加坡-机场名称3优先, 香港-机场名称3优先, 日本-机场名称3优先, 机场名称1优先, 自建/家宽节点, 欧洲节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
-  - {name: TelegramSG, type: select, proxies: [新加坡-机场名称3优先, 香港-机场名称3优先, 日本-机场名称3优先, 机场名称1优先, 自建/家宽节点, 新加坡节点, 香港节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
-  - {name: TelegramUS, type: select, proxies: [美国-机场名称3优先, 新加坡-机场名称3优先, 香港-机场名称3优先, 日本-机场名称3优先, 机场名称1优先, 自建/家宽节点, 美国节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: TelegramEU, type: select, proxies: [新加坡-机场名称3优先, 日本-机场名称3优先, 香港-机场名称3优先, 机场名称1优先, 自建/家宽节点, 欧洲节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: TelegramSG, type: select, proxies: [新加坡-机场名称3优先, 日本-机场名称3优先, 香港-机场名称3优先, 机场名称1优先, 自建/家宽节点, 新加坡节点, 香港节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  - {name: TelegramUS, type: select, proxies: [美国-机场名称3优先, 新加坡-机场名称3优先, 日本-机场名称3优先, 香港-机场名称3优先, 机场名称1优先, 自建/家宽节点, 美国节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, 全球直连, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
 
   - {name: 自建/家宽节点, type: select, use: *use_ap_all, filter: *home_only, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
   - {name: YouTube, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/youtube.png"}

@@ -478,9 +478,9 @@ begin
   end
 
   telegram_region_orders = {
-    "TelegramEU" => %w[新加坡 香港 日本],
-    "TelegramSG" => %w[新加坡 香港 日本],
-    "TelegramUS" => %w[美国 新加坡 香港 日本],
+    "TelegramEU" => %w[新加坡 日本 香港],
+    "TelegramSG" => %w[新加坡 日本 香港],
+    "TelegramUS" => %w[美国 新加坡 日本 香港],
   }
   telegram_region_orders.each do |name, regions|
     group = groups.find { |candidate| candidate["name"] == name }
