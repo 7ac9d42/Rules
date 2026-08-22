@@ -41,6 +41,8 @@
 
 # 容器注册表与镜像包体；只收录明确的 registry/blob 域。
 +.azurecr.io
++.blob.core.windows.net
++.data.azurecr.io
 +.gcr.io
 +.ghcr.io
 +.mcr.microsoft.com
@@ -72,6 +74,7 @@
 
 # IDE、AI 工具链和模型包体。
 +.cache-redirector.jetbrains.com
++.dd20bb891979d25aebc8bec07b2b3bbc.r2.cloudflarestorage.com
 +.download-cdn.jetbrains.com
 +.download.jetbrains.com
 +.download.pytorch.org

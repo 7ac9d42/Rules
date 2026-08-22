@@ -12,7 +12,7 @@
 - 将两条主代理链明确命名为 `机场名称1优先` 与 `机场名称3优先`，服务模板直接引用主链并移除 `节点选择` 中转，避免旧的 `store-selected` 选择继续覆盖新默认；同地区跨机场链同步显式标注机场名称1优先语义。
 - 新增香港、日本、新加坡、美国的 `地区-机场名称3优先` 自动回退链；Telegram 保留既有 DC 地区顺序，但改按机场名称3→机场名称1→机场名称4使用出口，降低媒体流量成本并保留跨机场容灾。
 - 按 IP 质量重新收紧业务默认链路：Microsoft 与账号、金融、社交、严格解锁服务使用机场名称1优先，FCM、开发下载和游戏平台等低敏感业务使用机场名称3优先；台湾解锁新增机场名称1→机场名称3→机场名称4回退，机场名称4退出普通自动与负载均衡，仅保留末位兜底、手动及特殊用途。
-- 开发下载集合补齐常用容器注册表、Linux/Conda 软件仓库、Microsoft 开发包、JetBrains、PyTorch 与 Ollama 模型包体，并继续早于 Google、GitHub、OneDrive、Microsoft 等厂商父集合匹配；Windows Update、Office CDN 与 Visual Studio 大陆可用下载端点明确排除，避免可直连流量进入代理。
+- 开发下载集合补齐常用容器注册表、Linux/Conda 软件仓库、Microsoft 开发包、JetBrains、PyTorch 与 Ollama 模型包体，并覆盖 Ollama R2 及 Azure ACR 新旧数据端点；规则继续早于 Google、GitHub、OneDrive、Microsoft 等厂商父集合匹配，Windows Update、Office CDN 与 Visual Studio 大陆可用下载端点仍明确排除，避免可直连流量进入代理。
 - KISS 审计删除 `cn_ip` 之后与最终 `MATCH` 同策略的 Cloudflare、GFW 和非中国地理集合：未命中国内安全网的流量仍由 `MATCH,节点选择` 防漏兜底，分流结果不变，同时减少 3 个远程 rule provider 的更新、存储和匹配开销；classical provider 改用单一公共模板，避免三份等价参数漂移。
 - 全项目审计后收紧人工代理补充的优先级：`proxy_domain` 不再抢占高置信广告、PCDN、明确国内白名单及 Apple/B 站跨区策略，仅作为 `cn_domain` 之前的窄例外；验证器同时锁定国内规则的内置 `DIRECT` 出口、direct/proxy 源产物一致性及跨集合冲突，防止每日上游同步静默破坏国内优先语义。
 - 重排主配置的分流优先级：广告、自定义覆盖及 Apple/B 站等跨区策略之后，先以 `cn_domain` 保障国内域名直连，再处理常规代理服务；具体服务规则之后新增可解析的 `cn_ip` 安全网，减少国内域名被宽泛代理集合提前截获。
