@@ -345,6 +345,19 @@ begin
     end
   end
 
+  fallback_health_schedules = {
+    "机场名称3优先" => [45, false, 2],
+    "机场名称1优先" => [60, true, 2],
+  }
+  groups.select { |group| group["type"] == "fallback" }.each do |group|
+    expected = fallback_health_schedules.fetch(group["name"], [60, true, 3])
+    actual = group.values_at("interval", "lazy", "max-failed-times")
+    next if actual == expected
+
+    errors << "config: #{group.fetch("name")} fallback health schedule must be " \
+              "interval=#{expected[0]}, lazy=#{expected[1]}, max-failed-times=#{expected[2]}"
+  end
+
   airport2_enabled = proxy_provider_names.include?("Airport_02")
   airport_numbers = airport2_enabled ? %w[1 2 3 4] : %w[1 3 4]
   expected_airport_providers = airport_numbers.map { |number| "Airport_0#{number}" }
