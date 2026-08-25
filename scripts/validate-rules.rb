@@ -441,7 +441,7 @@ begin
       next
     end
 
-    region_order = number == "3" ? %w[新加坡 日本 香港 美国] : %w[香港 日本 新加坡 美国]
+    region_order = number == "3" ? %w[日本 新加坡 香港 美国] : %w[香港 日本 新加坡 美国]
     expected_children = region_order.map { |region| "机场名称#{number}-#{region}" }
     region_fallback = groups.find { |group| group["name"] == fallback_name }
     unless region_fallback
