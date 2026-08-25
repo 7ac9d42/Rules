@@ -435,6 +435,23 @@ begin
     end
   end
 
+  {
+    "机场名称3-日本" => "region_jp_no_ctcu",
+    "机场名称3-新加坡" => "region_sg_no_ctcu",
+  }.each do |group_name, filter_name|
+    group = groups.find { |candidate| candidate["name"] == group_name }
+    unless group && group["filter"] == config.fetch(filter_name) &&
+           group["exclude-filter"] == config.fetch("exclude_lowrate")
+      errors << "config: #{group_name} must exclude pure CTCU while preserving the common rate filter"
+    end
+  end
+
+  airport3_us_group = groups.find { |group| group["name"] == "机场名称3-美国" }
+  unless airport3_us_group && airport3_us_group["filter"] == config.fetch("region_us") &&
+         !airport3_us_group.key?("exclude-filter")
+    errors << "config: 机场名称3-美国 must keep low-rate Airport_03 nodes in its automatic pool"
+  end
+
   multi_airport_group = groups.find { |group| group["name"] == "机场名称1优先" }
   expected_multi_airport_proxies = airport_numbers.map { |number| "机场名称#{number}地区优先" }
   if multi_airport_group
@@ -814,6 +831,14 @@ begin
     "region_jp" => {
       required: ["日本 01", "JP 01", "Japan 01"],
       forbidden: ["JPN 01", "jupiter 01"],
+    },
+    "region_sg_no_ctcu" => {
+      required: ["新加坡专线|HY2", "新加坡高速|CTCUCM", "SG Premium"],
+      forbidden: ["新加坡高速|CTCU", "CTCU|Singapore", "日本高速|CUCM"],
+    },
+    "region_jp_no_ctcu" => {
+      required: ["日本专线|HY2", "日本高速|CUCM", "JP Premium"],
+      forbidden: ["日本高速|CTCU", "CTCU|Japan", "新加坡高速|CTCUCM"],
     },
     "region_us" => {
       required: ["美国 01", "US 01", "United States 01", "Seattle 01"],
