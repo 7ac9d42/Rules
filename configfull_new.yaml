@@ -316,49 +316,34 @@ proxy-groups:
   - {name: 机场名称3-美国, <<: *Urltest_Base, use: [Airport_03], filter: *region_us, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
   - {name: 机场名称3-台湾, <<: *Urltest_Base, use: [Airport_03], filter: *region_tw, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
 
-  - {name: 机场名称4-香港, <<: *Urltest_Base, use: [Airport_04], filter: *region_hk, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 机场名称4-日本, <<: *Urltest_Base, use: [Airport_04], filter: *region_jp, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  - {name: 机场名称4-新加坡, <<: *Urltest_Base, use: [Airport_04], filter: *region_sg, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 机场名称4-美国, <<: *Urltest_Base, use: [Airport_04], filter: *region_us, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-  - {name: 机场名称4-台湾, <<: *Urltest_Base, use: [Airport_04], filter: *region_tw, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
+  # 机场名称4仅作末位兜底，节点地区不固定；全量选择当前可用节点
+  - {name: 机场名称4地区优先, <<: *Urltest_Base, use: [Airport_04], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
   # 按机场名称分组
   - {name: 机场名称1地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡, 机场名称1-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # Airport_02 内部地区回退模板
 #  - {name: 机场名称2地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   - {name: 机场名称3地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-  - {name: 机场名称4地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称4-香港, 机场名称4-日本, 机场名称4-新加坡, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # 四机场模板：普通多机场链 机场名称1→机场名称2→机场名称3→机场名称4
 #  - {name: 机场名称1优先, <<: *Fallback_Base, max-failed-times: 2, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # 当前三机场链：机场名称1→机场名称3→机场名称4
   - {name: 机场名称1优先, <<: *Fallback_Base, max-failed-times: 2, proxies: [机场名称1地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
-  # 四机场模板：同地区跨机场严格按机场名称1→机场名称2→机场名称3→机场名称4回退；闲置时停掉重复探测
-#  - {name: 香港-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-#  - {name: 新加坡-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-#  - {name: 美国-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-美国, 机场名称2-美国, 机场名称3-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-#  - {name: 日本-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-日本, 机场名称2-日本, 机场名称3-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  # 当前三机场：同地区跨机场严格按机场名称1→机场名称3→机场名称4回退；共享内部地区组的健康状态
-  - {name: 香港-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称3-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 新加坡-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-新加坡, 机场名称3-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 美国-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-美国, 机场名称3-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-  - {name: 日本-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-日本, 机场名称3-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  # 四机场模板：前三个机场保持同地区，机场名称4以全量可用节点作末位兜底
+#  - {name: 香港-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+#  - {name: 新加坡-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+#  - {name: 美国-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-美国, 机场名称2-美国, 机场名称3-美国, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+#  - {name: 日本-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-日本, 机场名称2-日本, 机场名称3-日本, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  # 当前三机场：机场名称1→机场名称3保持同地区，机场名称4全量兜底
+  - {name: 香港-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称3-香港, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 新加坡-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-新加坡, 机场名称3-新加坡, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 美国-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-美国, 机场名称3-美国, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 日本-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-日本, 机场名称3-日本, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   #- {name: 多地区优先转移(<-地区优先), type: fallback, proxies: [香港-机场名称1优先, 新加坡-机场名称1优先, 美国-机场名称1优先], interval: 60, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/failover.png"}
 
   # 台湾解锁优先保证机场名称1质量，机场名称4仅作末位兜底
-#  - {name: 台湾-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-台湾, 机场名称2-台湾, 机场名称3-台湾, 机场名称4-台湾], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
-  - {name: 台湾-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-台湾, 机场名称3-台湾, 机场名称4-台湾], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
-
-  # 四机场模板：Telegram 同地区严格按机场名称3→机场名称1→机场名称2→机场名称4回退
-#  - {name: 香港-机场名称3优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-香港, 机场名称1-香港, 机场名称2-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-#  - {name: 新加坡-机场名称3优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-新加坡, 机场名称1-新加坡, 机场名称2-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-#  - {name: 美国-机场名称3优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-美国, 机场名称1-美国, 机场名称2-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-#  - {name: 日本-机场名称3优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-日本, 机场名称1-日本, 机场名称2-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  # 当前三机场：保持 Telegram DC 地区不变，只调整机场成本优先级
-  - {name: 香港-机场名称3优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-香港, 机场名称1-香港, 机场名称4-香港], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 新加坡-机场名称3优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-新加坡, 机场名称1-新加坡, 机场名称4-新加坡], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 美国-机场名称3优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-美国, 机场名称1-美国, 机场名称4-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-  - {name: 日本-机场名称3优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-日本, 机场名称1-日本, 机场名称4-日本], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+#  - {name: 台湾-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-台湾, 机场名称2-台湾, 机场名称3-台湾, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
+  - {name: 台湾-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-台湾, 机场名称3-台湾, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
 
   # 四机场模板：机场名称3主链作为唯一常驻心跳，递归覆盖全部机场路径
 #  - {name: 机场名称3优先, <<: *Fallback_Heartbeat_Base, proxies: [机场名称3地区优先, 机场名称1地区优先, 机场名称2地区优先, 机场名称4地区优先]}
@@ -372,10 +357,8 @@ proxy-groups:
 
   # 低倍率/MITM节点组
   - {name: 低倍率/MITM节点, type: select, hidden: true, use: *use_ap_all, filter: *lowrate_mitm, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
-  # TG专用节点组
-  - {name: TelegramEU, type: select, proxies: [新加坡-机场名称3优先, 日本-机场名称3优先, 香港-机场名称3优先, 机场名称1优先, 自建/家宽节点, 欧洲节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 美国节点, DIRECT, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
-  - {name: TelegramSG, type: select, proxies: [新加坡-机场名称3优先, 日本-机场名称3优先, 香港-机场名称3优先, 机场名称1优先, 自建/家宽节点, 新加坡节点, 香港节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, DIRECT, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
-  - {name: TelegramUS, type: select, proxies: [美国-机场名称3优先, 新加坡-机场名称3优先, 日本-机场名称3优先, 香港-机场名称3优先, 机场名称1优先, 自建/家宽节点, 美国节点, 香港节点, 日本节点, 新加坡节点, 台湾节点, 欧洲节点, DIRECT, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
+  # Telegram 域名与全部 IP 共用机场名称3优先选择组
+  - {name: Telegram, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/telegram.png"}
 
   - {name: 自建/家宽节点, type: select, use: *use_ap_all, filter: *home_only, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/private_node.png"}
   - {name: YouTube, <<: *Airport3_first, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/youtube.png"}
@@ -421,17 +404,17 @@ proxy-groups:
 
   # 地区节点组
   # 四机场模板：启用 Airport_02 时用以下五行替换当前同名组
-#  - {name: 香港节点, type: select, proxies: [香港-机场名称1优先, 机场名称1-香港, 机场名称2-香港, 机场名称3-香港, 机场名称4-香港, 香港均衡], use: *use_ap_all, filter: *region_hk, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-#  - {name: 新加坡节点, type: select, proxies: [新加坡-机场名称1优先, 机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡, 机场名称4-新加坡, 新加坡均衡], use: *use_ap_all, filter: *region_sg, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-#  - {name: 日本节点, type: select, proxies: [日本-机场名称1优先, 机场名称1-日本, 机场名称2-日本, 机场名称3-日本, 机场名称4-日本, 日本均衡], use: *use_ap_all, filter: *region_jp, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-#  - {name: 美国节点, type: select, proxies: [美国-机场名称1优先, 机场名称1-美国, 机场名称2-美国, 机场名称3-美国, 机场名称4-美国, 美国均衡], use: *use_ap_all, filter: *region_us, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-#  - {name: 台湾节点, type: select, proxies: [台湾-机场名称1优先, 机场名称1-台湾, 机场名称2-台湾, 机场名称3-台湾, 机场名称4-台湾, 台湾自动, 台湾均衡], use: *use_ap_all, filter: *region_tw, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
+#  - {name: 香港节点, type: select, proxies: [香港-机场名称1优先, 机场名称1-香港, 机场名称2-香港, 机场名称3-香港, 机场名称4地区优先, 香港均衡], use: *use_ap_all, filter: *region_hk, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+#  - {name: 新加坡节点, type: select, proxies: [新加坡-机场名称1优先, 机场名称1-新加坡, 机场名称2-新加坡, 机场名称3-新加坡, 机场名称4地区优先, 新加坡均衡], use: *use_ap_all, filter: *region_sg, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+#  - {name: 日本节点, type: select, proxies: [日本-机场名称1优先, 机场名称1-日本, 机场名称2-日本, 机场名称3-日本, 机场名称4地区优先, 日本均衡], use: *use_ap_all, filter: *region_jp, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+#  - {name: 美国节点, type: select, proxies: [美国-机场名称1优先, 机场名称1-美国, 机场名称2-美国, 机场名称3-美国, 机场名称4地区优先, 美国均衡], use: *use_ap_all, filter: *region_us, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+#  - {name: 台湾节点, type: select, proxies: [台湾-机场名称1优先, 机场名称1-台湾, 机场名称2-台湾, 机场名称3-台湾, 机场名称4地区优先, 台湾自动, 台湾均衡], use: *use_ap_all, filter: *region_tw, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
   # 当前三机场地区节点组
-  - {name: 香港节点, type: select, proxies: [香港-机场名称1优先, 机场名称1-香港, 机场名称3-香港, 机场名称4-香港, 香港均衡], use: *use_ap_all, filter: *region_hk, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
-  - {name: 新加坡节点, type: select, proxies: [新加坡-机场名称1优先, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称4-新加坡, 新加坡均衡], use: *use_ap_all, filter: *region_sg, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
-  - {name: 日本节点, type: select, proxies: [日本-机场名称1优先, 机场名称1-日本, 机场名称3-日本, 机场名称4-日本, 日本均衡], use: *use_ap_all, filter: *region_jp, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
-  - {name: 美国节点, type: select, proxies: [美国-机场名称1优先, 机场名称1-美国, 机场名称3-美国, 机场名称4-美国, 美国均衡], use: *use_ap_all, filter: *region_us, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
-  - {name: 台湾节点, type: select, proxies: [台湾-机场名称1优先, 机场名称1-台湾, 机场名称3-台湾, 机场名称4-台湾, 台湾自动, 台湾均衡], use: *use_ap_all, filter: *region_tw, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
+  - {name: 香港节点, type: select, proxies: [香港-机场名称1优先, 机场名称1-香港, 机场名称3-香港, 机场名称4地区优先, 香港均衡], use: *use_ap_all, filter: *region_hk, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 新加坡节点, type: select, proxies: [新加坡-机场名称1优先, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称4地区优先, 新加坡均衡], use: *use_ap_all, filter: *region_sg, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
+  - {name: 日本节点, type: select, proxies: [日本-机场名称1优先, 机场名称1-日本, 机场名称3-日本, 机场名称4地区优先, 日本均衡], use: *use_ap_all, filter: *region_jp, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
+  - {name: 美国节点, type: select, proxies: [美国-机场名称1优先, 机场名称1-美国, 机场名称3-美国, 机场名称4地区优先, 美国均衡], use: *use_ap_all, filter: *region_us, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
+  - {name: 台湾节点, type: select, proxies: [台湾-机场名称1优先, 机场名称1-台湾, 机场名称3-台湾, 机场名称4地区优先, 台湾自动, 台湾均衡], use: *use_ap_all, filter: *region_tw, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"}
   - {name: 欧洲节点, type: select, use: *use_ap_all, filter: *region_eu, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/European.png"}
 
   # 额外的URL test组
@@ -446,7 +429,7 @@ proxy-groups:
   - {name: 全部节点, type: select, use: *use_ap_all, empty-fallback: REJECT, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/all.png"}
 
 # 功能型代理组默认隐藏
-  - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, HuggingFace, GitHub, Docker, 开发下载, Kryptex, OneDrive, Microsoft, TelegramEU, TelegramSG, TelegramUS, 境外通信, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, Spotify, 境外影音, 境外社媒, 游戏平台, Speedtest, 境外金融, 加密资产, PayPal, Wise, 境外电商, STEAM, DIRECT, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
+  - {name: GLOBAL, type: select, proxies: [节点选择, YouTube, GoogleVPN, FCM, Google, Meta, AI, HuggingFace, GitHub, Docker, 开发下载, Kryptex, OneDrive, Microsoft, Telegram, 境外通信, Discord, Talkatone, LINE, Signal, TikTok, NETFLIX, DisneyPlus, HBO, Primevideo, AppleTV, Apple, Emby, 哔哩哔哩, 哔哩东南亚, Spotify, 境外影音, 境外社媒, 游戏平台, Speedtest, 境外金融, 加密资产, PayPal, Wise, 境外电商, STEAM, DIRECT, 隐私拦截, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 台湾自动, 香港均衡, 新加坡均衡, 日本均衡, 台湾均衡, 美国均衡, 自建/家宽节点, 全部节点], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/global.png"}
 
 rules:
 # === 用户自定义优先 ===
@@ -547,11 +530,9 @@ rules:
 # === 国内域名总兜底（必须早于常规代理服务和宽泛代理集合） ===
   - RULE-SET,cn_domain,DIRECT
 
-# === Telegram DC 分流（提前避免被通用规则遮蔽） ===
-  - RULE-SET,telegram_domain,TelegramSG
-  - RULE-SET,TelegramSG_ip,TelegramSG,no-resolve
-  - RULE-SET,TelegramUS_ip,TelegramUS,no-resolve
-  - RULE-SET,TelegramEU_ip,TelegramEU,no-resolve
+# === Telegram 域名与 IP（提前避免被通用规则遮蔽） ===
+  - RULE-SET,telegram_domain,Telegram
+  - RULE-SET,telegram_ip,Telegram,no-resolve
 
 # === 具体产品规则（产品边界优先于承载它的厂商云或共享平台） ===
   - RULE-SET,bahamut_domain,台湾节点
@@ -624,11 +605,9 @@ rules:
   - MATCH,节点选择
 
 rule-providers:
-  # 自定义TG依照DC分流规则
+  # Telegram 域名使用上游集合，IP 使用本地合并后的完整集合
   telegram_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs" }
-  TelegramSG_ip: { <<: *ip, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Telegram/TelegramSG.mrs" }
-  TelegramUS_ip: { <<: *ip, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Telegram/TelegramUS.mrs" }
-  TelegramEU_ip: { <<: *ip, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Telegram/TelegramEU.mrs" }
+  telegram_ip: { <<: *ip, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Telegram/Telegram.mrs" }
 
   banAd_core_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core.mrs" }
   banAd_pcdn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn.mrs" }

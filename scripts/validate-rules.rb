@@ -412,9 +412,35 @@ begin
     errors << "config: missing 机场名称3优先 proxy group"
   end
 
+  airport_region_target = lambda do |number, region|
+    number == "4" ? "机场名称4地区优先" : "机场名称#{number}-#{region}"
+  end
+
   airport_numbers.each do |number|
     fallback_name = "机场名称#{number}地区优先"
     provider_name = "Airport_0#{number}"
+    if number == "4"
+      airport4_pool = groups.find { |group| group["name"] == fallback_name }
+      if airport4_pool
+        errors << "config: #{fallback_name} must be a url-test group" unless airport4_pool["type"] == "url-test"
+        errors << "config: #{fallback_name} must be hidden" unless airport4_pool["hidden"] == true
+        unless Array(airport4_pool["use"]) == [provider_name]
+          errors << "config: #{fallback_name} must use only #{provider_name}"
+        end
+        unless (airport4_pool.keys & %w[filter exclude-filter proxies]).empty?
+          errors << "config: #{fallback_name} must test the full #{provider_name} provider without regional/rate filters"
+        end
+      else
+        errors << "config: missing #{fallback_name} proxy group"
+      end
+
+      stale_airport4_regions = group_names.grep(/\A机场名称4-(?:香港|日本|新加坡|美国|台湾)\z/)
+      unless stale_airport4_regions.empty?
+        errors << "config: Airport_04 must not retain empty regional groups: #{stale_airport4_regions.inspect}"
+      end
+      next
+    end
+
     region_order = number == "3" ? %w[日本 新加坡 香港 美国] : %w[香港 日本 新加坡 美国]
     expected_children = region_order.map { |region| "机场名称#{number}-#{region}" }
     region_fallback = groups.find { |group| group["name"] == fallback_name }
@@ -474,7 +500,7 @@ begin
   %w[香港 日本 新加坡 美国].each do |region|
     cross_airport_name = "#{region}-机场名称1优先"
     cross_airport_group = groups.find { |group| group["name"] == cross_airport_name }
-    expected_cross_airport_proxies = airport_numbers.map { |number| "机场名称#{number}-#{region}" }
+    expected_cross_airport_proxies = airport_numbers.map { |number| airport_region_target.call(number, region) }
     if cross_airport_group
       errors << "config: #{cross_airport_name} must be a fallback group" unless cross_airport_group["type"] == "fallback"
       unless cross_airport_group["proxies"] == expected_cross_airport_proxies
@@ -499,22 +525,10 @@ begin
       errors << "config: missing #{region_selector_name} proxy group"
     end
 
-    airport3_cross_name = "#{region}-机场名称3优先"
-    airport3_cross_group = groups.find { |group| group["name"] == airport3_cross_name }
-    expected_airport3_cross_proxies = airport3_first_numbers.map { |number| "机场名称#{number}-#{region}" }
-    if airport3_cross_group
-      errors << "config: #{airport3_cross_name} must be a fallback group" unless airport3_cross_group["type"] == "fallback"
-      errors << "config: #{airport3_cross_name} must be hidden" unless airport3_cross_group["hidden"] == true
-      unless airport3_cross_group["proxies"] == expected_airport3_cross_proxies
-        errors << "config: #{airport3_cross_name} proxies must be #{expected_airport3_cross_proxies.inspect}"
-      end
-    else
-      errors << "config: missing #{airport3_cross_name} proxy group"
-    end
   end
 
-  expected_taiwan_proxies = airport_numbers.map { |number| "机场名称#{number}-台湾" }
-  airport_numbers.each do |number|
+  expected_taiwan_proxies = airport_numbers.map { |number| airport_region_target.call(number, "台湾") }
+  airport_numbers.reject { |number| number == "4" }.each do |number|
     group_name = "机场名称#{number}-台湾"
     group = groups.find { |candidate| candidate["name"] == group_name }
     unless group && group["type"] == "url-test" && Array(group["use"]) == ["Airport_0#{number}"]
@@ -549,26 +563,15 @@ begin
     end
   end
 
-  telegram_region_orders = {
-    "TelegramEU" => %w[新加坡 日本 香港],
-    "TelegramSG" => %w[新加坡 日本 香港],
-    "TelegramUS" => %w[美国 新加坡 日本 香港],
-  }
-  telegram_region_orders.each do |name, regions|
-    group = groups.find { |candidate| candidate["name"] == name }
-    unless group
-      errors << "config: missing #{name} proxy group"
-      next
-    end
-
-    expected_prefix = regions.map { |region| "#{region}-机场名称3优先" }
-    unless Array(group["proxies"]).first(expected_prefix.length) == expected_prefix
-      errors << "config: #{name} must preserve DC order with airport-3-first regional fallbacks"
-    end
-    stale_candidates = Array(group["proxies"]) & (["节点选择"] + regions.map { |region| "#{region}-机场名称1优先" })
-    unless stale_candidates.empty?
-      errors << "config: #{name} retains stale quality-first candidates: #{stale_candidates.inspect}"
-    end
+  telegram_group = groups.find { |group| group["name"] == "Telegram" }
+  unless telegram_group && telegram_group["type"] == "select" &&
+         telegram_group["proxies"] == config.fetch("Airport3_first").fetch("proxies")
+    errors << "config: Telegram must be a single Airport3_first select group"
+  end
+  stale_telegram_names = (group_names & %w[TelegramEU TelegramSG TelegramUS]) +
+                         (provider_names.to_a & %w[TelegramEU_ip TelegramSG_ip TelegramUS_ip])
+  unless stale_telegram_names.empty?
+    errors << "config: stale regional Telegram names: #{stale_telegram_names.to_a.sort.inspect}"
   end
 
   rule_update_group = groups.find { |group| group["name"] == "规则更新" }
@@ -627,7 +630,7 @@ begin
 
   global_group = groups.find { |group| group["name"] == "GLOBAL" }
   if global_group
-    (airport1_service_groups + airport3_service_groups + %w[AI PayPal 哔哩东南亚]).uniq.each do |name|
+    (airport1_service_groups + airport3_service_groups + %w[AI PayPal 哔哩东南亚 Telegram]).uniq.each do |name|
       errors << "config: GLOBAL must expose #{name}" unless Array(global_group["proxies"]).include?(name)
     end
   else
@@ -659,6 +662,15 @@ begin
   expected_bahamut_rule = "RULE-SET,bahamut_domain,台湾节点"
   unless rules.grep(/\ARULE-SET,bahamut_domain,/) == [expected_bahamut_rule]
     errors << "config: bahamut_domain must route directly through 台湾节点 without a wrapper group"
+  end
+
+  expected_telegram_rules = [
+    "RULE-SET,telegram_domain,Telegram",
+    "RULE-SET,telegram_ip,Telegram,no-resolve",
+  ]
+  actual_telegram_rules = rules.grep(/\ARULE-SET,telegram_(?:domain|ip),/)
+  unless actual_telegram_rules == expected_telegram_rules
+    errors << "config: Telegram domain/IP rules must use the unified Telegram group"
   end
 
   rules.each_with_index do |rule, index|
@@ -1040,9 +1052,10 @@ critical_rules = {
     forbidden: ["50.117.27.0/24", "216.172.154.0/24"],
     required: ["50.117.27.96/29"],
   },
-  "rules/Telegram/TelegramEU.yaml" => {
+  "rules/Telegram/Telegram.yaml" => {
     forbidden: ["5.28.192.0/18"],
-    required: ["95.161.64.0/20", "109.239.140.0/24"],
+    required: ["91.108.8.0/21", "91.108.16.0/21", "95.161.64.0/20",
+               "109.239.140.0/24", "149.154.160.0/20", "2001:b28:f23c::/47"],
   },
   "rules/Domain/fakeip-filter.yaml" => {
     forbidden: ["+.lan", "+.local", "+.qq.com", "+.tencent.com", "+.126.net"],

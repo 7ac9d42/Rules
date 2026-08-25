@@ -10,7 +10,7 @@
 - KISS 清理删除自定义 `🟢 直连` 节点及仅包装单一目标的 `全球直连`、`🚫 拒绝`、`⚪ 丢弃` 三个策略组，规则和候选项统一直接引用 Mihomo 内置 `DIRECT`、`REJECT`、`REJECT-DROP`；仅供 Emby 使用的低倍率/MITM组改为隐藏，减少顶层界面噪声而不改变选路能力。
 - 境外金融、加密资产和通信聚合类别新增 `境外金融`、`加密资产`、`境外通信` 独立选择组并默认使用机场名称1优先链，既允许临时改道又继续晚于国内域名总集合以保留国内直连；跨境电商改用单一上游聚合集合并统一命名为 `境外电商`，原 `Global-Media`、`Global-TV` 同步明确为 `境外社媒`、`境外影音`。
 - 将两条主代理链明确命名为 `机场名称1优先` 与 `机场名称3优先`，服务模板直接引用主链并移除 `节点选择` 中转，避免旧的 `store-selected` 选择继续覆盖新默认；同地区跨机场链同步显式标注机场名称1优先语义。
-- 新增香港、日本、新加坡、美国的 `地区-机场名称3优先` 自动回退链；Telegram 保留既有 DC 地区顺序，但改按机场名称3→机场名称1→机场名称4使用出口，降低媒体流量成本并保留跨机场容灾。
+- Telegram 取消 DC 地区拆分，域名与完整 IP 集合统一使用单一 `Telegram` 选择组；默认复用机场名称3优先链，并保留机场名称1、地区及全部节点等临时切换候选。三份地区 IP 产物同步合并为一份，删除仅为旧分区服务的四个地区回退组。
 - 按 IP 质量重新收紧业务默认链路：Microsoft 与账号、金融、社交、严格解锁服务使用机场名称1优先，FCM、开发下载和游戏平台等低敏感业务使用机场名称3优先；台湾解锁新增机场名称1→机场名称3→机场名称4回退，机场名称4退出普通自动与负载均衡，仅保留末位兜底、手动及特殊用途。
 - 开发下载集合补齐常用容器注册表、Linux/Conda 软件仓库、Microsoft 开发包、JetBrains、PyTorch 与 Ollama 模型包体，并覆盖 Ollama R2 及 Azure ACR 新旧数据端点；规则继续早于 Google、GitHub、OneDrive、Microsoft 等厂商父集合匹配，Windows Update、Office CDN 与 Visual Studio 大陆可用下载端点仍明确排除，避免可直连流量进入代理。
 - KISS 审计删除 `cn_ip` 之后与最终 `MATCH` 同策略的 Cloudflare、GFW 和非中国地理集合：未命中国内安全网的流量仍由 `MATCH,节点选择` 防漏兜底，分流结果不变，同时减少 3 个远程 rule provider 的更新、存储和匹配开销；classical provider 改用单一公共模板，避免三份等价参数漂移。
@@ -24,6 +24,7 @@
 - AOSP 下载规则扩展到全部 `googlesource.com`、Repo 启动器所在的 `storage.googleapis.com`，以及 Android SDK/Maven 使用的 `dl.google.com`，修复此前只有 `android.googlesource.com` 明确走机场名称3的缺口。由于 Mihomo 不能按 HTTPS 路径匹配，`storage.googleapis.com` 是有意接受的整域例外。
 - Docker Hub 拉取链和官方安装/更新端点采用窄规则；账号、Scout、AI 等 Docker 产品域不纳入。共享机场出口仍可能触发 Docker Hub 的按 IP 拉取限额。
 - 补齐已禁用 `Airport_02` 的四机场恢复模板与成套启用说明；恢复时共享服务按“机场名称3 → 机场名称1 → 机场名称2 → 机场名称4”回退并失败关闭，规则更新链则独立保留末位直连以避免启动死锁。
+- 机场名称4的五个空地区组收敛为一个 provider 全量测速组，使其真正承担末位兜底。
 
 ### 破坏性更新
 
@@ -34,7 +35,7 @@
 - 游戏规则会丢弃非公网地址、过宽 CIDR 和可疑的聚合地址，并在单个游戏内合并等价 CIDR。部分游戏规则的匹配范围因此收窄。
 - `rules/IP/emby-ip.yaml`、`rules/IP/emby-ip.mrs` 及其构建脚本已移除。Emby 现在使用域名规则和 classical 规则。
 - Talkatone IP 规则从多个历史网段收窄为当前维护的专用网段 `50.117.27.96/29`。
-- Telegram Europe 规则移除旧的 `5.28.192.0/18` 网段。
+- Telegram 的 `TelegramEU`、`TelegramSG`、`TelegramUS` 策略组和 IP provider 已合并为 `Telegram` 与 `telegram_ip`，旧名称不再提供。
 - 配置中的规则提供者已拆分或重命名：广告规则拆为 core、PCDN、low 和 classical 层；Amazon、Apple、社交媒体、Emby 等 provider 名称及路由顺序也有调整。请不要直接覆盖旧配置，需重新合并本版 `configfull_new.yaml`。
 
 ### 迁移建议
@@ -42,3 +43,4 @@
 - 依赖已删除游戏规则 URL 的用户应迁移到仍保留的具体游戏规则；不应继续引用上述旧文件。
 - 依赖 `emby_ip`、`Amazon_ip`、`discord_asn` 或 `wechat_asn` provider 的自定义配置，需要删除这些引用或改用本版域名/规则集。
 - 使用旧版广告 provider 名称的自定义配置，应按本版 `rule-providers` 和 `rules` 段重新配置。
+- 使用 `TelegramEU_ip`、`TelegramSG_ip`、`TelegramUS_ip` 或对应地区策略组的自定义配置，应迁移到 `telegram_ip` 与 `Telegram`。
