@@ -441,7 +441,7 @@ begin
       next
     end
 
-    region_order = number == "3" ? %w[日本 新加坡 香港 美国] : %w[香港 日本 新加坡 美国]
+    region_order = number == "3" ? %w[新加坡 日本 香港 美国] : %w[香港 日本 新加坡 美国]
     expected_children = region_order.map { |region| "机场名称#{number}-#{region}" }
     region_fallback = groups.find { |group| group["name"] == fallback_name }
     unless region_fallback
@@ -469,6 +469,14 @@ begin
     unless group && group["filter"] == config.fetch(filter_name) &&
            group["exclude-filter"] == config.fetch("exclude_lowrate")
       errors << "config: #{group_name} must exclude pure CTCU while preserving the common rate filter"
+    end
+  end
+
+  %w[机场名称1-香港 香港均衡].each do |group_name|
+    group = groups.find { |candidate| candidate["name"] == group_name }
+    unless group && group["filter"] == config.fetch("region_hk_stable_auto") &&
+           group["exclude-filter"] == config.fetch("exclude_lowrate")
+      errors << "config: #{group_name} must exclude unstable Airport_01 HongKong 02-05 while preserving the common rate filter"
     end
   end
 

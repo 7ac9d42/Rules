@@ -31,6 +31,8 @@ Ruleset_Classical_Base: &classical {type: http, interval: 86400, behavior: class
 
 # ── 5. 节点名筛选：地区 ──
 region_hk: &region_hk "(?i)(香港|港|🇭🇰|\\bHK\\b|Hong ?Kong)"
+# 机场名称1 HongKong 02-05 纵向成功率仅 10%-19%；只退出自动组，地区手选仍保留原始节点
+region_hk_stable_auto: &region_hk_stable_auto "(?i)^(?!.*Hong ?Kong 0[2-5](?:\\D|$)).*(香港|港|🇭🇰|\\bHK\\b|Hong ?Kong)"
 region_sg: &region_sg "(?i)(新加坡|狮城|🇸🇬|\\bSG\\b|Singapore)"
 region_jp: &region_jp "(?i)(日本|🇯🇵|\\bJP\\b|Japan)"
 # 机场名称3 的日新纯 CTCU 在路由器出口持续波动；仅从这两个自动组排除，不误伤 CTCUCM
@@ -296,7 +298,7 @@ proxy-groups:
   - {name: 节点选择, type: select, proxies: [机场名称3优先, 机场名称1优先, 自建/家宽节点, 香港节点, 新加坡节点, 日本节点, 台湾节点, 美国节点, 欧洲节点, 全部节点, DIRECT], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"}
 
   # 按机场URL_Test区域
-  - {name: 机场名称1-香港, <<: *Urltest_Base, use: [Airport_01], filter: *region_hk, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
+  - {name: 机场名称1-香港, <<: *Urltest_Base, use: [Airport_01], filter: *region_hk_stable_auto, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
   - {name: 机场名称1-日本, <<: *Urltest_Base, use: [Airport_01], filter: *region_jp, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"}
   - {name: 机场名称1-新加坡, <<: *Urltest_Base, use: [Airport_01], filter: *region_sg, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"}
   - {name: 机场名称1-美国, <<: *Urltest_Base, use: [Airport_01], filter: *region_us, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"}
@@ -323,7 +325,7 @@ proxy-groups:
   - {name: 机场名称1地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡, 机场名称1-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # Airport_02 内部地区回退模板
 #  - {name: 机场名称2地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-  - {name: 机场名称3地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称3地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-新加坡, 机场名称3-日本, 机场名称3-香港, 机场名称3-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # 四机场模板：普通多机场链 机场名称1→机场名称2→机场名称3→机场名称4
 #  - {name: 机场名称1优先, <<: *Fallback_Base, max-failed-times: 2, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # 当前三机场链：机场名称1→机场名称3→机场名称4
@@ -421,7 +423,7 @@ proxy-groups:
   - {name: 台湾自动, <<: *Urltest_Base, use: *use_ap_primary, filter: *region_tw, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/automation2.png"}
 
   # Load balance组
-  - {name: 香港均衡, <<: *Loadbalance_Base, use: *use_ap_primary, hidden: true, filter: *region_hk, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
+  - {name: 香港均衡, <<: *Loadbalance_Base, use: *use_ap_primary, hidden: true, filter: *region_hk_stable_auto, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 新加坡均衡, <<: *Loadbalance_Base, use: *use_ap_primary, hidden: true, filter: *region_sg, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 日本均衡, <<: *Loadbalance_Base, use: *use_ap_primary, hidden: true, filter: *region_jp, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
   - {name: 台湾均衡, <<: *Loadbalance_Base, use: *use_ap_primary, hidden: true, filter: *region_tw, exclude-filter: *exclude_lowrate, icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/load-balance.png"}
