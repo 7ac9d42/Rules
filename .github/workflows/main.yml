@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -39,7 +39,7 @@ jobs:
           git checkout upstream/main -- rules/
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
 
@@ -59,14 +59,14 @@ jobs:
 
       - name: Cache mihomo binary
         id: cache-mihomo
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /usr/local/bin/mihomo
           key: mihomo-bin-${{ runner.os }}-${{ steps.mihomo-version.outputs.version }}
 
       - name: Cache mihomo v1.19.19 compatibility binary
         id: cache-mihomo-compat
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ runner.tool_cache }}/mihomo/v1.19.19/mihomo
           key: mihomo-bin-${{ runner.os }}-${{ runner.arch }}-v1.19.19
