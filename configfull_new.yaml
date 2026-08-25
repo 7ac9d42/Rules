@@ -325,7 +325,8 @@ proxy-groups:
   - {name: 机场名称1地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称1-日本, 机场名称1-新加坡, 机场名称1-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # Airport_02 内部地区回退模板
 #  - {name: 机场名称2地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
-  - {name: 机场名称3地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  # 主用机场将地区出口状态复查窗口缩短至 18 秒
+  - {name: 机场名称3地区优先, <<: *Fallback_Base, interval: 18, hidden: true, proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # 四机场模板：普通多机场链 机场名称1→机场名称2→机场名称3→机场名称4
 #  - {name: 机场名称1优先, <<: *Fallback_Base, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # 当前三机场链：机场名称1→机场名称3→机场名称4

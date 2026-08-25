@@ -359,6 +359,7 @@ begin
 
   fallback_health_schedules = {
     "机场名称3优先" => [45, false, 3],
+    "机场名称3地区优先" => [18, true, 3],
   }
   groups.select { |group| group["type"] == "fallback" }.each do |group|
     expected = fallback_health_schedules.fetch(group["name"], [60, true, 3])
