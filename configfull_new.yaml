@@ -13,8 +13,8 @@ Direct_first: &Direct_first {type: select, proxies: [DIRECT, 节点选择, 自�
 # ── 2. 策略组类型基础参数 ──
 # use 组继承 provider 的测试地址与健康状态；组级失败计数仍可触发 provider 强检
 Urltest_Base: &Urltest_Base {type: url-test, timeout: 3500, tolerance: 80, max-failed-times: 3, empty-fallback: REJECT, expected-status: 204, hidden: true}
-# 下层与辅助 fallback 按需复检；空组拒绝连接，多次连接失败后强制复测
-Fallback_Base: &Fallback_Base {type: fallback, url: "https://www.gstatic.com/generate_204", expected-status: 204, timeout: 3500, interval: 60, max-failed-times: 3, lazy: true, empty-fallback: REJECT}
+# 下层与辅助 fallback 每 30 秒按需复检；空组拒绝连接，多次连接失败后强制复测
+Fallback_Base: &Fallback_Base {type: fallback, url: "https://www.gstatic.com/generate_204", expected-status: 204, timeout: 3500, interval: 30, max-failed-times: 3, lazy: true, empty-fallback: REJECT}
 # 机场名称3主链作为唯一常驻心跳，每 45 秒递归刷新三机场路径并在三次连接失败后强检
 Fallback_Heartbeat_Base: &Fallback_Heartbeat_Base {<<: *Fallback_Base, interval: 45, lazy: false}
 # load-balance 同域名走同节点；use 节点继续复用 provider 的健康状态

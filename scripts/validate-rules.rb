@@ -362,7 +362,7 @@ begin
     "机场名称3地区优先" => [18, true, 3],
   }
   groups.select { |group| group["type"] == "fallback" }.each do |group|
-    expected = fallback_health_schedules.fetch(group["name"], [60, true, 3])
+    expected = fallback_health_schedules.fetch(group["name"], [30, true, 3])
     actual = group.values_at("interval", "lazy", "max-failed-times")
     next if actual == expected
 
