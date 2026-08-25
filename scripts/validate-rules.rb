@@ -345,9 +345,20 @@ begin
     end
   end
 
+  groups.select { |group| %w[url-test fallback load-balance].include?(group["type"]) }.each do |group|
+    errors << "config: #{group.fetch("name")} health-check timeout must be 3500" unless group["timeout"] == 3500
+    errors << "config: #{group.fetch("name")} max-failed-times must be 3" unless group["max-failed-times"] == 3
+    if group["type"] == "url-test" && group["tolerance"] != 80
+      errors << "config: #{group.fetch("name")} url-test tolerance must be 80"
+    end
+  end
+
+  unless config.dig("PProviders", "health-check", "timeout") == 3500
+    errors << "config: PProviders health-check timeout must be 3500"
+  end
+
   fallback_health_schedules = {
-    "机场名称3优先" => [45, false, 2],
-    "机场名称1优先" => [60, true, 2],
+    "机场名称3优先" => [45, false, 3],
   }
   groups.select { |group| group["type"] == "fallback" }.each do |group|
     expected = fallback_health_schedules.fetch(group["name"], [60, true, 3])

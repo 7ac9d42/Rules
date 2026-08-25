@@ -12,17 +12,17 @@ Direct_first: &Direct_first {type: select, proxies: [DIRECT, 节点选择, 自�
 
 # ── 2. 策略组类型基础参数 ──
 # use 组继承 provider 的测试地址与健康状态；组级失败计数仍可触发 provider 强检
-Urltest_Base: &Urltest_Base {type: url-test, timeout: 3000, tolerance: 50, max-failed-times: 2, empty-fallback: REJECT, expected-status: 204, hidden: true}
+Urltest_Base: &Urltest_Base {type: url-test, timeout: 3500, tolerance: 80, max-failed-times: 3, empty-fallback: REJECT, expected-status: 204, hidden: true}
 # 下层与辅助 fallback 按需复检；空组拒绝连接，多次连接失败后强制复测
-Fallback_Base: &Fallback_Base {type: fallback, url: "https://www.gstatic.com/generate_204", expected-status: 204, timeout: 3000, interval: 60, max-failed-times: 3, lazy: true, empty-fallback: REJECT}
-# 机场名称3主链作为唯一常驻心跳，每 45 秒递归刷新三机场路径并在两次连接失败后强检
-Fallback_Heartbeat_Base: &Fallback_Heartbeat_Base {<<: *Fallback_Base, interval: 45, max-failed-times: 2, lazy: false}
+Fallback_Base: &Fallback_Base {type: fallback, url: "https://www.gstatic.com/generate_204", expected-status: 204, timeout: 3500, interval: 60, max-failed-times: 3, lazy: true, empty-fallback: REJECT}
+# 机场名称3主链作为唯一常驻心跳，每 45 秒递归刷新三机场路径并在三次连接失败后强检
+Fallback_Heartbeat_Base: &Fallback_Heartbeat_Base {<<: *Fallback_Base, interval: 45, lazy: false}
 # load-balance 同域名走同节点；use 节点继续复用 provider 的健康状态
-Loadbalance_Base: &Loadbalance_Base {type: load-balance, strategy: consistent-hashing, timeout: 3000, expected-status: 204, max-failed-times: 3, empty-fallback: REJECT}
+Loadbalance_Base: &Loadbalance_Base {type: load-balance, strategy: consistent-hashing, timeout: 3500, expected-status: 204, max-failed-times: 3, empty-fallback: REJECT}
 
 # ── 3. 机场订阅 provider 模板 ──
 # 180 秒全量刷新叶节点；真实业务失败仍会绕过周期触发强检
-PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', expected-status: 204, timeout: 3000, interval: 180, lazy: false}, exclude-filter: '(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\s\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\s*[:：]\s*(?:[0-9]|∞|Unlimited)|(?:^|[\s\[【(（_|｜丨-])Email\s*[:：]\s*\S+@|(?:^|[\s\[【(（_|｜丨-])Panel\s*[:：]|(?:^|[\s\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\s\]】)）|｜丨:：_-]))'}
+PProviders: &PProviders {type: http, interval: 86400, health-check: {enable: true, url: 'https://www.gstatic.com/generate_204', expected-status: 204, timeout: 3500, interval: 180, lazy: false}, exclude-filter: '(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\s\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\s*[:：]\s*(?:[0-9]|∞|Unlimited)|(?:^|[\s\[【(（_|｜丨-])Email\s*[:：]\s*\S+@|(?:^|[\s\[【(（_|｜丨-])Panel\s*[:：]|(?:^|[\s\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\s\]】)）|｜丨:：_-]))'}
 
 # ── 4. 规则提供者基础（24h 更新） ──
 Ruleset_Domain_Base: &domain {type: http, interval: 86400, behavior: domain, format: mrs, proxy: 规则更新}
@@ -327,9 +327,9 @@ proxy-groups:
 #  - {name: 机场名称2地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
   - {name: 机场名称3地区优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # 四机场模板：普通多机场链 机场名称1→机场名称2→机场名称3→机场名称4
-#  - {name: 机场名称1优先, <<: *Fallback_Base, max-failed-times: 2, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+#  - {name: 机场名称1优先, <<: *Fallback_Base, proxies: [机场名称1地区优先, 机场名称2地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 # 当前三机场链：机场名称1→机场名称3→机场名称4
-  - {name: 机场名称1优先, <<: *Fallback_Base, max-failed-times: 2, proxies: [机场名称1地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
+  - {name: 机场名称1优先, <<: *Fallback_Base, proxies: [机场名称1地区优先, 机场名称3地区优先, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"}
 
   # 四机场模板：前三个机场保持同地区，机场名称4以全量可用节点作末位兜底
 #  - {name: 香港-机场名称1优先, <<: *Fallback_Base, hidden: true, proxies: [机场名称1-香港, 机场名称2-香港, 机场名称3-香港, 机场名称4地区优先], icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"}
