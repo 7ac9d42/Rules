@@ -684,6 +684,11 @@ begin
     errors << "config: bahamut_domain must route directly through 台湾节点 without a wrapper group"
   end
 
+  expected_opencode_rule = "DOMAIN-SUFFIX,opencode.ai,AI"
+  unless rules.grep(/\ADOMAIN-SUFFIX,opencode\.ai,/) == [expected_opencode_rule]
+    errors << "config: opencode.ai must route exactly once through AI"
+  end
+
   expected_telegram_rules = [
     "RULE-SET,telegram_domain,Telegram",
     "RULE-SET,telegram_ip,Telegram,no-resolve",
@@ -745,6 +750,11 @@ begin
 
   order = lambda do |prefix|
     rules.index { |rule| rule.start_with?(prefix) } || raise("missing ordered rule #{prefix}")
+  end
+  ["RULE-SET,proxy_domain,", "RULE-SET,cn_domain,", "RULE-SET,ai!cn_domain,"].each do |after|
+    unless order.call("DOMAIN-SUFFIX,opencode.ai,") < order.call(after)
+      errors << "config: opencode.ai must precede #{after}"
+    end
   end
   download_precedence = [
     ["DOMAIN-SUFFIX,huggingface.co,", "RULE-SET,proxy_domain,"],

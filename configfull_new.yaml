@@ -436,6 +436,8 @@ proxy-groups:
 
 rules:
 # === 用户自定义优先 ===
+  # OpenCode Zen/Go 共用 opencode.ai，固定走 IP 质量优先的 AI 链
+  - DOMAIN-SUFFIX,opencode.ai,AI
   # Hugging Face Hub 及其 LFS/Xet/CDN 下载端点（机场名称3优先）
   - DOMAIN-SUFFIX,huggingface.co,HuggingFace
   - DOMAIN-SUFFIX,hf.co,HuggingFace
