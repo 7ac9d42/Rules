@@ -716,12 +716,18 @@ begin
     "cryptocurrency_domain" => "加密资产",
     "communication_domain" => "境外通信",
     "ecommerce_domain" => "境外电商",
+    "reddit_domain" => "境外社媒",
   }
   quality_category_routes.each do |provider, target|
     expected = "RULE-SET,#{provider},#{target}"
     unless rules.grep(/\ARULE-SET,#{Regexp.escape(provider)},/) == [expected]
       errors << "config: #{provider} must route exactly once through #{target}"
     end
+  end
+
+  # 上游社交媒体聚合集合不包含 Reddit，必须引用独立业务集合。
+  unless providers.dig("reddit_domain", "url").to_s.match?(%r{\Ahttps://raw\.githubusercontent\.com/MetaCubeX/meta-rules-dat/(?:refs/heads/)?meta/geo/geosite/reddit\.mrs\z})
+    errors << "config: reddit_domain must use the MetaCubeX reddit.mrs ruleset"
   end
 
   priority_download_rules = [
@@ -984,6 +990,7 @@ begin
     ["RULE-SET,cn_domain,", "RULE-SET,cryptocurrency_domain,"],
     ["RULE-SET,cn_domain,", "RULE-SET,communication_domain,"],
     ["RULE-SET,cn_domain,", "RULE-SET,ecommerce_domain,"],
+    ["RULE-SET,cn_domain,", "RULE-SET,reddit_domain,"],
     ["RULE-SET,telegram_domain,", "RULE-SET,communication_domain,"],
     ["RULE-SET,Wise_domain,", "RULE-SET,finance_domain,"],
     ["RULE-SET,paypal_domain,", "RULE-SET,finance_domain,"],
@@ -992,6 +999,7 @@ begin
     ["RULE-SET,cryptocurrency_domain,", "RULE-SET,cn_ip,"],
     ["RULE-SET,finance_domain,", "RULE-SET,cn_ip,"],
     ["RULE-SET,ecommerce_domain,", "RULE-SET,cn_ip,"],
+    ["RULE-SET,reddit_domain,", "RULE-SET,cn_ip,"],
     ["RULE-SET,steam_cn_domain,", "RULE-SET,steam_domain,"],
     ["RULE-SET,proxy_domain,", "RULE-SET,google_domain,"],
     ["RULE-SET,discord_domain,", "RULE-SET,google_domain,"],

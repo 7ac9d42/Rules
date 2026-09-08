@@ -597,6 +597,8 @@ rules:
   - RULE-SET,finance_domain,境外金融
   - RULE-SET,cryptocurrency_domain,加密资产
   - RULE-SET,communication_domain,境外通信
+  # Reddit 属于上游论坛分类，需单独补齐主站与媒体域名
+  - RULE-SET,reddit_domain,境外社媒
   - RULE-SET,social_media_non_cn_domain,境外社媒
   # Twitter/X 域名已包含在境外社交媒体集合中，IP 保持同一策略
   - RULE-SET,twitter_ip,境外社媒,no-resolve
@@ -645,6 +647,7 @@ rule-providers:
   cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs" }
   media_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-media-cn.mrs" }
   social_media_non_cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-social-media-!cn.mrs" }
+  reddit_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/reddit.mrs" }
   finance_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-finance.mrs" }
   cryptocurrency_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-cryptocurrency.mrs" }
   communication_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-communication.mrs" }
