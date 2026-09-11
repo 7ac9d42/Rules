@@ -114,7 +114,11 @@ def static_checks(source, with_home):
     assert source["dns"]["nameserver-policy"]["+.argotunnel.com"] == source["dns"]["direct-nameserver"]
     assert source["profile"]["store-selected"] is True
     assert source["unified-delay"] is False
-    groups = {g["name"]: g for g in source["proxy-groups"]}
+    for group in source["proxy-groups"]:
+        if not group.get("hidden", False):
+            assert group.get("icon", "").startswith("https://"), group["name"]
+    groups = {g["name"]: {k: v for k, v in g.items() if k != "icon"}
+              for g in source["proxy-groups"]}
     for name, prefix in (("机场名称1地区优先", ""), ("GitHub-机场名称1", "GitHub-"),
                          ("Cloudflare-机场名称1", "Cloudflare-")):
         assert groups[name]["proxies"] == [f"{prefix}机场名称1-{region}" for region in ("日本", "香港", "新加坡", "美国")], name

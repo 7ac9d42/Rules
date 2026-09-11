@@ -276,7 +276,7 @@ def main():
     args = parser.parse_args()
     source, config_sha = RR['load_config'](args.config)
     tunnel = next(g for g in source['proxy-groups'] if g['name'] == TUNNEL)
-    assert tunnel == dict(source['Direct_Select'], name=TUNNEL)
+    assert {k: v for k, v in tunnel.items() if k != 'icon'} == dict(source['Direct_Select'], name=TUNNEL)
     assert set(tunnel['use']) == set(source['proxy-providers'])
     assert tunnel['filter'] == '.*' and tunnel['empty-fallback'] == 'REJECT'
     assert 'interval' not in tunnel and source['profile']['store-selected'] is True

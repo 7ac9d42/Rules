@@ -430,33 +430,84 @@ proxies:
   - {name: 美国·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-美国}
 
 proxy-groups:
-  - {name: Cloudflare Tunnel, <<: *Direct_Select}
-  - {name: AI, <<: *Highest_policy}
-  - {name: 金融, <<: *High_policy}
-  - {name: Talkatone, <<: *High_policy}
-  - {name: Google, <<: *Normal_policy}
-  - {name: Microsoft, <<: *Cost_policy}
-  - {name: 境外通信, <<: *Cost_policy}
-  - {name: TikTok, <<: *Normal_policy}
-  - {name: NETFLIX, <<: *High_policy}
-  - {name: DisneyPlus, <<: *High_policy}
-  - {name: HBO, <<: *High_policy}
-  - {name: Primevideo, <<: *High_policy}
-  - {name: 哔哩东南亚, <<: *Normal_policy}
-  - {name: Spotify, <<: *High_policy}
-  - {name: TVB, <<: *Normal_policy}
-  - {name: 境外影音, <<: *Cost_policy}
-  - {name: Reddit, <<: *High_policy}
-  - {name: 境外社媒, <<: *Normal_policy}
-  - {name: 境外电商, <<: *Normal_policy}
-  - {name: Kryptex, <<: *Cost_policy}
-  - {name: Speedtest, <<: *Cost_policy}
-  - {name: 开发下载, <<: *Cost_policy}
-  - {name: 纯下载, <<: *Cost_policy}
-  - {name: 游戏平台, <<: *Cost_policy}
-  - {name: 通用代理, <<: *Cost_policy}
+  - name: Cloudflare Tunnel
+    <<: *Direct_Select
+    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
+  - name: AI
+    <<: *Highest_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
+  - name: 金融
+    <<: *High_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/wise.png
+  - name: Talkatone
+    <<: *High_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
+  - name: Google
+    <<: *Normal_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
+  - name: Microsoft
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
+  - name: 境外通信
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
+  - name: TikTok
+    <<: *Normal_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
+  - name: NETFLIX
+    <<: *High_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/netflix.png
+  - name: DisneyPlus
+    <<: *High_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/disney.png
+  - name: HBO
+    <<: *High_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/hbo.png
+  - name: Primevideo
+    <<: *High_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
+  - name: 哔哩东南亚
+    <<: *Normal_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
+  - name: Spotify
+    <<: *High_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
+  - name: TVB
+    <<: *Normal_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
+  - name: 境外影音
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
+  - name: Reddit
+    <<: *High_policy
+    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
+  - name: 境外社媒
+    <<: *Normal_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
+  - name: 境外电商
+    <<: *Normal_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
+  - name: Kryptex
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/automation.png
+  - name: Speedtest
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/speedtest.png
+  - name: 开发下载
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
+  - name: 纯下载
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Download.png
+  - name: 游戏平台
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
+  - name: 通用代理
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
 
   - name: 台湾限定
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
     type: select
     use: *use_ap_all
     filter: *region_tw
@@ -467,6 +518,7 @@ proxy-groups:
       - 台湾·机场名称1优先
 
   - name: Emby
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/emby.png
     <<: *Cost_policy
     proxies:
       - 低倍率/MITM节点
@@ -479,10 +531,15 @@ proxy-groups:
       - 台湾·机场名称3优先
       - 美国·机场名称3优先
       - DIRECT
-  - {name: Apple, <<: *Direct_Select}
-  - {name: 哔哩哔哩, <<: *Direct_Select}
+  - name: Apple
+    <<: *Direct_Select
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.png
+  - name: 哔哩哔哩
+    <<: *Direct_Select
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
 
   - name: 隐私拦截
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/block.png
     type: select
     proxies:
       - REJECT
@@ -491,6 +548,7 @@ proxy-groups:
       - 通用代理
 
   - name: GLOBAL
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global.png
     type: select
     use: *use_ap_all
     empty-fallback: REJECT
@@ -506,6 +564,7 @@ proxy-groups:
       - DIRECT
 
   - name: 自建/家宽节点
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/private_node.png
     type: select
     use: *use_ap_all
     filter: *home_only
