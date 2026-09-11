@@ -1,6 +1,6 @@
-# 三机场配置：层级决定业务默认顺序，业务入口独立手选。
+# 四机场模板：填写真实的机场名称2家宽订阅后使用。
 # 使用支持 rematch 的 Mihomo；固定验证版本为 v1.19.30。
-# 机场名称1、机场名称3仅同地区测速；先同机场换地区，再跨机场；纯下载例外。
+# 机场名称1、机场名称2、机场名称3仅同地区测速；先同机场换地区，再跨机场；纯下载例外。
 # 设计依据与边界见 docs/single-config-design.md。
 
 # 探测与回退
@@ -110,12 +110,13 @@ lowrate_mitm: &lowrate_mitm "(?i)(?:(?:香港|港|🇭🇰|\\bHK\\b|Hong ?Kong|�
 exclude_lowrate: &exclude_lowrate "(?i)(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))"
 
 # 下载另排除 MITM 等特殊用途；倍率不代表速度。
+exclude_download: &exclude_download "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.]))"
 exclude_download_1: &exclude_download_1 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|Hong ?Kong 0[2-5](?:\\D|$))"
 
 # 机场名称3下载仅美国豁免低倍率；日新排除纯 CTCU，保留 CTCUCM。
 exclude_download_3: &exclude_download_3 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS\\b|\\bUSA\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?:\\||$))"
 
-use_ap_all: &use_ap_all [Airport_01, Airport_03, Airport_04]
+use_ap_all: &use_ap_all [Airport_01, Airport_02, Airport_03, Airport_04]
 
 # 订阅：固定 provider 键名；只改 url 及非空、唯一的显示前缀。
 proxy-providers:
@@ -125,6 +126,14 @@ proxy-providers:
     url: "订阅链接1"
     override:
       additional-prefix: '[机场名称1]'
+      skip-cert-verify: true
+      udp: true
+  Airport_02:
+    <<: *PProviders
+    proxy: DIRECT
+    url: "订阅链接2"
+    override:
+      additional-prefix: '[机场名称2]'
       skip-cert-verify: true
       udp: true
   Airport_03:
@@ -336,6 +345,7 @@ Highest_policy: &Highest_policy
   proxies:
     - AI-机场名称1-日本
     - 机场名称1优先-自动
+    - 机场名称2优先-自动
     - 机场名称3优先-自动
     - 自建/家宽节点
     - 香港·机场名称1优先
@@ -359,7 +369,18 @@ Normal_policy: &Normal_policy
     - DIRECT
 
 High_policy: &High_policy
-  <<: *Normal_policy
+  <<: *Business_Select
+  proxies:
+    - 机场名称2优先-自动
+    - 机场名称1优先-自动
+    - 机场名称3优先-自动
+    - 自建/家宽节点
+    - 香港·机场名称2优先
+    - 日本·机场名称2优先
+    - 新加坡·机场名称2优先
+    - 台湾·机场名称2优先
+    - 美国·机场名称2优先
+    - DIRECT
 
 Cost_policy: &Cost_policy
   <<: *Business_Select
@@ -389,16 +410,22 @@ Direct_Select: &Direct_Select
 
 # 自动链路按 CF/GitHub/通用探针分流；GLOBAL 使用可直接拨号的池。
 proxies:
+  - {name: 机场名称2优先-自动, type: rematch, target-sub-rule: 机场名称2自动}
   - {name: 机场名称1优先-自动, type: rematch, target-sub-rule: 机场名称1自动}
   - {name: 机场名称3优先-自动, type: rematch, target-sub-rule: 机场名称3自动}
+  - {name: 香港·机场名称2优先, type: rematch, target-sub-rule: 机场名称2-香港}
   - {name: 香港·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-香港}
   - {name: 香港·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-香港}
+  - {name: 日本·机场名称2优先, type: rematch, target-sub-rule: 机场名称2-日本}
   - {name: 日本·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-日本}
   - {name: 日本·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-日本}
+  - {name: 新加坡·机场名称2优先, type: rematch, target-sub-rule: 机场名称2-新加坡}
   - {name: 新加坡·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-新加坡}
   - {name: 新加坡·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-新加坡}
+  - {name: 台湾·机场名称2优先, type: rematch, target-sub-rule: 机场名称2-台湾}
   - {name: 台湾·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-台湾}
   - {name: 台湾·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-台湾}
+  - {name: 美国·机场名称2优先, type: rematch, target-sub-rule: 机场名称2-美国}
   - {name: 美国·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-美国}
   - {name: 美国·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-美国}
 
@@ -530,6 +557,41 @@ proxy-groups:
     exclude-filter: *exclude_lowrate
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"
 
+  - name: 机场名称2-香港
+    <<: *Urltest_Base
+    use: [Airport_02]
+    filter: *region_hk
+    exclude-filter: *exclude_lowrate
+    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"
+
+  - name: 机场名称2-日本
+    <<: *Urltest_Base
+    use: [Airport_02]
+    filter: *region_jp
+    exclude-filter: *exclude_lowrate
+    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"
+
+  - name: 机场名称2-新加坡
+    <<: *Urltest_Base
+    use: [Airport_02]
+    filter: *region_sg
+    exclude-filter: *exclude_lowrate
+    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"
+
+  - name: 机场名称2-美国
+    <<: *Urltest_Base
+    use: [Airport_02]
+    filter: *region_us
+    exclude-filter: *exclude_lowrate
+    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"
+
+  - name: 机场名称2-台湾
+    <<: *Urltest_Base
+    use: [Airport_02]
+    filter: *region_tw
+    exclude-filter: *exclude_lowrate
+    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"
+
   - name: 机场名称3-香港
     <<: *Urltest_Base
     use: [Airport_03]
@@ -581,6 +643,16 @@ proxy-groups:
       - 机场名称1-美国
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"
 
+  - name: 机场名称2地区优先
+    <<: *Fallback_Base
+    hidden: true
+    proxies:
+      - 机场名称2-香港
+      - 机场名称2-日本
+      - 机场名称2-新加坡
+      - 机场名称2-美国
+    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"
+
   - name: 机场名称3地区优先
     <<: *Fallback_Base
     interval: 18
@@ -597,9 +669,19 @@ proxy-groups:
     <<: *Fallback_Base
     proxies:
       - 机场名称1地区优先
+      - 机场名称2地区优先
       - 机场名称3地区优先
       - 机场名称4地区优先
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"
+
+  - name: 家宽优先
+    hidden: true
+    <<: *Fallback_Base
+    proxies:
+      - 机场名称2地区优先
+      - 机场名称1地区优先
+      - 机场名称3地区优先
+      - 机场名称4地区优先
 
   - name: 香港-机场名称1优先
     <<: *Fallback_Base
@@ -608,6 +690,7 @@ proxy-groups:
     filter: *region_hk
     proxies:
       - 机场名称1-香港
+      - 机场名称2-香港
       - 机场名称3-香港
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"
 
@@ -618,6 +701,7 @@ proxy-groups:
     filter: *region_sg
     proxies:
       - 机场名称1-新加坡
+      - 机场名称2-新加坡
       - 机场名称3-新加坡
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"
 
@@ -628,6 +712,7 @@ proxy-groups:
     filter: *region_us
     proxies:
       - 机场名称1-美国
+      - 机场名称2-美国
       - 机场名称3-美国
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"
 
@@ -638,6 +723,7 @@ proxy-groups:
     filter: *region_jp
     proxies:
       - 机场名称1-日本
+      - 机场名称2-日本
       - 机场名称3-日本
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"
 
@@ -648,6 +734,7 @@ proxy-groups:
     filter: *region_tw
     proxies:
       - 机场名称1-台湾
+      - 机场名称2-台湾
       - 机场名称3-台湾
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"
 
@@ -659,6 +746,7 @@ proxy-groups:
     proxies:
       - 机场名称3地区优先
       - 机场名称1地区优先
+      - 机场名称2地区优先
       - 机场名称4地区优先
 
   - name: 规则更新
@@ -666,6 +754,7 @@ proxy-groups:
     proxies:
       - GitHub-机场名称3
       - GitHub-机场名称1
+      - GitHub-机场名称2
       - GitHub-机场名称4
       - DIRECT
 
@@ -712,6 +801,38 @@ proxy-groups:
       - GitHub-机场名称1-新加坡
       - GitHub-机场名称1-美国
 
+  - name: GitHub-机场名称2-香港
+    <<: *GitHub_Urltest_Base
+    use: [Airport_02]
+    filter: *region_hk
+    exclude-filter: *exclude_lowrate
+
+  - name: GitHub-机场名称2-日本
+    <<: *GitHub_Urltest_Base
+    use: [Airport_02]
+    filter: *region_jp
+    exclude-filter: *exclude_lowrate
+
+  - name: GitHub-机场名称2-新加坡
+    <<: *GitHub_Urltest_Base
+    use: [Airport_02]
+    filter: *region_sg
+    exclude-filter: *exclude_lowrate
+
+  - name: GitHub-机场名称2-美国
+    <<: *GitHub_Urltest_Base
+    use: [Airport_02]
+    filter: *region_us
+    exclude-filter: *exclude_lowrate
+
+  - name: GitHub-机场名称2
+    <<: *GitHub_Fallback_Base
+    proxies:
+      - GitHub-机场名称2-香港
+      - GitHub-机场名称2-日本
+      - GitHub-机场名称2-新加坡
+      - GitHub-机场名称2-美国
+
   - name: GitHub-机场名称3-香港
     <<: *GitHub_Urltest_Base
     use: [Airport_03]
@@ -754,6 +875,7 @@ proxy-groups:
     proxies:
       - GitHub-机场名称3
       - GitHub-机场名称1
+      - GitHub-机场名称2
       - GitHub-机场名称4
     interval: 45
     lazy: false
@@ -762,6 +884,7 @@ proxy-groups:
     <<: *GitHub_Fallback_Base
     proxies:
       - GitHub-机场名称1
+      - GitHub-机场名称2
       - GitHub-机场名称3
       - GitHub-机场名称4
 
@@ -797,6 +920,38 @@ proxy-groups:
       - Cloudflare-机场名称1-香港
       - Cloudflare-机场名称1-新加坡
       - Cloudflare-机场名称1-美国
+
+  - name: Cloudflare-机场名称2-香港
+    <<: *Cloudflare_Urltest_Base
+    use: [Airport_02]
+    filter: *region_hk
+    exclude-filter: *exclude_lowrate
+
+  - name: Cloudflare-机场名称2-日本
+    <<: *Cloudflare_Urltest_Base
+    use: [Airport_02]
+    filter: *region_jp
+    exclude-filter: *exclude_lowrate
+
+  - name: Cloudflare-机场名称2-新加坡
+    <<: *Cloudflare_Urltest_Base
+    use: [Airport_02]
+    filter: *region_sg
+    exclude-filter: *exclude_lowrate
+
+  - name: Cloudflare-机场名称2-美国
+    <<: *Cloudflare_Urltest_Base
+    use: [Airport_02]
+    filter: *region_us
+    exclude-filter: *exclude_lowrate
+
+  - name: Cloudflare-机场名称2
+    <<: *Cloudflare_Fallback_Base
+    proxies:
+      - Cloudflare-机场名称2-香港
+      - Cloudflare-机场名称2-日本
+      - Cloudflare-机场名称2-新加坡
+      - Cloudflare-机场名称2-美国
 
   - name: Cloudflare-机场名称3-香港
     <<: *Cloudflare_Urltest_Base
@@ -840,6 +995,7 @@ proxy-groups:
     proxies:
       - Cloudflare-机场名称3
       - Cloudflare-机场名称1
+      - Cloudflare-机场名称2
       - Cloudflare-机场名称4
     interval: 45
     lazy: false
@@ -847,6 +1003,15 @@ proxy-groups:
   - name: Cloudflare-机场名称1优先
     <<: *Cloudflare_Fallback_Base
     proxies:
+      - Cloudflare-机场名称1
+      - Cloudflare-机场名称2
+      - Cloudflare-机场名称3
+      - Cloudflare-机场名称4
+
+  - name: Cloudflare-家宽优先
+    <<: *Cloudflare_Fallback_Base
+    proxies:
+      - Cloudflare-机场名称2
       - Cloudflare-机场名称1
       - Cloudflare-机场名称3
       - Cloudflare-机场名称4
@@ -870,6 +1035,12 @@ proxy-groups:
     filter: *region_download
     exclude-filter: *exclude_download_1
 
+  - name: 纯下载-机场名称2
+    <<: *GitHub_Urltest_Base
+    use: [Airport_02]
+    filter: *region_download
+    exclude-filter: *exclude_download
+
   - name: 纯下载-机场名称4
     <<: *GitHub_Urltest_Base
     use: [Airport_04]
@@ -880,11 +1051,20 @@ proxy-groups:
     proxies:
       - 纯下载-机场名称3
       - 纯下载-机场名称1
+      - 纯下载-机场名称2
       - 纯下载-机场名称4
     url: *github_test_url
     expected-status: 200
     interval: 60
     lazy: false
+
+  - name: GitHub-家宽优先
+    <<: *GitHub_Fallback_Base
+    proxies:
+      - GitHub-机场名称2
+      - GitHub-机场名称1
+      - GitHub-机场名称3
+      - GitHub-机场名称4
 
   # 指定地区：机场名称1优先
   - name: GitHub-香港-地区优先
@@ -893,6 +1073,7 @@ proxy-groups:
     filter: *region_hk
     proxies:
       - GitHub-机场名称1-香港
+      - GitHub-机场名称2-香港
       - GitHub-机场名称3-香港
 
   - name: GitHub-日本-地区优先
@@ -901,6 +1082,7 @@ proxy-groups:
     filter: *region_jp
     proxies:
       - GitHub-机场名称1-日本
+      - GitHub-机场名称2-日本
       - GitHub-机场名称3-日本
 
   - name: GitHub-新加坡-地区优先
@@ -909,6 +1091,7 @@ proxy-groups:
     filter: *region_sg
     proxies:
       - GitHub-机场名称1-新加坡
+      - GitHub-机场名称2-新加坡
       - GitHub-机场名称3-新加坡
 
   - name: GitHub-台湾
@@ -923,6 +1106,7 @@ proxy-groups:
     filter: *region_us
     proxies:
       - GitHub-机场名称1-美国
+      - GitHub-机场名称2-美国
       - GitHub-机场名称3-美国
 
   - name: Cloudflare-香港-地区优先
@@ -931,6 +1115,7 @@ proxy-groups:
     filter: *region_hk
     proxies:
       - Cloudflare-机场名称1-香港
+      - Cloudflare-机场名称2-香港
       - Cloudflare-机场名称3-香港
 
   - name: Cloudflare-日本-地区优先
@@ -939,6 +1124,7 @@ proxy-groups:
     filter: *region_jp
     proxies:
       - Cloudflare-机场名称1-日本
+      - Cloudflare-机场名称2-日本
       - Cloudflare-机场名称3-日本
 
   - name: Cloudflare-新加坡-地区优先
@@ -947,6 +1133,7 @@ proxy-groups:
     filter: *region_sg
     proxies:
       - Cloudflare-机场名称1-新加坡
+      - Cloudflare-机场名称2-新加坡
       - Cloudflare-机场名称3-新加坡
 
   - name: Cloudflare-美国-地区优先
@@ -955,12 +1142,14 @@ proxy-groups:
     filter: *region_us
     proxies:
       - Cloudflare-机场名称1-美国
+      - Cloudflare-机场名称2-美国
       - Cloudflare-机场名称3-美国
 
   - name: 纯下载-机场名称1优先
     <<: *GitHub_Fallback_Base
     proxies:
       - 纯下载-机场名称1
+      - 纯下载-机场名称2
       - 纯下载-机场名称3
       - 纯下载-机场名称4
 
@@ -973,6 +1162,17 @@ proxy-groups:
     proxies:
       - 机场名称3-香港
       - 机场名称1-香港
+      - 机场名称2-香港
+
+  - name: 香港-高要求
+    <<: *Fallback_Base
+    hidden: true
+    use: [Airport_04]
+    filter: *region_hk
+    proxies:
+      - 机场名称2-香港
+      - 机场名称1-香港
+      - 机场名称3-香港
 
   - name: Cloudflare-香港-成本优先
     <<: *Cloudflare_Fallback_Base
@@ -981,6 +1181,16 @@ proxy-groups:
     proxies:
       - Cloudflare-机场名称3-香港
       - Cloudflare-机场名称1-香港
+      - Cloudflare-机场名称2-香港
+
+  - name: Cloudflare-香港-高要求
+    <<: *Cloudflare_Fallback_Base
+    use: [Airport_04]
+    filter: *region_hk
+    proxies:
+      - Cloudflare-机场名称2-香港
+      - Cloudflare-机场名称1-香港
+      - Cloudflare-机场名称3-香港
 
   - name: GitHub-香港-成本优先
     <<: *GitHub_Fallback_Base
@@ -989,6 +1199,16 @@ proxy-groups:
     proxies:
       - GitHub-机场名称3-香港
       - GitHub-机场名称1-香港
+      - GitHub-机场名称2-香港
+
+  - name: GitHub-香港-高要求
+    <<: *GitHub_Fallback_Base
+    use: [Airport_04]
+    filter: *region_hk
+    proxies:
+      - GitHub-机场名称2-香港
+      - GitHub-机场名称1-香港
+      - GitHub-机场名称3-香港
 
   - name: 日本-成本优先
     <<: *Fallback_Base
@@ -998,6 +1218,17 @@ proxy-groups:
     proxies:
       - 机场名称3-日本
       - 机场名称1-日本
+      - 机场名称2-日本
+
+  - name: 日本-高要求
+    <<: *Fallback_Base
+    hidden: true
+    use: [Airport_04]
+    filter: *region_jp
+    proxies:
+      - 机场名称2-日本
+      - 机场名称1-日本
+      - 机场名称3-日本
 
   - name: Cloudflare-日本-成本优先
     <<: *Cloudflare_Fallback_Base
@@ -1006,6 +1237,16 @@ proxy-groups:
     proxies:
       - Cloudflare-机场名称3-日本
       - Cloudflare-机场名称1-日本
+      - Cloudflare-机场名称2-日本
+
+  - name: Cloudflare-日本-高要求
+    <<: *Cloudflare_Fallback_Base
+    use: [Airport_04]
+    filter: *region_jp
+    proxies:
+      - Cloudflare-机场名称2-日本
+      - Cloudflare-机场名称1-日本
+      - Cloudflare-机场名称3-日本
 
   - name: GitHub-日本-成本优先
     <<: *GitHub_Fallback_Base
@@ -1014,6 +1255,16 @@ proxy-groups:
     proxies:
       - GitHub-机场名称3-日本
       - GitHub-机场名称1-日本
+      - GitHub-机场名称2-日本
+
+  - name: GitHub-日本-高要求
+    <<: *GitHub_Fallback_Base
+    use: [Airport_04]
+    filter: *region_jp
+    proxies:
+      - GitHub-机场名称2-日本
+      - GitHub-机场名称1-日本
+      - GitHub-机场名称3-日本
 
   - name: 新加坡-成本优先
     <<: *Fallback_Base
@@ -1023,6 +1274,17 @@ proxy-groups:
     proxies:
       - 机场名称3-新加坡
       - 机场名称1-新加坡
+      - 机场名称2-新加坡
+
+  - name: 新加坡-高要求
+    <<: *Fallback_Base
+    hidden: true
+    use: [Airport_04]
+    filter: *region_sg
+    proxies:
+      - 机场名称2-新加坡
+      - 机场名称1-新加坡
+      - 机场名称3-新加坡
 
   - name: Cloudflare-新加坡-成本优先
     <<: *Cloudflare_Fallback_Base
@@ -1031,6 +1293,16 @@ proxy-groups:
     proxies:
       - Cloudflare-机场名称3-新加坡
       - Cloudflare-机场名称1-新加坡
+      - Cloudflare-机场名称2-新加坡
+
+  - name: Cloudflare-新加坡-高要求
+    <<: *Cloudflare_Fallback_Base
+    use: [Airport_04]
+    filter: *region_sg
+    proxies:
+      - Cloudflare-机场名称2-新加坡
+      - Cloudflare-机场名称1-新加坡
+      - Cloudflare-机场名称3-新加坡
 
   - name: GitHub-新加坡-成本优先
     <<: *GitHub_Fallback_Base
@@ -1039,6 +1311,16 @@ proxy-groups:
     proxies:
       - GitHub-机场名称3-新加坡
       - GitHub-机场名称1-新加坡
+      - GitHub-机场名称2-新加坡
+
+  - name: GitHub-新加坡-高要求
+    <<: *GitHub_Fallback_Base
+    use: [Airport_04]
+    filter: *region_sg
+    proxies:
+      - GitHub-机场名称2-新加坡
+      - GitHub-机场名称1-新加坡
+      - GitHub-机场名称3-新加坡
 
   - name: 台湾-成本优先
     <<: *Fallback_Base
@@ -1048,16 +1330,39 @@ proxy-groups:
     proxies:
       - 机场名称3-台湾
       - 机场名称1-台湾
+      - 机场名称2-台湾
+
+  - name: 台湾-高要求
+    <<: *Fallback_Base
+    hidden: true
+    use: [Airport_04]
+    filter: *region_tw
+    proxies:
+      - 机场名称2-台湾
+      - 机场名称1-台湾
+      - 机场名称3-台湾
 
   - name: Cloudflare-台湾-成本优先
     <<: *Cloudflare_Fallback_Base
-    use: [Airport_03, Airport_01, Airport_04]
+    use: [Airport_03, Airport_01, Airport_02, Airport_04]
+    filter: *region_tw
+    exclude-filter: *exclude_lowrate
+
+  - name: Cloudflare-台湾-高要求
+    <<: *Cloudflare_Fallback_Base
+    use: [Airport_02, Airport_01, Airport_03, Airport_04]
     filter: *region_tw
     exclude-filter: *exclude_lowrate
 
   - name: GitHub-台湾-成本优先
     <<: *GitHub_Fallback_Base
-    use: [Airport_03, Airport_01, Airport_04]
+    use: [Airport_03, Airport_01, Airport_02, Airport_04]
+    filter: *region_tw
+    exclude-filter: *exclude_lowrate
+
+  - name: GitHub-台湾-高要求
+    <<: *GitHub_Fallback_Base
+    use: [Airport_02, Airport_01, Airport_03, Airport_04]
     filter: *region_tw
     exclude-filter: *exclude_lowrate
 
@@ -1069,6 +1374,17 @@ proxy-groups:
     proxies:
       - 机场名称3-美国
       - 机场名称1-美国
+      - 机场名称2-美国
+
+  - name: 美国-高要求
+    <<: *Fallback_Base
+    hidden: true
+    use: [Airport_04]
+    filter: *region_us
+    proxies:
+      - 机场名称2-美国
+      - 机场名称1-美国
+      - 机场名称3-美国
 
   - name: Cloudflare-美国-成本优先
     <<: *Cloudflare_Fallback_Base
@@ -1077,6 +1393,16 @@ proxy-groups:
     proxies:
       - Cloudflare-机场名称3-美国
       - Cloudflare-机场名称1-美国
+      - Cloudflare-机场名称2-美国
+
+  - name: Cloudflare-美国-高要求
+    <<: *Cloudflare_Fallback_Base
+    use: [Airport_04]
+    filter: *region_us
+    proxies:
+      - Cloudflare-机场名称2-美国
+      - Cloudflare-机场名称1-美国
+      - Cloudflare-机场名称3-美国
 
   - name: GitHub-美国-成本优先
     <<: *GitHub_Fallback_Base
@@ -1085,6 +1411,16 @@ proxy-groups:
     proxies:
       - GitHub-机场名称3-美国
       - GitHub-机场名称1-美国
+      - GitHub-机场名称2-美国
+
+  - name: GitHub-美国-高要求
+    <<: *GitHub_Fallback_Base
+    use: [Airport_04]
+    filter: *region_us
+    proxies:
+      - GitHub-机场名称2-美国
+      - GitHub-机场名称1-美国
+      - GitHub-机场名称3-美国
 
 rules:
   # 自定义优先规则
@@ -1265,6 +1601,11 @@ rules:
   # 只决定探针与候选链，不回到业务入口。
 sub-rules:
 
+  机场名称2自动:
+    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-家宽优先
+    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-家宽优先
+    - MATCH,家宽优先
+
   机场名称1自动:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-机场名称1优先
     - RULE-SET,pure_download_domain,纯下载-机场名称1优先
@@ -1277,6 +1618,11 @@ sub-rules:
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-自动
     - MATCH,机场名称3优先
 
+  机场名称2-香港:
+    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-香港-高要求
+    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-香港-高要求
+    - MATCH,香港-高要求
+
   机场名称1-香港:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-香港-地区优先
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-香港-地区优先
@@ -1286,6 +1632,11 @@ sub-rules:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-香港-成本优先
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-香港-成本优先
     - MATCH,香港-成本优先
+
+  机场名称2-日本:
+    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-日本-高要求
+    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-日本-高要求
+    - MATCH,日本-高要求
 
   机场名称1-日本:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-日本-地区优先
@@ -1297,6 +1648,11 @@ sub-rules:
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-日本-成本优先
     - MATCH,日本-成本优先
 
+  机场名称2-新加坡:
+    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-新加坡-高要求
+    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-新加坡-高要求
+    - MATCH,新加坡-高要求
+
   机场名称1-新加坡:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-新加坡-地区优先
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-新加坡-地区优先
@@ -1307,6 +1663,11 @@ sub-rules:
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-新加坡-成本优先
     - MATCH,新加坡-成本优先
 
+  机场名称2-台湾:
+    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-台湾-高要求
+    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-台湾-高要求
+    - MATCH,台湾-高要求
+
   机场名称1-台湾:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-台湾
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-台湾
@@ -1316,6 +1677,11 @@ sub-rules:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-台湾-成本优先
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-台湾-成本优先
     - MATCH,台湾-成本优先
+
+  机场名称2-美国:
+    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-美国-高要求
+    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-美国-高要求
+    - MATCH,美国-高要求
 
   机场名称1-美国:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-美国-地区优先

@@ -64,18 +64,18 @@ jobs:
           path: /usr/local/bin/mihomo
           key: mihomo-bin-${{ runner.os }}-${{ steps.mihomo-version.outputs.version }}
 
-      - name: Cache mihomo v1.19.19 compatibility binary
+      - name: Cache mihomo v1.19.30 baseline binary
         id: cache-mihomo-compat
         uses: actions/cache@v6
         with:
-          path: ${{ runner.tool_cache }}/mihomo/v1.19.19/mihomo
-          key: mihomo-bin-${{ runner.os }}-${{ runner.arch }}-v1.19.19
+          path: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo
+          key: mihomo-bin-${{ runner.os }}-${{ runner.arch }}-v1.19.30
 
       - name: Install dependencies and mihomo
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y jq ruby
+          sudo apt-get install -y jq ruby python3
 
           if [[ "${{ steps.cache-mihomo.outputs.cache-hit }}" != "true" ]]; then
             version="${{ steps.mihomo-version.outputs.version }}"
@@ -92,10 +92,10 @@ jobs:
 
           mihomo -v
 
-      - name: Install mihomo v1.19.19 compatibility binary
+      - name: Install mihomo v1.19.30 baseline binary
         env:
-          MIHOMO_COMPAT_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.19/mihomo
-          MIHOMO_COMPAT_VERSION: v1.19.19
+          MIHOMO_COMPAT_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo
+          MIHOMO_COMPAT_VERSION: v1.19.30
         run: |
           set -euo pipefail
           if [[ "${{ steps.cache-mihomo-compat.outputs.cache-hit }}" != "true" ]]; then
@@ -113,7 +113,7 @@ jobs:
           version_output=$("$MIHOMO_COMPAT_BIN" -v)
           printf '%s\n' "$version_output"
           if [[ "$version_output" != *"Mihomo Meta ${MIHOMO_COMPAT_VERSION} "* ]]; then
-            echo "Unexpected compatibility mihomo version" >&2
+            echo "Unexpected baseline mihomo version" >&2
             exit 1
           fi
 
@@ -131,9 +131,9 @@ jobs:
           set -euo pipefail
           ruby scripts/validate-rules.rb
 
-      - name: Validate with mihomo v1.19.19
+      - name: Validate with pinned mihomo v1.19.30
         env:
-          MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.19/mihomo
+          MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo
         run: |
           set -euo pipefail
           ruby scripts/validate-rules.rb
