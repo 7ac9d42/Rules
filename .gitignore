@@ -8,3 +8,6 @@
 # ignored.
 /rules/.Game.publish.*/
 /rules/.Game.backup.*/
+
+# Local research and analysis notes
+/docs/

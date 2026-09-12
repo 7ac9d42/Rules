@@ -1,156 +1,61 @@
-# 本项目为原项目的一个自用fork，以下README为原项目README，本人未作修改。本项目不接受需求类issue但是仍欢迎友好讨论交流
+# Rules
 
-# 置顶/Precautions
+基于 [Lanlan13-14/Rules](https://github.com/Lanlan13-14/Rules) 的自用分支，维护 Mihomo 配置与分流规则。不接受需求类 issue，欢迎问题反馈和讨论。
 
-> [!Caution]
-> 禁止任何形式的转载或发布至🇨🇳大陆平台
->
-> Any form of reprinting or posting to the 🇨🇳 mainland platform is prohibited
+## 配置文件
 
-> [!WARNING]
-> 中国大陆用户使用请遵守本国法律法规
->
-> Mainland China users please abide by the laws and regulations of your country.
+| 文件 | 用途 |
+|---|---|
+| [configfull_new.yaml](configfull_new.yaml) | 当前三机场主配置，使用机场名称1、3、4 |
+| [cinfigfull_new_4.yaml](cinfigfull_new_4.yaml) | 独立四机场模板，增加机场名称2家宽；准备好订阅后再使用 |
+| [configfull.bak.yaml](configfull.bak.yaml) | 重构前的原版备份，用于对照 |
 
-## 免责申明/Disclaimer
+每次加载一份完整配置，无需拼接。当前模板使用官方 Mihomo 的 `rematch`，固定验收版本为 **v1.19.30**；不要直接当作 Stash 或其他内核的通用模板使用。
 
-> [!IMPORTANT]
-> 任何以任何方式查看此项目的人或直接或间接使用该项目的使用者都应仔细阅读此声明。
->
-> 保留随时更改或补充此免责声明的权利。
->
-> 一旦使用并复制了该项目的任何文件，则视为您已接受此免责声明。
->
-> Anyone who views this project in any way or uses it directly or indirectly should read this statement carefully.
->
-> We reserve the right to change or supplement this disclaimer at any time.
->
-> Once you use and copy any file of this project, you are deemed to have accepted this disclaimer.
+使用前填写机场订阅，核对节点名称过滤条件，并按自己的环境调整监听地址、控制器密钥和 DNS。升级时以新模板为基础迁移个人设置，旧分组名称与缓存选择不保证兼容。变更见 [CHANGELOG.md](CHANGELOG.md)。
 
-- 本项目涉及的文件仅用于资源共享和学习研究，不能保证其合法性，准确性，完整性和有效性，请根据情况自行判断，有Bug建议可以提issue.
+## 如何选择出口
 
-- 请勿将本项目的任何内容用于商业或非法目的，否则后果自负.
+规则先确定业务分组，业务 `select` 保存用户选择，自动链路再按 CF、GitHub 或通用探针选择节点。
 
-- 有问题请提交issue，仅通过issue回复
+| 默认政策 | 三机场顺序 | 四机场顺序 |
+|---|---|---|
+| 最高要求（AI） | 机场名称1日本手选池 | 同左 |
+| 高要求 | 1 → 3 → 4 | 2 → 1 → 3 → 4 |
+| 普通 | 1 → 3 → 4 | 1 → 2 → 3 → 4 |
+| 成本优先 | 3 → 1 → 4 | 3 → 1 → 2 → 4 |
 
-- Stash如果需要去广告，请使用mitm的方式而非使用本项目的完整规则
+- 自动链路先在同机场换地区，再跨机场。机场名称1按日本 → 香港 → 新加坡 → 美国；机场名称3按日本 → 新加坡 → 香港 → 美国。纯下载使用独立策略。
+- 业务可以手选机场优先链、指定地区或实际节点，具体以组内选项为准。地区链仍可跨机场；地区和 IP 稳定是尽力而为，不是固定出口承诺。
+- AI 默认不自动换路，但允许主动选择其他机场或节点。金融保持独立；Netflix、DisneyPlus 等需要分别选路的服务也各自保留。
+- Google 包含 GoogleVPN、FCM；Microsoft 包含 OneDrive；开发下载包含 GitHub、Docker、HuggingFace；普通境外影音、通信、社媒及游戏平台按各自分组共用选择。
+- `自建/家宽节点` 是共享手选入口：修改它会影响所有选择该入口的业务。普通业务之间的独立选择互不影响。
+- 临时让流量统一走单个节点：切换客户端到全局模式，再在 `GLOBAL` 选择该节点；结束后切回规则模式。
+- 手选结果在核心重启后保留；切换出口通常只影响新连接，已有连接不会自动迁移。
 
-- 订阅更新默认走“故障转移”,如需要可手动改成节点选择
+明确国内直连规则优先于普通境外归类。Apple、哔哩哔哩和 Cloudflare Tunnel 默认直连，保留各自的手选入口。
 
-- 考虑到部分机场热门地区节点有高低倍率之分，根据普遍情况设置了自动选择组（仅保留标准节点）和手动组（全部节点）
+Tunnel 专用规则限定端点及 TCP/UDP 7844，并保留地址发现所需的真实 IP 解析。普通 CF 204 探针不能证明 Tunnel 的连接注册、UDP 可用性或长连接稳定性。
 
-- 本项目提供适用于Mihomo/Stash的[游戏规则](https://github.com/Lanlan13-14/Rules/tree/main/rules%2FGame)，但考虑到这类规则的特殊性，需要请自行添加
+连接页的 `MATCH` 可能是 `rematch` 子规则的最终结果，不代表最初没有命中业务分组；判断主兜底覆盖率应查看顶层规则的命中计数。
 
-- 梅林clash请使用Sub-store展开锚点后再使用
+## 维护与验证
 
-- 本项目的订阅转换模板/yaml文件是参考 ACL4SSR，Aethersailor等规则修改而来，基于作者个人理解做出的修改，另外我的更新不固定建议每2-3周下载一次配置文件替换，以获得最佳体验/也可配合Substore一同使用达到如同使用订阅链接的效果(每次更新订阅即会自动拉取配置文件更新，无需手动下载上传)，同时感谢各位的大力支持
+- `rules/`：发布的规则产物；`scripts/`：构建和验证脚本；`icon/`：图标资源。
+- `.github/workflows/main.yml`：每日同步上游规则并构建验证，使用最新稳定版及固定 v1.19.30 内核检查。
+- `docs/`：本地研究与历史分析，不纳入 Git，也不是使用或构建依赖。正式用法以本 README 和配置为准。
 
-#### Substore部署使用教程，高级玩法请将Substore更新至最新版本，注意更新前请先备份以防止配置丢失，另外注意请确保有文件页面后再进行操作
+修改配置后，可先运行静态检查（需 Python 3、Ruby）：
 
-<a href="https://github.com/sub-store-org/Sub-Store"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/Sub-Store.png" width="32" style="vertical-align:middle;"/> Sub-store直达链接</a>
->
-若无所需游戏规则，可以向该项目提交请求或者自己抓包获取后给该项目提交请求
-[游戏规则相关内容](https://github.com/FQrabbit/SSTap-Rule)
+```sh
+python3 scripts/test-config-design.py --static
+python3 scripts/test-config-design.py --static --config cinfigfull_new_4.yaml
+```
 
-### 配置模板/Configuration template
-###### For Mihomo and Stash
+修改路由或回退行为时，还应运行对应的 `scripts/test-*.py` 专项测试；完整规则校验入口为 `ruby scripts/validate-rules.rb`，需要 Mihomo。具体参数见各脚本的帮助或 CI 调用。
 
-[![Mihomo](https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo-mini.png)](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_new.yaml)
-**[configfull_new.yaml](https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/configfull_new.yaml)**
+## 使用声明与致谢
 
-当前分支只发布这一份配置模板；NoAd 和 Lite 变体暂未随本分支发布。使用前请按模板说明填写订阅链接，并检查规则组和本地节点配置。
+沿用上游要求：禁止转载或发布至中国大陆平台；使用者应遵守所在地法律法规。本项目仅用于学习研究，不保证规则的完整性、准确性或适用性，请勿用于商业或非法用途，使用风险由使用者承担。
 
-This branch currently publishes this configuration template only. NoAd and Lite variants are not published in this branch.
-
-详细的破坏性更新和迁移影响见 [CHANGELOG.md](CHANGELOG.md)。
-
-## 客户端推荐/Client Recommendation
-•Windows/MacOS/Linux
->
-<a href="https://github.com/INKCR0W/sparkle"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/mihomo.png" width="32" style="vertical-align:middle;"/> Sparkle</a>
->
-<a href="https://github.com/chen08209/FlClash"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/flclash.png" width="32" style="vertical-align:middle;"/> Flclash</a>
->
-<a href="https://github.com/pluralplay/FlClashX"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/flclash.png" width="32" style="vertical-align:middle;"/> FlclashX</a>
->
->
-•Android
->
-<a href="https://github.com/chen08209/FlClash"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/flclash.png" width="32" style="vertical-align:middle;"/> Flclash</a>
->
-<a href="https://github.com/pluralplay/FlClashX"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/flclash.png" width="32" style="vertical-align:middle;"/> FlclashX</a>
->
-<a href="https://github.com/KaringX/clashmi"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/clashmi.png" width="32" style="vertical-align:middle;"/> ClashMi</a>
->
->
-•iOS
->
-<a href="https://apps.apple.com/us/app/pharos-pro/id1456610173"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/pharos.png" width="32" style="vertical-align:middle;"/> Pharos</a>
->
-<a href="https://apps.apple.com/us/app/clash-mi/id6744321968"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/clashmi.png" width="32" style="vertical-align:middle;"/> ClashMi</a>
->
-<a href="https://apps.apple.com/app/stash/id1596063349?platform=iphone&l=zh-CN"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/stash.png" width="32" style="vertical-align:middle;"/> Stash</a>
->
->
-•HarmonyOS
->
-<a href="https://github.com/xiaobaigroup/ClashBox"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/clashbox.png" width="32" style="vertical-align:middle;"/> ClashBox</a>  
->
->
-•Openwrt
->
-<a href="https://github.com/nikkinikki-org/OpenWrt-nikki"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/nikki.png" width="32" style="vertical-align:middle;"/> Nikki</a>
->
-<a href="https://github.com/vernesong/OpenClash"><img src="https://raw.githubusercontent.com/Lanlan13-14/Icon-for-webui/refs/heads/main/openclash.png" width="32" style="vertical-align:middle;"/> Openclash</a>
->
-## 快速体验
-https://sub.ikar.eu.org
-## 🚫广告拦截效果/Test your ad blocking effect
-
-[AdBlock Tester](https://adblock-tester.com)
-
-[Block Ads! Adblock test](https://blockads.fivefilters.org/)
-
-[Ad Blocker Test](https://adblock.turtlecute.org/)
-
-## 🌟鸣谢,以下排名不分先后/Thanks, the following is in no particular order
-
-•[vernesong/OpenClash](https://github.com/vernesong/OpenClash)
-
-•[MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo)
-
-•[ACL4SSR/ACL4SSR](https://github.com/ACL4SSR/ACL4SSR)
-
-•[blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script)
-
-•[TraderWukong/demo](https://github.com/TraderWukong/demo)
-
-•[dogfight360/UsbEAm](https://github.com/dogfight360/UsbEAm)
-
-•[Aethersailor/Custom_OpenClash_Rules](https://github.com/Aethersailor/Custom_OpenClash_Rules)
-
-•[8680/GOODBYEADS](https://github.com/8680/GOODBYEADS)
-
-•[666OS/YYDS](https://github.com/666OS/YYDS)
-
-•[MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat)
-
-•[SSTap](https://github.com/FQrabbit/SSTap-Rule)
-
-•[Kwisma](https://github.com/Kwisma/cf-worker-mihomo)
-
-> [!TIP]
-> **生活是一条双行道，这是一个简单而深刻的事实。**  
-> 如果你在使用过程中遇到问题或有任何建议，欢迎指出。请确保你的帖子包含对他人有用的细节与信息，并通过 GitHub 社区分享你的发现。  
-> 同样地，也欢迎分享你遇到的问题。  
-> 感谢每一位为本项目做出贡献的开发者，正是他们的努力让项目不断进步。  
-> 请不要成为只索取不回馈的“伸手党”。
->
-> **Life is a two-way street. This is a simple, profound, and undeniable truth.**  
-> If you encounter any problems or have suggestions, feel free to report them. Just make sure your post includes helpful details and information for others.  
-> Share your findings with the GitHub community — and also share the issues you’ve run into.  
-> We’re grateful to every developer who has contributed to this project; your efforts build the foundation we stand on.  
-> Please don’t be a “help vampire.”
->
-> 如果你觉得这个项目对你有帮助，欢迎点击右上角的 ⭐Star 支持我们，让更多人了解并使用这个项目。  
-> If you find this project helpful, please click ⭐Star in the upper-right corner to support us — and help more people discover and use it.
+感谢上游项目及 [Mihomo](https://github.com/MetaCubeX/mihomo)、[OpenClash](https://github.com/vernesong/OpenClash)、[ACL4SSR](https://github.com/ACL4SSR/ACL4SSR)、[Custom_OpenClash_Rules](https://github.com/Aethersailor/Custom_OpenClash_Rules)、[blackmatrix7](https://github.com/blackmatrix7/ios_rule_script)、[meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat)、[SSTap-Rule](https://github.com/FQrabbit/SSTap-Rule) 等配置、规则和工具来源。各资源的许可与署名要求以上游为准。
