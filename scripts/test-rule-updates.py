@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 
 ROOT = Path(__file__).resolve().parent.parent
-H = runpy.run_path(str(ROOT / 'scripts/test-download-policy.py'))
+H = runpy.run_path(str(ROOT / 'scripts/proxy-fixture.py'))
 SOURCE = json.loads(subprocess.check_output(['ruby', '-ryaml', '-rjson', '-e',
     'puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))', str(ROOT / 'configfull_new.yaml')], timeout=10))
 LOCK = threading.Lock()

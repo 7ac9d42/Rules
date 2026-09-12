@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""用本机假代理运行正式策略组与规则，共享回环夹具并验证当前设计的下载回退与隔离；无需订阅或外网。"""
+"""供策略测试复用的回环假代理、故障开关与等待工具；不访问真实订阅。"""
 
 import os
 from pathlib import Path
@@ -107,9 +107,3 @@ def until(check, seconds=18):
             pass
         time.sleep(.15)
     raise AssertionError("等待运行时状态超时")
-
-
-
-if __name__ == "__main__":
-    import runpy
-    runpy.run_path(str(Path(__file__).with_name("test-config-design.py")), run_name="__main__")

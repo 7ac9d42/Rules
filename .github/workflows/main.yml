@@ -131,6 +131,12 @@ jobs:
           set -euo pipefail
           ruby scripts/validate-rules.rb
 
+      - name: Verify UDP routing and manual selection
+        run: |
+          set -euo pipefail
+          python3 scripts/test-rematch-udp.py
+          python3 scripts/test-rematch-udp.py --config cinfigfull_new_4.yaml
+
       - name: Validate with pinned mihomo v1.19.30
         env:
           MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo

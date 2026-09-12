@@ -3,7 +3,7 @@
 
 需要公开规则下载目录中的原始 MRS/text 与 manifest.json，不读取真实订阅。
 仅替换出口、DNS/TUN 和 provider 获取方式，保留完整规则条件和顺序。
-DIRECT 也替换为回环假出口，hosts 固定 1.1.1.1 作匹配元数据，不拨号公网。
+DIRECT 也替换为回环假出口，hosts 默认使用 1.1.1.1，交叉用例注入指定 IP 作匹配元数据，不拨号公网。
 本测试验证业务入口归属、选择隔离与默认 rematch 出口；地区回退、健康检查及手选持久化由其他测试覆盖。
 
 复现：python scripts/test-real-rule-routing.py --rules-dir /path/to/remote --report /path/to/report.json
@@ -27,6 +27,7 @@ import shutil
 import signal
 import socket
 import socketserver
+import struct
 import subprocess
 import tempfile
 import threading
@@ -37,13 +38,40 @@ import urllib.parse
 ROOT = Path(__file__).resolve().parent.parent
 DIRECT_PROXY = 'fixture-DIRECT'
 FIXTURE_IP = '1.1.1.1'
+# Deliberate CDN/IP overlaps: domain classification must win; unknown hosts retain IP fallback.
+HOST_IPS = {
+    'www.408os.cn': '106.75.74.76',
+    'www.microsoft.com': '106.75.74.76',
+    'www.google.com': '45.121.184.1',
+    'www.disneyplus.com': '23.246.0.1',
+    'ip-only-bilibili.example.com': '106.75.74.76',
+}
+
 
 # 每例明确给出业务入口与默认自动终结出口；预期独立于待测配置。
 # 预期按已确认的业务合并边界编写；探针家族不改变业务归属。
 CASES = [
+    ('whatsapp.com', '境外通信', '机场名称3优先'),
+    ('graph.whatsapp.net', '境外通信', '机场名称3优先'),
+    ('m.me', '境外通信', '机场名称3优先'),
+    ('viber.com', '境外通信', '机场名称3优先'),
+    ('vbcdn.net', '境外通信', '机场名称3优先'),
+    ('l-0005.l-msedge.net', '境外社媒', '机场名称1优先'),
+    ('www.408os.cn', 'DIRECT', 'DIRECT'),
+    ('www.microsoft.com', 'Microsoft', '机场名称3优先'),
+    ('www.google.com', 'Google', '机场名称1优先'),
+    ('www.disneyplus.com', 'DisneyPlus', '机场名称1优先'),
+    ('ip-only-bilibili.example.com', '哔哩哔哩', 'DIRECT'),
+
     ('hk.tv.global.mi.com', '通用代理', '机场名称3优先'),
     ('www.mi.com', 'DIRECT', 'DIRECT'),
     ('weixin.qq.com', 'DIRECT', 'DIRECT'),
+    ('wxcdn.weixin.qq.com', 'DIRECT', 'DIRECT'),
+    ('wx.qlogo.cn', 'DIRECT', 'DIRECT'),
+    ('taobao.com', 'DIRECT', 'DIRECT'),
+    ('g.alicdn.com', 'DIRECT', 'DIRECT'),
+    ('music.163.com', 'DIRECT', 'DIRECT'),
+    ('music.126.net', 'DIRECT', 'DIRECT'),
     ('test.kuapt.top', 'DIRECT', 'DIRECT'),
     ('argotunnel.com', 'DIRECT', 'DIRECT'),
     ('cftunnel.com', 'DIRECT', 'DIRECT'),
@@ -298,6 +326,29 @@ def free_port():
 def get_json(port, target):
     connection = http.client.HTTPConnection('127.0.0.1', port, timeout=3)
     try:
+        address = urllib.parse.urlsplit(target)
+        if address.hostname in HOST_IPS:
+            # SOCKS ingress exercises address metadata in addition to HTTP domain routing.
+            connection.sock = socket.create_connection(('127.0.0.1', port), timeout=3)
+            def read(size):
+                data = b''
+                while len(data) < size:
+                    chunk = connection.sock.recv(size - len(data))
+                    if not chunk:
+                        raise OSError('SOCKS handshake closed')
+                    data += chunk
+                return data
+            connection.sock.sendall(b'\x05\x01\x00')
+            assert read(2) == b'\x05\x00'
+            host = address.hostname.encode()
+            connection.sock.sendall(b'\x05\x01\x00\x03' + bytes([len(host)]) + host
+                                    + struct.pack('!H', address.port or 80))
+            reply = read(4)
+            assert reply[:3] == b'\x05\x00\x00', reply
+            assert reply[3] in (1, 3, 4), reply
+            length = read(1)[0] if reply[3] == 3 else {1: 4, 4: 16}[reply[3]]
+            read(length)
+            read(2)
         connection.request('GET', target, headers={'Connection': 'close'})
         response = connection.getresponse()
         body = response.read()
@@ -336,7 +387,7 @@ def run(args):
             'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule',
             'log-level': 'warning', 'dns': {'enable': False}, 'tun': {'enable': False},
             'profile': {'store-selected': False, 'store-fake-ip': False},
-            'hosts': dict.fromkeys(hosts, FIXTURE_IP),
+            'hosts': {host: HOST_IPS.get(host, FIXTURE_IP) for host in hosts},
             'proxies': [{'name': DIRECT_PROXY if label == 'DIRECT' else 'fixture-' + label if label in {g['name'] for g in controlled} else label,
                          'type': 'http', 'server': '127.0.0.1',
                          'port': port, 'username': username, 'password': 'fixture'}
@@ -431,7 +482,7 @@ def run(args):
                     ('境外影音', 'NETFLIX', {'youtube.com', 'tv.apple.com', 'twitch.tv',
                                             'cavporn.github.io', 'netflix.com'}),
                     ('境外通信', '境外社媒', {'telegram.org', 'line.me', 'signal.org',
-                                            'discord.com', 'api.discord.com', 'facebook.com'}),
+                                            'discord.com', 'api.discord.com', 'whatsapp.com', 'viber.com', 'facebook.com'}),
                     ('Reddit', '境外社媒', {'reddit.com', 'facebook.com'}),
                     ('游戏平台', '境外影音', {'store.steampowered.com', 'epicgames.com',
                                             'ea.com', 'youtube.com', 'tv.apple.com'}),
@@ -478,14 +529,14 @@ def run(args):
               'business_independence': independence_checked,
               'count_semantics': 'count 是导出文本行数；native_rule_count 是核心保存的规则计数。MRS 保存插入计数，域名导出会过滤内部根项，两者不必相等。所有 provider 均须原生初始化成功且计数大于零。',
               'scope': '两阶段真实规则验证：手选标签验证业务归属，默认 rematch 验证自动探针出口；中间检查金融/Talkatone、开发/纯下载、Netflix/Disney、Google/Microsoft、普通影音/Netflix、通信/社媒、Reddit/社媒及游戏/影音选择隔离。Docker R2随开发下载选择，合并成员共用选择，独立入口互不改变。原健康池及 DIRECT 使用回环标签，不测试健康回退',
-              'routing_fixture': {'hosts_ip': FIXTURE_IP, 'direct_proxy': DIRECT_PROXY,
+              'routing_fixture': {'hosts_ip': FIXTURE_IP, 'ip_overlap_cases': HOST_IPS, 'direct_proxy': DIRECT_PROXY,
                                   'network': '所有实际出站只拨号回环 HTTP 假出口，hosts IP 只参与规则匹配'},
               'uncovered': ['CF 与 Wise/PayPal/台湾的交叉规则暂无本快照的真实域名见证，未伪造 provider 覆盖',
-                            '所有域名固定为同一非国内、非私有 IP，不证明实网解析或国内 IP 交叠；IP 分流由其他测试覆盖',
+                            'IP 交叠使用明确的本地元数据，实际公网解析与可达性不在测试范围内',
                             '不测试真实 CDN、DNS、UDP 或线上服务连通性']}
     if args.report:
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
-    print(f'PASS: {len(source["proxy-providers"])}机场，{len(checked)} 个真实域名 × 业务/自动两个阶段；{len(providers)} 个规则provider')
+    print(f'PASS: {len(source["proxy-providers"])}机场，{len(checked)} 个域名用例 × 业务/自动两个阶段；{len(providers)} 个规则provider')
     print(f'业务选择隔离: {len(independence_checked)} 次请求，覆盖合并成员共用选择及保留入口独立选择')
     print('规则来源: ' + json.dumps(counts, ensure_ascii=False))
     print(f'快照: manifest SHA256={manifest_sha}；各 provider 原生计数之和={sum(item["native_rule_count"] for item in evidence)}')

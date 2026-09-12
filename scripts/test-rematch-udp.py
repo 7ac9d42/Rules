@@ -58,6 +58,12 @@ class Echo(socketserver.BaseRequestHandler):
         sock.sendto(packet[:size] + self.server.label.encode(), self.client_address)
 
 
+class DirectEcho(socketserver.BaseRequestHandler):
+    def handle(self):
+        _, sock = self.request
+        sock.sendto(b'UNEXPECTED_DIRECT', self.client_address)
+
+
 class Control(socketserver.BaseRequestHandler):
     def handle(self):
         sock = self.request
@@ -76,7 +82,7 @@ class Control(socketserver.BaseRequestHandler):
             return
 
 
-def request(mixed, host, udp_sockets):
+def request(mixed, host, udp_sockets, target_port=12345):
     # 新 SOCKS 关联不清除旧 UDP NAT；整轮持有源端口，避免复用后继承旧出口。
     udp = udp_sockets.enter_context(socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
     udp.bind(('127.0.0.1', 0))
@@ -86,7 +92,7 @@ def request(mixed, host, udp_sockets):
         control.sendall(b'\x05\x03\x00\x01' + b'\x00' * 6)
         assert read(control, 3) == b'\x05\x00\x00'
         target = address(control)
-        packet = b'\x00\x00\x00\x03' + bytes([len(host)]) + host.encode() + struct.pack('!H', 12345) + b'fixture'
+        packet = b'\x00\x00\x00\x03' + bytes([len(host)]) + host.encode() + struct.pack('!H', target_port) + b'fixture'
         udp.settimeout(3)
         udp.sendto(packet, target)
         response = udp.recv(4096)
@@ -124,7 +130,7 @@ def main(config_path=D['CONFIG']):
                 'GitHub-日本-高要求': 'jp-high-github',
             }
             manual_labels = ('manual', 'manual-dev', 'manual-download', 'manual-general', 'manual-finance',
-                             'manual-ms', 'manual-netflix', 'manual-disney', 'manual-comm', 'manual-social', 'manual-game')
+                             'manual-ms', 'manual-netflix', 'manual-disney', 'manual-comm', 'manual-social', 'manual-game', 'direct')
             groups, labels = [], set(manual_labels)
             for group in source['proxy-groups']:
                 if group['type'] == 'select':
@@ -134,7 +140,9 @@ def main(config_path=D['CONFIG']):
                     label = route_labels.get(group['name'], family)
                     labels.add(label)
                     choices = ['fixture-' + label]
-                groups.append({'name': group['name'], 'type': 'select', 'proxies': choices})
+                choices.append('fixture-no-udp')
+                groups.append({'name': group['name'], 'type': 'select',
+                               'proxies': ['fixture-direct' if p == 'DIRECT' else p for p in choices]})
             fixture_proxies = []
             for label in sorted(labels):
                 relay = Relay(('127.0.0.1', 0), Echo)
@@ -146,6 +154,8 @@ def main(config_path=D['CONFIG']):
                     servers.append(item)
                 fixture_proxies.append({'name': 'fixture-' + label, 'type': 'socks5', 'udp': True,
                                         'server': '127.0.0.1', 'port': server.server_address[1]})
+            fixture_proxies.append({'name': 'fixture-no-udp', 'type': 'http',
+                                    'server': '127.0.0.1', 'port': servers[0].server_address[1]})
             providers = {name: {'type': 'inline', 'behavior': provider['behavior'], 'payload': []}
                          for name, provider in source['rule-providers'].items()}
             docker_r2 = 'docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com'
@@ -184,18 +194,39 @@ def main(config_path=D['CONFIG']):
                 'talkatone_domain': ['talk.invalid'],
                 'banAd_core_domain': ['blocked.cf.invalid'],
             }
+            members['communication_domain'] += ['whatsapp.invalid', 'viber.invalid']
+            members['meta_domain'] += ['whatsapp.invalid']
+            members['ecommerce_domain'] = ['viber.invalid']
+            members['social_media_non_cn_domain'] += ['social-ms.invalid']
+            members['microsoft_domain'] += ['social-ms.invalid', 'ms-ip-overlap.invalid']
+            members['cn_domain'] = ['cn-ip-overlap.invalid']
+            members['bilibili_ip'] = ['106.75.74.76/32']
             for name, payload in members.items():
                 providers[name]['payload'] = payload
             hosts = ['unknown.invalid', 'registry-1.docker.io', 'huggingface.co', 'mytv.com.hk',
                      *{host for payload in members.values() for host in payload}]
+            # Every real-IP witness still exits through a loopback proxy.
+            hosts.extend(['opencode.ai', 'origin-tracker.githubusercontent.com',
+                          'copilotprodattachments.blob.core.windows.net'])
+            ip_hosts = dict.fromkeys(['cn-ip-overlap.invalid', 'ms-ip-overlap.invalid',
+                                     'ip-only-bilibili.invalid'], '106.75.74.76')
+            hosts.extend(ip_hosts)
+            def local_direct(rule):
+                parts = rule.split(',')
+                action = -2 if parts[-1] == 'no-resolve' else -1
+                if parts[action] == 'DIRECT':
+                    parts[action] = 'fixture-direct'
+                return ','.join(parts)
             mixed, controller = H['free_port'](), H['free_port']()
             config = {'mixed-port': mixed, 'external-controller': f'127.0.0.1:{controller}',
                       'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule', 'log-level': 'silent',
                       'dns': {'enable': False}, 'tun': {'enable': False},
-                      'hosts': dict.fromkeys(hosts, '127.0.0.1'),
+                      'hosts': {**dict.fromkeys(hosts, '127.0.0.1'), **ip_hosts},
                       'proxies': copy.deepcopy(source['proxies']) + fixture_proxies,
                       'proxy-groups': groups, 'rule-providers': providers,
-                      'rules': source['rules'], 'sub-rules': source['sub-rules']}
+                      'rules': [local_direct(rule) for rule in source['rules']],
+                      'sub-rules': {name: [local_direct(rule) for rule in rules]
+                                    for name, rules in source['sub-rules'].items()}}
             path = Path(directory) / 'config.json'
             path.write_text(json.dumps(config, ensure_ascii=False))
             validation = subprocess.run([H['MIHOMO'], '-t', '-d', directory, '-f', str(path)], capture_output=True, text=True, timeout=10)
@@ -218,6 +249,27 @@ def main(config_path=D['CONFIG']):
                     checks.append({'mode': mode, 'host': host, 'outlet': actual})
 
             H['until'](lambda: api('/version'))
+            # Catch both a probe-family escape and rematch's implicit DIRECT fallthrough.
+            direct_echo = Relay(('127.0.0.1', 0), DirectEcho)
+            threading.Thread(target=direct_echo.serve_forever, kwargs={'poll_interval': .05}, daemon=True).start()
+            servers.append(direct_echo)
+            for group, host in [('Cloudflare-自动', 'cf.invalid'), ('GitHub-自动', 'gh.invalid'),
+                                ('纯下载-自动', 'download.invalid'), ('机场名称3优先', 'unknown.invalid')]:
+                previous = next(g for g in groups if g['name'] == group)['proxies'][0]
+                choose(group, 'fixture-no-udp')
+                try:
+                    actual = request(mixed, host, udp_sockets, direct_echo.server_address[1])
+                except socket.timeout:
+                    checks.append({'mode': 'auto-unsupported-udp', 'host': host, 'outlet': 'REJECT'})
+                else:
+                    raise AssertionError(('UDP escaped selected probe family', group, host, actual))
+                finally:
+                    choose(group, previous)
+            choose('哔哩哔哩', 'fixture-manual')
+            expect('domain-before-ip-and-vendor', [
+                ('cn-ip-overlap.invalid', 'direct'), ('ms-ip-overlap.invalid', 'cost-generic'),
+                ('ip-only-bilibili.invalid', 'manual'), ('whatsapp.invalid', 'cost-generic'),
+                ('viber.invalid', 'cost-generic'), ('social-ms.invalid', 'quality-generic')])
             expect('auto', [('cf.invalid', 'cost-cf'), ('gh.invalid', 'cost-github'),
                             ('dev.invalid', 'cost-generic'), ('dev.cf.invalid', 'cost-cf'),
                             ('download.invalid', 'download'), ('unknown.invalid', 'cost-generic'),
@@ -229,6 +281,16 @@ def main(config_path=D['CONFIG']):
                             ('ai.invalid', 'manual')])
             dev_hosts = ['dev.invalid', 'dev.cf.invalid', 'gh.invalid', 'registry-1.docker.io', docker_r2, 'huggingface.co']
             finance_hosts = ['paypal.invalid', 'paypal.cf.invalid', 'wise.invalid', 'wise.cf.invalid', 'wise.gh.invalid']
+            choose('AI', 'fixture-no-udp')
+            for host in ['ai.invalid', 'opencode.ai', 'origin-tracker.githubusercontent.com',
+                         'copilotprodattachments.blob.core.windows.net']:
+                try:
+                    actual = request(mixed, host, udp_sockets)
+                except socket.timeout:
+                    checks.append({'mode': 'ai-unsupported-udp', 'host': host, 'outlet': 'REJECT'})
+                else:
+                    raise AssertionError(('AI UDP escaped selected route', host, actual))
+            choose('AI', 'fixture-manual')
             choose('开发下载', 'fixture-manual-dev')
             expect('dev-github-docker-hf-unified', [(host, 'manual-dev') for host in dev_hosts]
                    + [('download.invalid', 'download'), ('cf.invalid', 'cost-cf')])

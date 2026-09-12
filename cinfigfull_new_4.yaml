@@ -1491,6 +1491,8 @@ rules:
   - DOMAIN,origin-tracker.githubusercontent.com,AI
   # Copilot 专属附件先于通用 Azure Blob 下载后缀。
   - DOMAIN,copilotprodattachments.blob.core.windows.net,AI
+  # 手选节点不支持 UDP 时拒绝，保持 AI 出口边界。
+  - AND,((NETWORK,udp),(OR,((DOMAIN-SUFFIX,opencode.ai),(DOMAIN,origin-tracker.githubusercontent.com),(DOMAIN,copilotprodattachments.blob.core.windows.net)))),REJECT
   # 香港电视例外须先于小米父域直连。
   - DOMAIN,hk.tv.global.mi.com,通用代理
   - DOMAIN,ykk.emby.moe,Emby
@@ -1504,7 +1506,6 @@ rules:
   - DOMAIN-SUFFIX,homdgcat.wiki,DIRECT
   - DOMAIN-SUFFIX,bsbsb.top,DIRECT
   - DOMAIN-SUFFIX,3ct.2ndtool.top,DIRECT
-  - DOMAIN-SUFFIX,kejiweixun.com,DIRECT
   - DOMAIN-SUFFIX,yunmu.xiercloud.uk,DIRECT
   - AND,((DST-PORT,7844),(OR,((DOMAIN,region1.v2.argotunnel.com),(DOMAIN,region2.v2.argotunnel.com),(DOMAIN,cftunnel.com),(DOMAIN,h2.cftunnel.com),(DOMAIN,quic.cftunnel.com)))),Cloudflare Tunnel
   - AND,((DST-PORT,7844),(RULE-SET,cloudflare_tunnel_ip,no-resolve)),Cloudflare Tunnel
@@ -1514,8 +1515,6 @@ rules:
   - DOMAIN-SUFFIX,argotunnel.com,DIRECT
   - DOMAIN-SUFFIX,cftunnel.com,DIRECT
   - DOMAIN-SUFFIX,trycloudflare.com,DIRECT
-  - DOMAIN,www.csgraduates.com,DIRECT
-  - DOMAIN,www.cxyonly.fans,DIRECT
   # 金融例外先于广告
   - RULE-SET,Wise_domain,金融
   - RULE-SET,paypal_domain,金融
@@ -1548,9 +1547,7 @@ rules:
   - RULE-SET,steam_cn_domain,DIRECT
   - RULE-SET,game_cn_domain,DIRECT
   - RULE-SET,steamcdn_domain,DIRECT
-  - RULE-SET,steamcdn_ip,DIRECT,no-resolve
   - RULE-SET,NetEaseMusic_domain,DIRECT
-  - RULE-SET,NetEaseMusic_ip,DIRECT,no-resolve
   - RULE-SET,pt_domain,DIRECT
   - RULE-SET,public-tracker_domain,DIRECT
   - RULE-SET,media_cn_domain,DIRECT
@@ -1562,7 +1559,6 @@ rules:
   - RULE-SET,apple_domain,Apple
   - RULE-SET,biliintl_domain,哔哩东南亚
   - RULE-SET,bilibili_domain,哔哩哔哩
-  - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
 
   # 开发产品
   - DOMAIN-SUFFIX,huggingface.co,开发下载
@@ -1590,13 +1586,13 @@ rules:
   # 国内域名兜底
   - RULE-SET,cn_domain,DIRECT
 
-  # Telegram 域名与 IP
+  # Telegram 域名
   - RULE-SET,telegram_domain,境外通信
-  - RULE-SET,telegram_ip,境外通信,no-resolve
 
   # 具体产品先于共享平台
   - RULE-SET,bahamut_domain,台湾限定
   - RULE-SET,ai!cn_domain,AI
+  - AND,((NETWORK,udp),(RULE-SET,ai!cn_domain)),REJECT
   - RULE-SET,youtube_domain,境外影音
   - RULE-SET,fcm_domain,Google
   - RULE-SET,googlevpn_domain,Google
@@ -1608,12 +1604,10 @@ rules:
   - RULE-SET,onedrive_domain,Microsoft
   - RULE-SET,line_domain,境外通信
   - RULE-SET,talkatone_domain,Talkatone
-  - RULE-SET,talkatone_ip,Talkatone,no-resolve
   - RULE-SET,discord_domain,境外通信
   - RULE-SET,signal_domain,境外通信
   - RULE-SET,tiktok_domain,TikTok
   - RULE-SET,netflix_domain,NETFLIX
-  - RULE-SET,netflix_ip,NETFLIX,no-resolve
   - RULE-SET,disney_domain,DisneyPlus
   - RULE-SET,hbo_domain,HBO
   - RULE-SET,primevideo_domain,Primevideo
@@ -1627,26 +1621,33 @@ rules:
   - RULE-SET,UBI_domain,游戏平台
   - RULE-SET,Sony_domain,游戏平台
   - RULE-SET,Nintendo_domain,游戏平台
+  # 通信、社媒具体业务先于电商与厂商集合。
+  - RULE-SET,communication_domain,境外通信
+  - RULE-SET,reddit_domain,Reddit
+  - RULE-SET,social_media_non_cn_domain,境外社媒
   - RULE-SET,amazon_commerce_domain,境外电商
   - RULE-SET,ecommerce_domain,境外电商
   - RULE-SET,speedtest_domain,Speedtest
 
   # 厂商生态兜底
   - RULE-SET,google_domain,Google
-  - RULE-SET,google_asn_cn,Google,no-resolve
-  - RULE-SET,google_ip,Google,no-resolve
   - RULE-SET,microsoft_domain,Microsoft
   - RULE-SET,meta_domain,境外社媒
-  - RULE-SET,facebook_ip,境外社媒,no-resolve
 
-  # 金融、通信与社媒聚合
+  # 金融聚合
   - RULE-SET,finance_domain,金融
   - RULE-SET,cryptocurrency_domain,金融
-  - RULE-SET,communication_domain,境外通信
-  # Reddit 需单独补齐主站与媒体域。
-  - RULE-SET,reddit_domain,Reddit
-  - RULE-SET,social_media_non_cn_domain,境外社媒
-  # Twitter/X 域名已含在社媒集合，IP 保持同策略。
+
+  # 业务 IP 兜底：明确域名分类优先，共享 IP 不覆盖业务选择。
+  - RULE-SET,steamcdn_ip,DIRECT,no-resolve
+  - RULE-SET,NetEaseMusic_ip,DIRECT,no-resolve
+  - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
+  - RULE-SET,telegram_ip,境外通信,no-resolve
+  - RULE-SET,talkatone_ip,Talkatone,no-resolve
+  - RULE-SET,netflix_ip,NETFLIX,no-resolve
+  - RULE-SET,google_asn_cn,Google,no-resolve
+  - RULE-SET,google_ip,Google,no-resolve
+  - RULE-SET,facebook_ip,境外社媒,no-resolve
   - RULE-SET,twitter_ip,境外社媒,no-resolve
 
   # 国内 IP 兜底
@@ -1657,100 +1658,156 @@ rules:
   # 未匹配流量走代理
   - MATCH,通用代理
 
-  # 只决定探针与候选链，不回到业务入口。
+  # 按探针选择候选链；UDP 能力不匹配时明确拒绝。
 sub-rules:
 
   机场名称2自动:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-家宽优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-家宽优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,家宽优先
+    - NETWORK,udp,REJECT
 
   机场名称1自动:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-机场名称1优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - RULE-SET,pure_download_domain,纯下载-机场名称1优先
+    - AND,((NETWORK,udp),(RULE-SET,pure_download_domain)),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-机场名称1优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,机场名称1优先
+    - NETWORK,udp,REJECT
 
   机场名称3自动:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-自动
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - RULE-SET,pure_download_domain,纯下载-自动
+    - AND,((NETWORK,udp),(RULE-SET,pure_download_domain)),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-自动
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,机场名称3优先
+    - NETWORK,udp,REJECT
 
   机场名称2-香港:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-香港-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-香港-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,香港-高要求
+    - NETWORK,udp,REJECT
 
   机场名称1-香港:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-香港-地区优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-香港-地区优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,香港-机场名称1优先
+    - NETWORK,udp,REJECT
 
   机场名称3-香港:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-香港-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-香港-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,香港-成本优先
+    - NETWORK,udp,REJECT
 
   机场名称2-日本:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-日本-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-日本-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,日本-高要求
+    - NETWORK,udp,REJECT
 
   机场名称1-日本:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-日本-地区优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-日本-地区优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,日本-机场名称1优先
+    - NETWORK,udp,REJECT
 
   机场名称3-日本:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-日本-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-日本-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,日本-成本优先
+    - NETWORK,udp,REJECT
 
   机场名称2-新加坡:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-新加坡-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-新加坡-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,新加坡-高要求
+    - NETWORK,udp,REJECT
 
   机场名称1-新加坡:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-新加坡-地区优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-新加坡-地区优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,新加坡-机场名称1优先
+    - NETWORK,udp,REJECT
 
   机场名称3-新加坡:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-新加坡-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-新加坡-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,新加坡-成本优先
+    - NETWORK,udp,REJECT
 
   机场名称2-台湾:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-台湾-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-台湾-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,台湾-高要求
+    - NETWORK,udp,REJECT
 
   机场名称1-台湾:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-台湾
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-台湾
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,台湾-机场名称1优先
+    - NETWORK,udp,REJECT
 
   机场名称3-台湾:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-台湾-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-台湾-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,台湾-成本优先
+    - NETWORK,udp,REJECT
 
   机场名称2-美国:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-美国-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-美国-高要求
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,美国-高要求
+    - NETWORK,udp,REJECT
 
   机场名称1-美国:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-美国-地区优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-美国-地区优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,美国-机场名称1优先
+    - NETWORK,udp,REJECT
 
   机场名称3-美国:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-美国-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
     - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-美国-成本优先
+    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
     - MATCH,美国-成本优先
+    - NETWORK,udp,REJECT
 
 rule-providers:
   # 全球 Tunnel 端点，2026-09-11 官方清单；仅供 7844 规则使用。

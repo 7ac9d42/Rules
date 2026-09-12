@@ -13,7 +13,7 @@ import urllib.request
 
 
 ROOT = Path(__file__).resolve().parent.parent
-H = runpy.run_path(str(Path(__file__).with_name("test-download-policy.py")))
+H = runpy.run_path(str(Path(__file__).with_name("proxy-fixture.py")))
 SOURCE = json.loads(subprocess.check_output(["ruby", "-ryaml", "-rjson", "-e",
     "puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))",
     os.environ.get("MIHOMO_DESIGN_CONFIG", str(ROOT / "configfull_new.yaml"))], timeout=10))
@@ -48,6 +48,9 @@ def main():
         ],
         "Airport_04": [("德国备用", set())],
     }
+    if "Airport_02" in SOURCE["proxy-providers"]:
+        examples["Airport_02"] = [("香港家宽 1x", {"hk2"}), ("日本家宽 1x", {"jp2"}),
+                                  ("香港家宽 BETA", set()), ("日本家宽 0.3x", set())]
     notices = ["剩余流量: 100 GB", "套餐到期: 2027-01-01", "Email: support@example.invalid", "Expired"]
     core = None
     with tempfile.TemporaryDirectory(prefix="mihomo-node-filters-") as directory:
@@ -71,6 +74,9 @@ def main():
             for family in ("机场名称", "GitHub-机场名称", "Cloudflare-机场名称"):
                 subjects.update({f"{family}1-香港": "hk1", f"{family}3-日本": "jp3",
                                  f"{family}3-新加坡": "sg3", f"{family}3-美国": "us3"})
+            if "Airport_02" in examples:
+                for family in ("机场名称", "GitHub-机场名称", "Cloudflare-机场名称"):
+                    subjects.update({f"{family}2-香港": "hk2", f"{family}2-日本": "jp2"})
             groups = [copy.deepcopy(group) for group in SOURCE["proxy-groups"] if group["name"] in subjects]
             assert len(groups) == len(subjects)
             for group in groups:

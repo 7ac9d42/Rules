@@ -12,7 +12,7 @@
 
 每次加载一份完整配置，无需拼接。当前模板使用官方 Mihomo 的 `rematch`，固定验收版本为 **v1.19.30**；不要直接当作 Stash 或其他内核的通用模板使用。
 
-使用前填写机场订阅，核对节点名称过滤条件，并按自己的环境调整监听地址、控制器密钥和 DNS。升级时以新模板为基础迁移个人设置，旧分组名称与缓存选择不保证兼容。变更见 [CHANGELOG.md](CHANGELOG.md)。
+使用前填写机场订阅，核对节点名称过滤条件，并按自己的环境调整监听地址、控制器密钥和 DNS。升级时以新模板为基础迁移个人设置，旧分组名称与缓存选择不保证兼容。
 
 ## 如何选择出口
 
@@ -41,9 +41,10 @@ Tunnel 专用规则限定端点及 TCP/UDP 7844，并保留地址发现所需的
 
 ## 维护与验证
 
+- 手工直连、代理补充分别维护在 `scripts/data/direct.list`、`scripts/data/proxy.list`；修改后运行 `bash scripts/build/direct.sh`、`bash scripts/build/proxy.sh`，同步发布列表及 YAML/MRS。
 - `rules/`：发布的规则产物；`scripts/`：构建和验证脚本；`icon/`：图标资源。
 - `.github/workflows/main.yml`：每日同步上游规则并构建验证，使用最新稳定版及固定 v1.19.30 内核检查。
-- `docs/`：本地研究与历史分析，不纳入 Git，也不是使用或构建依赖。正式用法以本 README 和配置为准。
+- `docs/`：本地临时研究笔记，不纳入 Git，也不是使用或构建依赖。正式用法以本 README 和配置为准。
 
 修改配置后，可先运行静态检查（需 Python 3、Ruby）：
 
@@ -51,6 +52,8 @@ Tunnel 专用规则限定端点及 TCP/UDP 7844，并保留地址发现所需的
 python3 scripts/test-config-design.py --static
 python3 scripts/test-config-design.py --static --config cinfigfull_new_4.yaml
 ```
+
+`scripts/proxy-fixture.py` 是共享测试工具，不是测试入口。AI 手选和重启验证使用 `scripts/test-runtime-lifecycle.py`，下载回退验证使用 `scripts/test-config-design.py`。
 
 修改路由或回退行为时，还应运行对应的 `scripts/test-*.py` 专项测试；完整规则校验入口为 `ruby scripts/validate-rules.rb`，需要 Mihomo。具体参数见各脚本的帮助或 CI 调用。
 

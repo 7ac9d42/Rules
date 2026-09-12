@@ -18,7 +18,7 @@ import urllib.request
 
 
 ROOT = Path(__file__).resolve().parent.parent
-H = runpy.run_path(str(Path(__file__).with_name("test-download-policy.py")))
+H = runpy.run_path(str(Path(__file__).with_name("proxy-fixture.py")))
 GENERIC, GITHUB, CF = H["GENERIC"], H["GITHUB"], H["CLOUDFLARE"]
 CONFIG = Path(os.environ.get("MIHOMO_DESIGN_CONFIG", str(ROOT / "configfull_new.yaml")))
 CF_HOSTS = set()
@@ -179,13 +179,18 @@ def static_checks(source, with_home):
         *(f"机场名称{airport}自动" for airport in airports),
         *(f"机场名称{airport}-{region}" for airport in airports for region in REGIONS),
     }, referenced
+    primary_subrules = {name: [rule for rule in rules if not rule.endswith(",REJECT")]
+                        for name, rules in source["sub-rules"].items()}
+    for rules in source["sub-rules"].values():
+        assert rules[-1] == "NETWORK,udp,REJECT"
+        assert all("NETWORK,udp" in rule for rule in rules if rule.endswith(",REJECT"))
     for airport, target in (("1", "纯下载-机场名称1优先"), ("3", "纯下载-自动")):
-        rules = source["sub-rules"][f"机场名称{airport}自动"]
+        rules = primary_subrules[f"机场名称{airport}自动"]
         assert outbounds[f"机场名称{airport}优先-自动"]["target-sub-rule"] == f"机场名称{airport}自动"
         assert rules[1] == "RULE-SET,pure_download_domain," + target
         assert rules[2] == "OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain))," + (
             "GitHub-机场名称1优先" if airport == "1" else "GitHub-自动")
-    for rules in source["sub-rules"].values():
+    for rules in primary_subrules.values():
         assert rules[-1].startswith("MATCH,")
         for rule in rules:
             target = rule.rsplit(",", 1)[-1]
@@ -218,6 +223,16 @@ def static_checks(source, with_home):
     assert groups["台湾限定"]["proxies"] == ["台湾·机场名称1优先"]
     assert source["Direct_Select"]["proxies"] == ["DIRECT", *source["Cost_policy"]["proxies"][:-1]]
     assert groups["Emby"]["proxies"] == ["低倍率/MITM节点", *source["Cost_policy"]["proxies"]]
+    # Provider IP fallbacks follow all ordinary domain rules; precise Tunnel/IP exceptions remain above.
+    business_ip_indexes = [i for i, rule in enumerate(source["rules"])
+                           if rule.startswith("RULE-SET,")
+                           and source["rule-providers"][rule.split(",")[1]]["behavior"] == "ipcidr"
+                           and rule.split(",")[1] not in {"private_ip", "cn_ip"}]
+    domain_indexes = [i for i, rule in enumerate(source["rules"])
+                      if rule.startswith(("DOMAIN,", "DOMAIN-SUFFIX,"))
+                      or (rule.startswith("RULE-SET,")
+                          and source["rule-providers"][rule.split(",")[1]]["behavior"] == "domain")]
+    assert max(domain_indexes) < min(business_ip_indexes)
     # 聚合改变业务入口，不能只检验菜单而遗漏实际规则去向。
     provider_businesses = {
         "Google": ["google_domain", "googlevpn_domain", "fcm_domain"],
@@ -273,12 +288,12 @@ def static_checks(source, with_home):
     assert set(source["proxy-providers"]) == {"Airport_01", "Airport_03", "Airport_04", *home}
     if not with_home:
         assert "Airport_02" not in json.dumps(source, ensure_ascii=False)
-    assert source["sub-rules"]["机场名称1自动"][-1] == "MATCH,机场名称1优先"
-    assert source["sub-rules"]["机场名称3自动"][-1] == "MATCH,机场名称3优先"
+    assert primary_subrules["机场名称1自动"][-1] == "MATCH,机场名称1优先"
+    assert primary_subrules["机场名称3自动"][-1] == "MATCH,机场名称3优先"
     assert groups["机场名称1优先"]["proxies"] == [f"机场名称{n}地区优先" for n in ([1, 2, 3, 4] if with_home else [1, 3, 4])]
     assert groups["机场名称3优先"]["proxies"] == [f"机场名称{n}地区优先" for n in ([3, 1, 2, 4] if with_home else [3, 1, 4])]
     if with_home:
-        assert source["sub-rules"]["机场名称2自动"][-1] == "MATCH,家宽优先"
+        assert primary_subrules["机场名称2自动"][-1] == "MATCH,家宽优先"
         assert outbounds["机场名称2优先-自动"]["target-sub-rule"] == "机场名称2自动"
         for prefix in ("Cloudflare-", "GitHub-"):
             assert groups[prefix + "家宽优先"]["proxies"] == [prefix + f"机场名称{n}" for n in [2, 1, 3, 4]]

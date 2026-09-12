@@ -290,10 +290,13 @@ errors << "scripts/build/dev-download.sh: builder must be executable" unless Fil
 
 begin
   local_domain_sources = {
-    "direct" => File.join(ROOT, "rules", "Domain", "direct.list"),
-    "proxy" => File.join(ROOT, "rules", "Domain", "Proxymini.list"),
+    "direct" => File.join(ROOT, "scripts", "data", "direct.list"),
+    "proxy" => File.join(ROOT, "scripts", "data", "proxy.list"),
   }
   local_domain_payloads = local_domain_sources.to_h do |name, source_path|
+    published_name = name == "direct" ? "direct.list" : "Proxymini.list"
+    published_path = File.join(ROOT, "rules", "Domain", published_name)
+    errors << "#{published_path}: published source differs from scripts/data" unless File.binread(source_path) == File.binread(published_path)
     generated_path = File.join(ROOT, "rules", "Domain", "#{name}.yaml")
     expected = domain_payload_from_classical_source(source_path)
     generated = yaml_payloads.fetch(generated_path)

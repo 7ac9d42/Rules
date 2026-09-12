@@ -4,7 +4,7 @@ export LC_ALL=C
 
 echo "=== Building direct ==="
 
-source_file="rules/Domain/direct.list"
+source_file="scripts/data/direct.list"
 if [[ ! -s "$source_file" ]]; then
   echo "Missing direct source: $source_file" >&2
   exit 1
@@ -26,3 +26,6 @@ fi
 # Convert Direct Rules to MRS
 # 使用 mihomo 转换为 MRS 格式
 mihomo convert-ruleset domain yaml rules/Domain/direct.yaml rules/Domain/direct.mrs
+
+# 发布手工源，覆盖同步得到的上游版本。
+cp "$source_file" rules/Domain/direct.list
