@@ -90,9 +90,10 @@ class Handler(H["Handler"]):
                               (service, label) in H["NODE_FAILED"])
                 if method == "HEAD":
                     preferred = {GENERIC: "3-JP", GITHUB: "3-US", CF: "3-JP"}[service]
-                    delay = .01 if label == preferred else .15
+                    delay = .01 if label == preferred else .25
                     if service == GITHUB and label == "3-JP2":
-                        delay = .04
+                        # 与最快及普通节点均相差超过 50ms 容差，避免合法保留旧节点被误判。
+                        delay = .12
                     time.sleep(getattr(self.server, "probe_delays", {}).get(service, delay))
                     status, body = (503 if failed else H["EXPECTED"][service]), b""
                 else:
@@ -137,9 +138,11 @@ def static_checks(source, with_home):
     known = set(groups) | set(outbounds) | {"DIRECT", "REJECT", "REJECT-DROP"}
     visible = {name for name, g in groups.items() if not g.get("hidden", False)}
     assert visible == {name for names in BUSINESS_TEMPLATES.values() for name in names} | {
-        "台湾限定", "Emby", "隐私拦截", "GLOBAL", "Cloudflare Tunnel", "自建/家宽节点"}, visible
-    assert len(visible) == 32
+        "台湾限定", "Emby", "隐私拦截", "GLOBAL", "Cloudflare Tunnel", "自建/家宽节点", "低倍率/MITM节点"}, visible
+    assert len(visible) == 33
     for name, group in groups.items():
+        # 手选必须可见；隐藏实现层必须自行选择节点。
+        assert (group["type"] == "select") == (name in visible), name
         if group["type"] == "select":
             assert len(group.get("proxies", [])) == len(set(group.get("proxies", []))), name
         assert set(group.get("proxies", [])) <= known, name
@@ -201,10 +204,12 @@ def static_checks(source, with_home):
     if with_home:
         ai_choices.insert(2, "机场名称2优先-自动")
     assert groups["AI"]["proxies"] == ai_choices
-    assert groups["AI-机场名称1-日本"]["type"] == "select"
-    assert groups["AI-机场名称1-日本"]["use"] == ["Airport_01"]
+    assert groups["AI-机场名称1-日本"] == {
+        "name": "AI-机场名称1-日本", **source["Cloudflare_Urltest_Base"],
+        "use": ["Airport_01"], "filter": source["region_jp"],
+        "exclude-filter": source["exclude_lowrate"],
+    }
     dialable("AI-机场名称1-日本")
-    assert groups["AI-机场名称1-日本"]["filter"] == source["region_jp"]
     for policy, businesses in BUSINESS_TEMPLATES.items():
         for business in businesses:
             assert groups[business] == {"name": business, **source[policy]}, business
@@ -679,15 +684,31 @@ def main(config=CONFIG):
             recover()
             checks.append("探针只影响对应自动池：CF/Google故障独立，机场偏好保留各自探针")
 
+            # 同机场同地区的第二个节点：先验证择优，再验证故障切换和边界。
+            ai_provider = Path(directory) / "Airport_01.json"
+            ai_extra = {"name": "[机场名称1]日本02", "type": "http", "server": "127.0.0.1",
+                        "port": by_label["1-fast"].server_address[1]}
+            ai_provider.write_text(json.dumps({"proxies": [*nodes["Airport_01"], ai_extra]}))
+            api("/providers/proxies/Airport_01", method="PUT")
+            expect("ai.cf.invalid", "1-fast")
+            assert group("AI-机场名称1-日本")["now"] == "[机场名称1]日本02"
+            fail(CF, labels=["1-fast"])
+            expect("ai.cf.invalid", "1-jp")
             fail(CF, airports=["1", "2"])
             expect("google.cf.invalid", "3-JP")
             expect("wise.cf.invalid", "3-JP")
             assert request("ai.cf.invalid")[0] != 0
             assert group("AI")["now"] == "AI-机场名称1-日本"
-            assert group("AI-机场名称1-日本")["now"] == "[机场名称1]日本01"
             recover()
+            ai_provider.write_text(json.dumps({"proxies": [node for node in nodes["Airport_01"]
+                                                         if "日本" not in node["name"]]}))
+            api("/providers/proxies/Airport_01", method="PUT")
+            H["until"](lambda: group("AI-机场名称1-日本")["all"] == ["REJECT"])
+            H["until"](lambda: request("ai.cf.invalid")[0] != 0)
+            ai_provider.write_text(json.dumps({"proxies": nodes["Airport_01"]}))
+            api("/providers/proxies/Airport_01", method="PUT")
             expect("ai.cf.invalid", "1-jp")
-            checks.append("最高要求通过AI业务独立执行；已选机场名称1节点失败不自动换路")
+            checks.append("AI按CF探针在机场名称1日本内择优及故障切换；全部故障或空池不跨机场/地区")
 
             # 指定日本同时验证地区边界和三层不同机场顺序。
             choose("金融", "日本·" + high_preference)

@@ -55,7 +55,7 @@ def main():
     core = None
     with tempfile.TemporaryDirectory(prefix="mihomo-node-filters-") as directory:
         try:
-            providers, expected, manual = {}, {}, set()
+            providers, expected, manual, udp_capabilities = {}, {}, set(), {}
             for name, cases in examples.items():
                 provider = copy.deepcopy(SOURCE["proxy-providers"][name])
                 prefix = provider["override"]["additional-prefix"]
@@ -64,9 +64,12 @@ def main():
                     for membership in memberships:
                         expected.setdefault(membership, set()).add(prefix + raw_name)
                 path = Path(directory) / f"{name}.json"
+                udp_capabilities.update({prefix + raw_name: bool(i % 2)
+                                         for i, (raw_name, _) in enumerate(cases)})
                 path.write_text(json.dumps({"proxies": [
-                    {"name": raw_name, "type": "http", "server": "127.0.0.1", "port": 9}
-                    for raw_name in [entry[0] for entry in cases] + notices]}))
+                    {"name": raw_name, "type": "socks5", "server": "127.0.0.1", "port": 9,
+                     "udp": bool(i % 2)}
+                    for i, raw_name in enumerate([entry[0] for entry in cases] + notices)]}))
                 provider.pop("url", None)
                 provider.update(type="file", path=str(path), **{"health-check": {"enable": False}})
                 providers[name] = provider
@@ -102,6 +105,13 @@ def main():
 
             actual = H["until"](snapshot)
             failures = []
+            with opener.open(f"http://127.0.0.1:{control}/providers/proxies", timeout=2) as response:
+                actual_nodes = {node["name"]: node for provider in json.load(response)["providers"].values()
+                                for node in provider["proxies"]}
+            for name, supported in udp_capabilities.items():
+                if actual_nodes[name]["udp"] != supported:
+                    failures.append({"node": name, "expected_udp": supported,
+                                     "actual_udp": actual_nodes[name]["udp"]})
             for name, membership in subjects.items():
                 want = manual if membership == "manual" else expected[membership]
                 members = set(actual[name]["all"])
@@ -109,7 +119,8 @@ def main():
                     failures.append({"group": name, "unexpected": sorted(members - want), "missing": sorted(want - members)})
             print(json.dumps({"passed": not failures, "groups": len(subjects), "raw_nodes": len(manual),
                 "checks": ["provider 原始公告先过滤、显示前缀后添加", "CTCU 首中末标签排除且保留 CTCUCM",
-                           "美国延续低倍率和 CTCU 例外", "香港质量及倍率/BETA/MITM 下载边界", "全量手选保留问题节点"],
+                           "美国延续低倍率和 CTCU 例外", "香港质量及倍率/BETA/MITM 下载边界", "全量手选保留问题节点",
+                           "订阅 UDP 能力声明保留，TCP-only 节点仍可入池和手选"],
                 "failures": failures}, ensure_ascii=False, indent=2))
             assert not failures, "官方核心候选与准入政策不一致"
         finally:

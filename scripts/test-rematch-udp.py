@@ -112,6 +112,7 @@ def main(config_path=D['CONFIG']):
         try:
             # 标签区分自动路径；这里不模拟各路径中的节点健康与延迟。
             route_labels = {
+                'AI-机场名称1-日本': 'ai-jp-cf',
                 '机场名称1优先': 'quality-generic', '机场名称3优先': 'cost-generic',
                 'Cloudflare-机场名称1优先': 'quality-cf', 'Cloudflare-自动': 'cost-cf',
                 'GitHub-机场名称1优先': 'quality-github', 'GitHub-自动': 'cost-github',
@@ -219,7 +220,7 @@ def main(config_path=D['CONFIG']):
                 return ','.join(parts)
             mixed, controller = H['free_port'](), H['free_port']()
             config = {'mixed-port': mixed, 'external-controller': f'127.0.0.1:{controller}',
-                      'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule', 'log-level': 'silent',
+                      'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule', 'log-level': 'info',
                       'dns': {'enable': False}, 'tun': {'enable': False},
                       'hosts': {**dict.fromkeys(hosts, '127.0.0.1'), **ip_hosts},
                       'proxies': copy.deepcopy(source['proxies']) + fixture_proxies,
@@ -231,7 +232,10 @@ def main(config_path=D['CONFIG']):
             path.write_text(json.dumps(config, ensure_ascii=False))
             validation = subprocess.run([H['MIHOMO'], '-t', '-d', directory, '-f', str(path)], capture_output=True, text=True, timeout=10)
             assert validation.returncode == 0, validation.stdout + validation.stderr
-            core = subprocess.Popen([H['MIHOMO'], '-d', directory, '-f', str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            core_log = Path(directory) / 'core.log'
+            with core_log.open('w') as output:
+                core = subprocess.Popen([H['MIHOMO'], '-d', directory, '-f', str(path)],
+                                        stdout=output, stderr=subprocess.STDOUT)
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
             def api(path, body=None, method='GET'):
                 data = json.dumps(body).encode() if body is not None else None
@@ -248,6 +252,12 @@ def main(config_path=D['CONFIG']):
                     assert actual == expected, (mode, host, expected, actual)
                     checks.append({'mode': mode, 'host': host, 'outlet': actual})
 
+            def assert_rejected(host, port=12345):
+                # 超时也可能来自 DNS/权限/网络故障，必须确认原生匹配到了 REJECT。
+                lines = core_log.read_text().splitlines()
+                assert any(f' --> {host}:{port} match ' in line and 'using REJECT' in line
+                           for line in lines), ('UDP timed out without a REJECT match', host, lines[-10:])
+
             H['until'](lambda: api('/version'))
             # Catch both a probe-family escape and rematch's implicit DIRECT fallthrough.
             direct_echo = Relay(('127.0.0.1', 0), DirectEcho)
@@ -260,6 +270,7 @@ def main(config_path=D['CONFIG']):
                 try:
                     actual = request(mixed, host, udp_sockets, direct_echo.server_address[1])
                 except socket.timeout:
+                    assert_rejected(host, direct_echo.server_address[1])
                     checks.append({'mode': 'auto-unsupported-udp', 'host': host, 'outlet': 'REJECT'})
                 else:
                     raise AssertionError(('UDP escaped selected probe family', group, host, actual))
@@ -278,7 +289,7 @@ def main(config_path=D['CONFIG']):
                             ('paypal.invalid', high['generic']), ('reddit.invalid', high['generic']),
                             ('wise.gh.invalid', high['github']),
                             ('telegram.invalid', 'cost-generic'), ('youtube.invalid', 'cost-generic'),
-                            ('ai.invalid', 'manual')])
+                            ('ai.invalid', 'ai-jp-cf')])
             dev_hosts = ['dev.invalid', 'dev.cf.invalid', 'gh.invalid', 'registry-1.docker.io', docker_r2, 'huggingface.co']
             finance_hosts = ['paypal.invalid', 'paypal.cf.invalid', 'wise.invalid', 'wise.cf.invalid', 'wise.gh.invalid']
             choose('AI', 'fixture-no-udp')
@@ -287,6 +298,7 @@ def main(config_path=D['CONFIG']):
                 try:
                     actual = request(mixed, host, udp_sockets)
                 except socket.timeout:
+                    assert_rejected(host)
                     checks.append({'mode': 'ai-unsupported-udp', 'host': host, 'outlet': 'REJECT'})
                 else:
                     raise AssertionError(('AI UDP escaped selected route', host, actual))

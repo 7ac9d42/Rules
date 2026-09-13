@@ -4,6 +4,7 @@
 import argparse
 import copy
 import json
+import os
 from pathlib import Path
 import runpy
 import signal
@@ -18,7 +19,8 @@ import urllib.request
 ROOT = Path(__file__).resolve().parent.parent
 H = runpy.run_path(str(ROOT / 'scripts/proxy-fixture.py'))
 SOURCE = json.loads(subprocess.check_output(['ruby', '-ryaml', '-rjson', '-e',
-    'puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))', str(ROOT / 'configfull_new.yaml')], timeout=10))
+    'puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))',
+    os.environ.get('MIHOMO_DESIGN_CONFIG', str(ROOT / 'configfull_new.yaml'))], timeout=10))
 LOCK = threading.Lock()
 BAD_GITHUB = {'3'}
 OFFLINE = False
@@ -76,7 +78,10 @@ def run(legacy=False):
     with tempfile.TemporaryDirectory(prefix='mihomo-rule-updates-') as directory:
         try:
             nodes = {}
-            for label, region in [('DIRECT', ''), ('1', '香港'), ('3', '日本'), ('4', '日本')]:
+            examples = [('DIRECT', ''), ('1', '香港'), ('3', '日本'), ('4', '日本')]
+            if 'Airport_02' in SOURCE['proxy-providers']:
+                examples.append(('2', '香港'))
+            for label, region in examples:
                 server = Server(('127.0.0.1', 0), Handler)
                 server.label = label
                 threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -152,7 +157,7 @@ def run(legacy=False):
             H['until'](lambda: api('/providers/rules')[1]['providers']['dev_download_domain']['ruleCount'] == 1)
             with LOCK:
                 assert ('1', True) in update_fetches, update_fetches
-                BAD_GITHUB.update(('1', '4'))
+                BAD_GITHUB.update(label for label, _ in examples if label != 'DIRECT')
             H['until'](lambda: group('规则更新')['now'] == 'DIRECT')
             with LOCK:
                 fetch_count = len(FETCHES)
@@ -178,7 +183,7 @@ def run(legacy=False):
                 assert api('/providers/rules')[1]['providers']['dev_download_domain']['ruleCount'] == 1, attempt
                 message = json.loads(payload).get('message') if isinstance(payload, str) else None
                 if (status == 503 and message == '503 Fixture' and update_fetches
-                        and all(label in {'1', '3', '4', 'DIRECT'} and not success
+                        and all(label in {name for name, _ in examples} and not success
                                 for label, success in update_fetches)):
                     return attempt
                 return False

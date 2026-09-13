@@ -327,7 +327,10 @@ def main():
             core = start()
             until(lambda: api("/version"))
             # 先分配另一个域名，再直接使用旧Fake-IP，避免重新查询掩盖映射未持久化。
-            assert query("new-after-restart.external.fixture.test")[1] != [saved]
+            # 控制器先于 DNS 监听就绪；等待实际回答，不能把启动竞态当成持久化失败。
+            answer = until(lambda: query("new-after-restart.external.fixture.test"))
+            assert answer[0] == 0 and len(answer[1]) == 1 and fake(answer[1][0])
+            assert answer[1] != [saved]
             assert request(saved)
             actual_counts = counts(host)
             # 与重启前的未匹配域相同：cn_ip默认预解析一次，DIRECT出站再解析一次。

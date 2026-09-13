@@ -412,7 +412,7 @@ def main(config_path=D["CONFIG"]):
             expect("ai.cloudflare.com", "3-SG")
             choose("AI", "AI-机场名称1-日本")
             expect("ai.cloudflare.com", "1-JP")
-            checks.append("AI默认节点失败不自动换路；用户可在规则模式覆盖为其他机场自动、地区或实际节点，其他业务选择保持")
+            checks.append("AI默认日本池全部失效不跨地区/机场；用户可手选其他自动链或实际节点，其他业务选择保持")
             shortcut = "自建/家宽节点"
             assert group(shortcut)["all"] == ["REJECT"]
             home_nodes = [{**nodes["Airport_04"][1], "name": "德国家宽"},

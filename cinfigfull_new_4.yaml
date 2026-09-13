@@ -126,32 +126,28 @@ proxy-providers:
     url: "订阅链接1"
     override:
       additional-prefix: '[机场名称1]'
-      skip-cert-verify: true
-      udp: true
+      skip-cert-verify: false
   Airport_02:
     <<: *PProviders
     proxy: DIRECT
     url: "订阅链接2"
     override:
       additional-prefix: '[机场名称2]'
-      skip-cert-verify: true
-      udp: true
+      skip-cert-verify: false
   Airport_03:
     <<: *PProviders
     proxy: DIRECT
     url: "订阅链接3"
     override:
       additional-prefix: '[机场名称3]'
-      skip-cert-verify: true
-      udp: true
+      skip-cert-verify: false
   Airport_04:
     <<: *PProviders
     proxy: DIRECT
     url: "订阅链接4"
     override:
       additional-prefix: '[机场名称4]'
-      skip-cert-verify: true
-      udp: true
+      skip-cert-verify: false
 
 # 全局配置
 global-ua: clash.meta
@@ -570,16 +566,21 @@ proxy-groups:
     filter: *home_only
     empty-fallback: REJECT
 
+  - name: 低倍率/MITM节点
+    type: select
+    url: *cloudflare_test_url
+    expected-status: 204
+    use: *use_ap_all
+    filter: *lowrate_mitm
+    empty-fallback: REJECT
+    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"
+
   # 通用节点池与机场回退
   - name: AI-机场名称1-日本
-    type: select
+    <<: *Cloudflare_Urltest_Base
     use: [Airport_01]
     filter: *region_jp
     exclude-filter: *exclude_lowrate
-    url: *cloudflare_test_url
-    expected-status: 204
-    empty-fallback: REJECT
-    hidden: true
 
   - name: 机场名称1-香港
     <<: *Urltest_Base
@@ -816,16 +817,6 @@ proxy-groups:
       - GitHub-机场名称2
       - GitHub-机场名称4
       - DIRECT
-
-  - name: 低倍率/MITM节点
-    type: select
-    url: *cloudflare_test_url
-    expected-status: 204
-    hidden: true
-    use: *use_ap_all
-    filter: *lowrate_mitm
-    empty-fallback: REJECT
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"
 
   # GitHub 节点池与机场回退
   - name: GitHub-机场名称1-香港
@@ -1860,7 +1851,7 @@ rule-providers:
     type: inline
     behavior: domain
     payload: [release-assets.githubusercontent.com, codeload.github.com]
-  # 已确认 CF 主机随配置内联；证据与范围见设计文档。
+  # 已确认使用 CF 的主机；按明确域名维护。
   cloudflare_cdn_domain:
     type: inline
     behavior: domain

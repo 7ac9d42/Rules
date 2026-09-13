@@ -20,14 +20,14 @@
 
 | 默认政策 | 三机场顺序 | 四机场顺序 |
 |---|---|---|
-| 最高要求（AI） | 机场名称1日本手选池 | 同左 |
+| 最高要求（AI） | 机场名称1日本自动池 | 同左 |
 | 高要求 | 1 → 3 → 4 | 2 → 1 → 3 → 4 |
 | 普通 | 1 → 3 → 4 | 1 → 2 → 3 → 4 |
 | 成本优先 | 3 → 1 → 4 | 3 → 1 → 2 → 4 |
 
 - 自动链路先在同机场换地区，再跨机场。机场名称1按日本 → 香港 → 新加坡 → 美国；机场名称3按日本 → 新加坡 → 香港 → 美国。纯下载使用独立策略。
 - 业务可以手选机场优先链、指定地区或实际节点，具体以组内选项为准。地区链仍可跨机场；地区和 IP 稳定是尽力而为，不是固定出口承诺。
-- AI 默认不自动换路，但允许主动选择其他机场或节点。金融保持独立；Netflix、DisneyPlus 等需要分别选路的服务也各自保留。
+- AI 默认仅在机场名称1的日本池内自动择优，不自动跨地区或机场；允许主动选择其他链路或节点。金融保持独立；Netflix、DisneyPlus 等需要分别选路的服务也各自保留。
 - Google 包含 GoogleVPN、FCM；Microsoft 包含 OneDrive；开发下载包含 GitHub、Docker、HuggingFace；普通境外影音、通信、社媒及游戏平台按各自分组共用选择。
 - `自建/家宽节点` 是共享手选入口：修改它会影响所有选择该入口的业务。普通业务之间的独立选择互不影响。
 - 临时让流量统一走单个节点：切换客户端到全局模式，再在 `GLOBAL` 选择该节点；结束后切回规则模式。
@@ -53,7 +53,7 @@ python3 scripts/test-config-design.py --static
 python3 scripts/test-config-design.py --static --config cinfigfull_new_4.yaml
 ```
 
-`scripts/proxy-fixture.py` 是共享测试工具，不是测试入口。AI 手选和重启验证使用 `scripts/test-runtime-lifecycle.py`，下载回退验证使用 `scripts/test-config-design.py`。
+`scripts/proxy-fixture.py` 是共享测试工具，不是测试入口。AI 出口选择和重启验证使用 `scripts/test-runtime-lifecycle.py`，下载回退验证使用 `scripts/test-config-design.py`。
 
 修改路由或回退行为时，还应运行对应的 `scripts/test-*.py` 专项测试；完整规则校验入口为 `ruby scripts/validate-rules.rb`，需要 Mihomo。具体参数见各脚本的帮助或 CI 调用。
 

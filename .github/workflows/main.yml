@@ -134,6 +134,8 @@ jobs:
       - name: Verify UDP routing and manual selection
         run: |
           set -euo pipefail
+          python3 scripts/test-node-filters.py
+          MIHOMO_DESIGN_CONFIG=cinfigfull_new_4.yaml python3 scripts/test-node-filters.py
           python3 scripts/test-rematch-udp.py
           python3 scripts/test-rematch-udp.py --config cinfigfull_new_4.yaml
 
