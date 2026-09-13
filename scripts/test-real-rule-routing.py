@@ -1,29 +1,23 @@
 #!/usr/bin/env python3
-"""用已下载的真实公开规则验证 Mihomo 首匹配；业务请求与假出口均局限回环。
+"""用真实规则和回环出口验证业务归属、手选隔离及 Tunnel 端口边界。
 
-需要公开规则下载目录中的原始 MRS/text 与 manifest.json，不读取真实订阅。
-仅替换出口、DNS/TUN 和 provider 获取方式，保留完整规则条件和顺序。
-DIRECT 也替换为回环假出口，hosts 默认使用 1.1.1.1，交叉用例注入指定 IP 作匹配元数据，不拨号公网。
-本测试验证业务入口归属、选择隔离与默认 rematch 出口；地区回退、健康检查及手选持久化由其他测试覆盖。
-
-复现：python scripts/test-real-rule-routing.py --rules-dir /path/to/remote --report /path/to/report.json
-使用 --config cinfigfull_new_4.yaml 验证四机场实际文件，不在测试中展开模板。
-快照布局：remote/manifest.json 与下载原件（例如 telegram_domain.mrs）。manifest 顶层
-providers 数组各项记录 name、配置中的公开 url、status="downloaded"、原件 file、
-sha256，以及使用 mihomo convert-ruleset 转文本后的非空非注释行 count。
-测试不下载文件；缺失源立即报错，仅 google_domain 可通过 --google-fallback 指定本地
-同源 MRS。报告记录每个实用文件的 SHA256 和核心加载条数，不能代替未来规则更新验证。
+--rules-dir 指定规则快照目录：manifest.json 的 providers 数组包含
+name、url、status（downloaded/workspace）、file、sha256，目录内保留对应的原始 MRS/text。
+--prepare-rules 新建快照：本仓库规则读取当前工作区产物，其他规则从配置 URL 下载。
+逐项核对 URL、SHA256 和核心加载结果；实际出站只拨号回环假代理。
 """
 
 import argparse
 import base64
 import copy
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import http.client
 import json
 import os
 from pathlib import Path
 import shutil
+import runpy
 import signal
 import socket
 import socketserver
@@ -36,6 +30,7 @@ import urllib.parse
 
 
 ROOT = Path(__file__).resolve().parent.parent
+H = runpy.run_path(str(Path(__file__).with_name('proxy-fixture.py')))
 DIRECT_PROXY = 'fixture-DIRECT'
 FIXTURE_IP = '1.1.1.1'
 # Deliberate CDN/IP overlaps: domain classification must win; unknown hosts retain IP fallback.
@@ -152,7 +147,7 @@ CASES = [
     ('mytv.com.hk', 'TVB', '机场名称1优先'),
     ('tvb.com', 'TVB', '机场名称1优先'),
     ('gamer.com.tw', '台湾限定', '台湾-机场名称1优先'),
-    ('bilibili.tv', '哔哩东南亚', '机场名称1优先'),
+    ('bilibili.tv', '哔哩东南亚', '新加坡-机场名称1优先'),
     ('bilibili.com', '哔哩哔哩', 'DIRECT'),
     ('amazon.com', '境外电商', '机场名称1优先'),
     ('store.steampowered.com', '游戏平台', '机场名称3优先'),
@@ -207,47 +202,64 @@ def load_config(path):
     content = path.read_bytes()
     result = subprocess.check_output(['ruby', '-ryaml', '-rjson', '-e',
         'puts JSON.generate(YAML.load(STDIN.read, aliases: true))'], input=content, timeout=10)
-    return json.loads(result), hashlib.sha256(content).hexdigest()
+    return json.loads(result)
 
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def prepare_rules(source, rules_dir, fallback, runtime):
-    manifest_path = rules_dir / 'manifest.json'
-    manifest = json.loads(manifest_path.read_text())
+def create_snapshot(source, rules_dir):
+    # 在发布前验证本次构建产物；不能下载 main 上尚未更新的自有规则。
+    rules_dir.mkdir(parents=True, exist_ok=False)
+    local_prefix = 'https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/'
+
+    def collect(item):
+        name, provider = item
+        url = provider['url']
+        path = rules_dir / f'{name}.{provider["format"]}'
+        if url.startswith(local_prefix):
+            local = ROOT / 'rules' / urllib.parse.unquote(url[len(local_prefix):])
+            shutil.copyfile(local, path)
+            status = 'workspace'
+        else:
+            subprocess.run(['curl', '--fail', '--location', '--silent', '--show-error',
+                            '--retry', '2', '--retry-all-errors', '--max-time', '60', '--output', str(path), url],
+                           check=True, timeout=190)
+            status = 'downloaded'
+        if path.stat().st_size == 0:
+            raise AssertionError(f'{name}: 规则文件为空')
+        return {'name': name, 'url': url, 'status': status, 'file': path.name, 'sha256': digest(path)}
+
+    items = [(name, provider) for name, provider in source['rule-providers'].items()
+             if provider['type'] == 'http']
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        entries = list(executor.map(collect, items))
+    # 全部完成才写清单；任何下载失败都不能生成可用于验收的快照。
+    (rules_dir / 'manifest.json').write_text(json.dumps({'providers': entries}, ensure_ascii=False, indent=2) + '\n')
+    print(f'Prepared {len(entries)} rule providers in {rules_dir}', flush=True)
+
+
+def prepare_rules(source, rules_dir, runtime):
+    manifest = json.loads((rules_dir / 'manifest.json').read_text())
     entries = {item['name']: item for item in manifest['providers']}
-    prepared, evidence = {}, []
+    prepared = {}
     for name, provider in source['rule-providers'].items():
         if provider['type'] == 'inline':
             prepared[name] = copy.deepcopy(provider)
-            evidence.append({'name': name, 'source': 'config inline', 'count': len(provider['payload'])})
             continue
         item = entries.get(name, {})
-        if item.get('url') != provider.get('url'):
-            raise AssertionError(f'{name}: manifest URL 与配置不一致')
-        if item.get('status') == 'downloaded':
-            filename = item['file']
-            if Path(filename).name != filename:
-                raise AssertionError(f'{name}: manifest 包含非文件名路径')
-            path = rules_dir / filename
-            if digest(path) != item['sha256']:
-                raise AssertionError(f'{name}: 原始公开规则 SHA256 不符')
-            origin = 'downloaded'
-        elif name == 'google_domain':
-            path, origin = fallback, 'local Google fallback; remote download unavailable'
-            if provider['format'] != 'mrs':
-                raise AssertionError('Google 本地回退要求 MRS 格式')
-        else:
-            raise AssertionError(f'{name}: 缺少成功下载的真实规则，拒绝以合成内容补齐')
+        assert item.get('url') == provider['url'], f'{name}: 快照 URL 与配置不一致'
+        assert item.get('status') in {'downloaded', 'workspace'}, f'{name}: 缺少原始规则'
+        filename = item['file']
+        assert Path(filename).name == filename, f'{name}: 快照 file 必须是文件名'
+        path = rules_dir / filename
+        assert digest(path) == item['sha256'], f'{name}: 规则 SHA256 不符'
         target = runtime / f'{name}.{provider["format"]}'
         shutil.copyfile(path, target)
         prepared[name] = {'type': 'file', 'behavior': provider['behavior'],
                           'format': provider['format'], 'path': str(target)}
-        evidence.append({'name': name, 'source': origin, 'url': provider['url'],
-                         'sha256': digest(path), 'count': item.get('count')})
-    return prepared, evidence, digest(manifest_path)
+    return prepared
 
 
 def policy_targets(source):
@@ -277,10 +289,8 @@ def local_direct(rules):
     return result
 
 
-class Server(socketserver.ThreadingTCPServer):
-    allow_reuse_address = True
-    daemon_threads = True
-
+Server = H["Server"]
+free_port = H["free_port"]
 
 class Handler(socketserver.StreamRequestHandler):
     def read_request(self):
@@ -315,12 +325,6 @@ class Handler(socketserver.StreamRequestHandler):
                               'Connection: close\r\n\r\n').encode() + body)
         except (OSError, ValueError, KeyError):
             return
-
-
-def free_port():
-    with socket.socket() as sock:
-        sock.bind(('127.0.0.1', 0))
-        return sock.getsockname()[1]
 
 
 def get_json(port, target):
@@ -360,13 +364,16 @@ def get_json(port, target):
 
 
 def run(args):
-    source, config_sha = load_config(args.config)
+    source = load_config(args.config)
+    if args.prepare_rules:
+        create_snapshot(source, args.rules_dir)
     cases = cases_for_config(source)
     targets = policy_targets(source)
     assert DIRECT_PROXY not in targets
-    hosts = {host for host, _, _ in cases}
+    hosts = {host for host, _, _ in cases} | {host for host, _, _ in H["TUNNEL_CASES"]}
     labels = {f'route{i}': target for i, target in enumerate([*targets, 'DIRECT'])}
     business_names = {business for _, business, _ in cases} - {'AI', 'DIRECT', '隐私拦截'}
+    business_names.add('Cloudflare Tunnel')
     controlled = [g for g in source['proxy-groups'] if g['name'] in business_names]
     if {g['name'] for g in controlled} != business_names:
         raise AssertionError('真实域名见证引用的业务入口缺失')
@@ -375,8 +382,7 @@ def run(args):
     checked, independence_checked = [], []
     with tempfile.TemporaryDirectory(prefix='mihomo-real-rules-') as directory:
         runtime = Path(directory)
-        providers, evidence, manifest_sha = prepare_rules(
-            source, args.rules_dir, args.google_fallback, runtime)
+        providers = prepare_rules(source, args.rules_dir, runtime)
         server = Server(('127.0.0.1', 0), Handler)
         server.labels, server.hosts = labels, hosts
         threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -384,7 +390,7 @@ def run(args):
         mixed, controller = free_port(), free_port()
         fixture = {
             'mixed-port': mixed, 'external-controller': f'127.0.0.1:{controller}',
-            'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule',
+            'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule', 'ipv6': True,
             'log-level': 'warning', 'dns': {'enable': False}, 'tun': {'enable': False},
             'profile': {'store-selected': False, 'store-fake-ip': False},
             'hosts': {host: HOST_IPS.get(host, FIXTURE_IP) for host in hosts},
@@ -415,7 +421,7 @@ def run(args):
                 while True:
                     try:
                         version = get_json(controller, '/version')
-                        loaded = get_json(controller, '/providers/rules')['providers']
+                        loaded = get_json(controller, '/providers/rules')['providers'] or {}
                         if set(loaded) == set(providers) and all(
                                 item['ruleCount'] > 0 for item in loaded.values()):
                             break
@@ -427,8 +433,6 @@ def run(args):
                         empty = [name for name, item in loaded.items() if not item['ruleCount']]
                         raise AssertionError(f'核心规则未就绪: missing={missing}, empty={empty}; ' + log.read()[-3000:])
                     time.sleep(.1)
-                for item in evidence:
-                    item['native_rule_count'] = loaded[item['name']]['ruleCount']
                 for host, business, _ in cases:
                     actual = get_json(mixed, f'http://{host}:{port}/rule-test')
                     if actual != {'host': host, 'policy': business}:
@@ -447,6 +451,15 @@ def run(args):
                     finally:
                         connection.close()
 
+                def tunnel_checks(automatic):
+                    defaults = {'Cloudflare Tunnel': 'DIRECT', '通用代理': '机场名称3优先', 'DIRECT': 'DIRECT'}
+                    for host, target_port, business in H['TUNNEL_CASES']:
+                        expected = defaults[business] if automatic else business
+                        address = '[' + host + ']' if ':' in host else host
+                        actual = get_json(mixed, f'http://{address}:{target_port}/rule-test')
+                        assert actual == {'host': host, 'policy': expected}, (host, target_port, expected, actual)
+
+                tunnel_checks(False)
                 finance = next(g for g in fixture['proxy-groups'] if g['name'] == '金融')
                 select_state(finance)
                 for host, business, automatic in cases:
@@ -460,21 +473,8 @@ def run(args):
                     independence_checked.append({'phase': 'finance_default', 'host': host,
                                                  'business': business, 'outlet': expected})
                 by_business = {g['name']: g for g in fixture['proxy-groups']}
-                for automatic_business, manual_business in [('开发下载', '纯下载'), ('纯下载', '开发下载')]:
-                    select_state(by_business[automatic_business])
-                    select_state(by_business[manual_business], automatic=False)
-                    for host, business, automatic in cases:
-                        if host not in DOWNLOAD_WITNESSES:
-                            continue
-                        expected = automatic if business == automatic_business else business
-                        actual = get_json(mixed, f'http://{host}:{port}/rule-test')
-                        if actual != {'host': host, 'policy': expected}:
-                            raise AssertionError({'phase': 'download_independence',
-                                                  'automatic_business': automatic_business,
-                                                  'host': host, 'expected': expected, 'actual': actual})
-                        independence_checked.append({'phase': automatic_business + '_default',
-                                                     'host': host, 'business': business, 'outlet': expected})
                 for left, right, witnesses in [
+                    ('开发下载', '纯下载', DOWNLOAD_WITNESSES),
                     ('NETFLIX', 'DisneyPlus', {'netflix.com', 'disneyplus.com'}),
                     ('Google', 'Microsoft', {'google.com', 'cloud.cupronickel.goog',
                                              'mtalk.google.com', 'fcm.googleapis.com',
@@ -508,6 +508,7 @@ def run(args):
                     if actual != {'host': host, 'policy': expected}:
                         raise AssertionError({'phase': 'auto', 'host': host, 'expected': expected, 'actual': actual})
                     item['automatic_outlet'] = expected
+                tunnel_checks(True)
 
         finally:
             if core is not None and core.poll() is None:
@@ -519,30 +520,12 @@ def run(args):
                     core.wait(timeout=5)
             server.shutdown()
             server.server_close()
-    counts = {'downloaded_http': sum(item['source'] == 'downloaded' for item in evidence),
-              'local_fallback_http': sum('fallback' in item['source'] for item in evidence),
-              'config_inline': sum(item['source'] == 'config inline' for item in evidence)}
-    report = {'config': str(args.config), 'config_sha256': config_sha,
-              'airport_count': len(source['proxy-providers']),
-              'rules_dir': str(args.rules_dir), 'manifest_sha256': manifest_sha,
-              'mihomo': version, 'provider_sources': counts, 'providers': evidence, 'checks': checked,
-              'business_independence': independence_checked,
-              'count_semantics': 'count 是导出文本行数；native_rule_count 是核心保存的规则计数。MRS 保存插入计数，域名导出会过滤内部根项，两者不必相等。所有 provider 均须原生初始化成功且计数大于零。',
-              'scope': '两阶段真实规则验证：手选标签验证业务归属，默认 rematch 验证自动探针出口；中间检查金融/Talkatone、开发/纯下载、Netflix/Disney、Google/Microsoft、普通影音/Netflix、通信/社媒、Reddit/社媒及游戏/影音选择隔离。Docker R2随开发下载选择，合并成员共用选择，独立入口互不改变。原健康池及 DIRECT 使用回环标签，不测试健康回退',
-              'routing_fixture': {'hosts_ip': FIXTURE_IP, 'ip_overlap_cases': HOST_IPS, 'direct_proxy': DIRECT_PROXY,
-                                  'network': '所有实际出站只拨号回环 HTTP 假出口，hosts IP 只参与规则匹配'},
-              'uncovered': ['CF 与 Wise/PayPal/台湾的交叉规则暂无本快照的真实域名见证，未伪造 provider 覆盖',
-                            'IP 交叠使用明确的本地元数据，实际公网解析与可达性不在测试范围内',
-                            '不测试真实 CDN、DNS、UDP 或线上服务连通性']}
+    report = {'config': str(args.config), 'mihomo': version, 'checks': checked,
+              'business_independence': independence_checked, 'tunnel_tcp_checks': 2 * len(H['TUNNEL_CASES'])}
     if args.report:
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
-    print(f'PASS: {len(source["proxy-providers"])}机场，{len(checked)} 个域名用例 × 业务/自动两个阶段；{len(providers)} 个规则provider')
-    print(f'业务选择隔离: {len(independence_checked)} 次请求，覆盖合并成员共用选择及保留入口独立选择')
-    print('规则来源: ' + json.dumps(counts, ensure_ascii=False))
-    print(f'快照: manifest SHA256={manifest_sha}；各 provider 原生计数之和={sum(item["native_rule_count"] for item in evidence)}')
-    if any('fallback' in item['source'] for item in evidence):
-        print(f'证据范围: google_domain 使用本地同源 {args.google_fallback}；其余 HTTP 源均校验下载 SHA256。')
-    print('范围: 规则入口归属及原生 rematch 自动出口；CF-PayPal/台湾交叉、原组健康及回退由其他测试覆盖。')
+    print(f'PASS: {args.config.name}，{len(checked)} 个域名 × 业务/自动两阶段，'
+          f'{len(independence_checked)} 次选择隔离，{report["tunnel_tcp_checks"]} 次 Tunnel TCP 检查')
 
 
 def interrupted(signum, _frame):
@@ -554,11 +537,12 @@ def main():
     signal.signal(signal.SIGTERM, interrupted)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rules-dir', type=Path, required=True,
-                        help='含原始下载文件与 manifest.json 的公开规则目录')
+                        help='含规则文件与 manifest.json 的公开规则快照目录')
+    parser.add_argument('--prepare-rules', action='store_true',
+                        help='从工作区产物与远程上游建立快照；--rules-dir 必须尚不存在')
     parser.add_argument('--config', type=Path,
                         default=Path(os.environ.get('MIHOMO_DESIGN_CONFIG', str(ROOT / 'configfull_new.yaml'))),
                         help='三机场或四机场的实际配置文件；默认遵循 MIHOMO_DESIGN_CONFIG，否则使用三机场')
-    parser.add_argument('--google-fallback', type=Path, default=ROOT / 'rules/Domain/google.mrs')
     parser.add_argument('--mihomo', default=os.environ.get('MIHOMO_BIN', 'mihomo'))
     parser.add_argument('--report', type=Path, help='可选 JSON 审计报告路径')
     run(parser.parse_args())

@@ -112,7 +112,8 @@ jobs:
           chmod +x "$MIHOMO_COMPAT_BIN"
           version_output=$("$MIHOMO_COMPAT_BIN" -v)
           printf '%s\n' "$version_output"
-          if [[ "$version_output" != *"Mihomo Meta ${MIHOMO_COMPAT_VERSION} "* ]]; then
+          if [[ "$version_output" != *"Mihomo Meta ${MIHOMO_COMPAT_VERSION} "* &&
+                "$version_output" != *"Mihomo Meta ${MIHOMO_COMPAT_VERSION#v} "* ]]; then
             echo "Unexpected baseline mihomo version" >&2
             exit 1
           fi
@@ -131,20 +132,42 @@ jobs:
           set -euo pipefail
           ruby scripts/validate-rules.rb
 
-      - name: Verify UDP routing and manual selection
+      - name: Prepare and verify real rule snapshot
         run: |
           set -euo pipefail
-          python3 scripts/test-node-filters.py
-          MIHOMO_DESIGN_CONFIG=cinfigfull_new_4.yaml python3 scripts/test-node-filters.py
-          python3 scripts/test-rematch-udp.py
-          python3 scripts/test-rematch-udp.py --config cinfigfull_new_4.yaml
+          python3 scripts/test-real-rule-routing.py \
+            --prepare-rules --rules-dir "${RUNNER_TEMP}/rule-snapshot" \
+            --config configfull_new.yaml
+          python3 scripts/test-real-rule-routing.py \
+            --rules-dir "${RUNNER_TEMP}/rule-snapshot" \
+            --config cinfigfull_new_4.yaml
 
-      - name: Validate with pinned mihomo v1.19.30
+      - name: Verify fallback, node filters, UDP routing and DNS policy
+        run: |
+          set -euo pipefail
+          for config in configfull_new.yaml cinfigfull_new_4.yaml; do
+            python3 scripts/test-config-design.py --config "$config"
+            MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-node-filters.py
+            MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-rematch-udp.py
+          done
+          # 两份 DNS 配置由静态检查保证一致。
+          python3 scripts/test-dns-policy.py
+
+      - name: Verify runtime with pinned mihomo v1.19.30
+        if: steps.mihomo-version.outputs.version != 'v1.19.30'
         env:
           MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo
         run: |
           set -euo pipefail
           ruby scripts/validate-rules.rb
+          for config in configfull_new.yaml cinfigfull_new_4.yaml; do
+            python3 scripts/test-config-design.py --config "$config"
+            MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-node-filters.py
+            python3 scripts/test-rematch-udp.py --config "$config"
+            python3 scripts/test-real-rule-routing.py \
+              --rules-dir "${RUNNER_TEMP}/rule-snapshot" --config "$config"
+          done
+          python3 scripts/test-dns-policy.py
 
       - name: Commit and push rule changes
         run: |

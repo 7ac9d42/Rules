@@ -7,6 +7,7 @@
 import argparse
 import copy
 from contextlib import ExitStack
+import ipaddress
 import json
 from pathlib import Path
 import runpy
@@ -92,7 +93,12 @@ def request(mixed, host, udp_sockets, target_port=12345):
         control.sendall(b'\x05\x03\x00\x01' + b'\x00' * 6)
         assert read(control, 3) == b'\x05\x00\x00'
         target = address(control)
-        packet = b'\x00\x00\x00\x03' + bytes([len(host)]) + host.encode() + struct.pack('!H', target_port) + b'fixture'
+        try:
+            ip = ipaddress.ip_address(host)
+            destination = bytes([1 if ip.version == 4 else 4]) + ip.packed
+        except ValueError:
+            destination = b'\x03' + bytes([len(host)]) + host.encode()
+        packet = b'\x00\x00\x00' + destination + struct.pack('!H', target_port) + b'fixture'
         udp.settimeout(3)
         udp.sendto(packet, target)
         response = udp.recv(4096)
@@ -130,8 +136,7 @@ def main(config_path=D['CONFIG']):
                 'Cloudflare-日本-高要求': 'jp-high-cf',
                 'GitHub-日本-高要求': 'jp-high-github',
             }
-            manual_labels = ('manual', 'manual-dev', 'manual-download', 'manual-general', 'manual-finance',
-                             'manual-ms', 'manual-netflix', 'manual-disney', 'manual-comm', 'manual-social', 'manual-game', 'direct')
+            manual_labels = ('manual', 'manual-dev', 'manual-download', 'manual-general', 'manual-finance', 'direct')
             groups, labels = [], set(manual_labels)
             for group in source['proxy-groups']:
                 if group['type'] == 'select':
@@ -142,6 +147,7 @@ def main(config_path=D['CONFIG']):
                     labels.add(label)
                     choices = ['fixture-' + label]
                 choices.append('fixture-no-udp')
+                choices.append('fixture-socks-no-udp')
                 groups.append({'name': group['name'], 'type': 'select',
                                'proxies': ['fixture-direct' if p == 'DIRECT' else p for p in choices]})
             fixture_proxies = []
@@ -157,61 +163,35 @@ def main(config_path=D['CONFIG']):
                                         'server': '127.0.0.1', 'port': server.server_address[1]})
             fixture_proxies.append({'name': 'fixture-no-udp', 'type': 'http',
                                     'server': '127.0.0.1', 'port': servers[0].server_address[1]})
-            providers = {name: {'type': 'inline', 'behavior': provider['behavior'], 'payload': []}
+            fixture_proxies.append({'name': 'fixture-socks-no-udp', 'type': 'socks5', 'udp': False,
+                                    'server': '127.0.0.1', 'port': servers[0].server_address[1]})
+            providers = {name: {'type': 'inline', 'behavior': provider['behavior'], 'payload': provider.get('payload', [])}
                          for name, provider in source['rule-providers'].items()}
-            docker_r2 = 'docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com'
             members = {
                 'cloudflare_domain': ['cf.invalid', 'dev.cf.invalid', 'paypal.cf.invalid',
-                                      'wise.cf.invalid', 'ordinary.cf.invalid', 'microsoft.cf.invalid',
-                                      'netflix.cf.invalid', 'disney.cf.invalid', 'reddit.cf.invalid',
-                                      'discord.cf.invalid', 'appletv.cf.invalid', 'blocked.cf.invalid', docker_r2],
+                                      'wise.cf.invalid', 'ordinary.cf.invalid', 'blocked.cf.invalid'],
                 'github_domain': ['gh.invalid', 'download.invalid', 'wise.gh.invalid'],
                 'dev_download_domain': ['dev.invalid', 'dev.cf.invalid'],
                 'pure_download_domain': ['download.invalid'],
                 'google_domain': ['ordinary.invalid', 'ordinary.cf.invalid'],
-                'fcm_domain': ['fcm.invalid'],
-                'googlevpn_domain': ['googlevpn.invalid'],
-                'microsoft_domain': ['microsoft.invalid', 'microsoft.cf.invalid'],
-                'onedrive_domain': ['onedrive.invalid'],
-                'netflix_domain': ['netflix.invalid', 'netflix.cf.invalid'],
-                'disney_domain': ['disney.invalid', 'disney.cf.invalid'],
-                'reddit_domain': ['reddit.invalid', 'reddit.cf.invalid'],
-                'telegram_domain': ['telegram.invalid'],
-                'line_domain': ['line.invalid'],
-                'discord_domain': ['discord.cf.invalid'],
-                'signal_domain': ['signal.invalid'],
-                'communication_domain': ['communication.invalid'],
-                'tiktok_domain': ['tiktok.invalid'],
-                'youtube_domain': ['youtube.invalid'],
-                'appleTV_domain': ['appletv.cf.invalid'],
-                'meta_domain': ['meta.invalid'],
-                'social_media_non_cn_domain': ['x.invalid', 'reddit.invalid', 'reddit.cf.invalid'],
-                'TVB_domain': ['mytv2.invalid'],
-                'steam_domain': ['steam.invalid'],
-                'Epic_domain': ['epic.invalid'],
                 'ai!cn_domain': ['ai.invalid'],
                 'paypal_domain': ['paypal.invalid', 'paypal.cf.invalid'],
                 'Wise_domain': ['wise.invalid', 'wise.cf.invalid', 'wise.gh.invalid'],
                 'talkatone_domain': ['talk.invalid'],
+                'talkatone_ip': ['203.0.113.123/32'],
+                'communication_domain': ['talk.invalid', 'comm.invalid'],
+                'ecommerce_domain': ['paypal.invalid'],
+                'steam_domain': ['game.invalid'],
+                'emby_classical': ['DOMAIN,emby.classical.invalid'],
                 'banAd_core_domain': ['blocked.cf.invalid'],
             }
-            members['communication_domain'] += ['whatsapp.invalid', 'viber.invalid']
-            members['meta_domain'] += ['whatsapp.invalid']
-            members['ecommerce_domain'] = ['viber.invalid']
-            members['social_media_non_cn_domain'] += ['social-ms.invalid']
-            members['microsoft_domain'] += ['social-ms.invalid', 'ms-ip-overlap.invalid']
-            members['cn_domain'] = ['cn-ip-overlap.invalid']
-            members['bilibili_ip'] = ['106.75.74.76/32']
             for name, payload in members.items():
                 providers[name]['payload'] = payload
-            hosts = ['unknown.invalid', 'registry-1.docker.io', 'huggingface.co', 'mytv.com.hk',
-                     *{host for payload in members.values() for host in payload}]
-            # Every real-IP witness still exits through a loopback proxy.
-            hosts.extend(['opencode.ai', 'origin-tracker.githubusercontent.com',
-                          'copilotprodattachments.blob.core.windows.net'])
-            ip_hosts = dict.fromkeys(['cn-ip-overlap.invalid', 'ms-ip-overlap.invalid',
-                                     'ip-only-bilibili.invalid'], '106.75.74.76')
-            hosts.extend(ip_hosts)
+            hosts = ['unknown.invalid', 'opencode.ai', 'origin-tracker.githubusercontent.com',
+                     'copilotprodattachments.blob.core.windows.net',
+                     'emby.classical.invalid',
+                     *{host for payload in members.values() for host in payload if ',' not in host and '/' not in host}]
+            hosts += [host for host, _, _ in H['TUNNEL_CASES'] if not host[0].isdigit()]
             def local_direct(rule):
                 parts = rule.split(',')
                 action = -2 if parts[-1] == 'no-resolve' else -1
@@ -220,9 +200,9 @@ def main(config_path=D['CONFIG']):
                 return ','.join(parts)
             mixed, controller = H['free_port'](), H['free_port']()
             config = {'mixed-port': mixed, 'external-controller': f'127.0.0.1:{controller}',
-                      'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule', 'log-level': 'info',
+                      'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule', 'ipv6': True, 'log-level': 'info',
                       'dns': {'enable': False}, 'tun': {'enable': False},
-                      'hosts': {**dict.fromkeys(hosts, '127.0.0.1'), **ip_hosts},
+                      'hosts': dict.fromkeys(hosts, '127.0.0.1'),
                       'proxies': copy.deepcopy(source['proxies']) + fixture_proxies,
                       'proxy-groups': groups, 'rule-providers': providers,
                       'rules': [local_direct(rule) for rule in source['rules']],
@@ -244,21 +224,43 @@ def main(config_path=D['CONFIG']):
                 with opener.open(req, timeout=3) as response:
                     return response.status
             def choose(group, target):
-                api('/proxies/' + urllib.parse.quote(group), {'name': target}, 'PUT')
+                api('/proxies/' + urllib.parse.quote(group, safe=''), {'name': target}, 'PUT')
 
-            def expect(mode, cases):
+            def expect(mode, cases, port=12345):
                 for host, expected in cases:
-                    actual = request(mixed, host, udp_sockets)
+                    try:
+                        actual = request(mixed, host, udp_sockets, port)
+                    except OSError as error:
+                        raise AssertionError((mode, host, port, expected, core_log.read_text().splitlines()[-4:])) from error
                     assert actual == expected, (mode, host, expected, actual)
                     checks.append({'mode': mode, 'host': host, 'outlet': actual})
 
-            def assert_rejected(host, port=12345):
+            def assert_rejected(host, port=12345, outlet='REJECT'):
                 # 超时也可能来自 DNS/权限/网络故障，必须确认原生匹配到了 REJECT。
                 lines = core_log.read_text().splitlines()
-                assert any(f' --> {host}:{port} match ' in line and 'using REJECT' in line
+                address = '[' + host + ']' if ':' in host else host
+                assert any(f' --> {address}:{port} match ' in line and f'using {outlet}"' in line
                            for line in lines), ('UDP timed out without a REJECT match', host, lines[-10:])
 
             H['until'](lambda: api('/version'))
+            for manual in (False, True):
+                choose('Cloudflare Tunnel', 'fixture-manual' if manual else 'fixture-direct')
+                choose('通用代理', 'fixture-manual-general' if manual else '机场名称3优先-自动')
+                outlets = {'Cloudflare Tunnel': 'manual' if manual else 'direct',
+                           '通用代理': 'manual-general' if manual else 'cost-generic', 'DIRECT': 'direct'}
+                for host, port, business in H['TUNNEL_CASES']:
+                    expect('tunnel-manual' if manual else 'tunnel-default', [(host, outlets[business])], port)
+            choose('Cloudflare Tunnel', 'fixture-no-udp')
+            for host in ('region1.v2.argotunnel.com', '198.41.192.167', '2606:4700:a0::1'):
+                try:
+                    actual = request(mixed, host, udp_sockets, 7844)
+                except socket.timeout:
+                    assert_rejected(host, 7844)
+                    checks.append({'mode': 'tunnel-unsupported-udp', 'host': host, 'outlet': 'REJECT'})
+                else:
+                    raise AssertionError(('Tunnel UDP escaped selected route', host, actual))
+            choose('Cloudflare Tunnel', 'fixture-direct')
+            choose('通用代理', '机场名称3优先-自动')
             # Catch both a probe-family escape and rematch's implicit DIRECT fallthrough.
             direct_echo = Relay(('127.0.0.1', 0), DirectEcho)
             threading.Thread(target=direct_echo.serve_forever, kwargs={'poll_interval': .05}, daemon=True).start()
@@ -276,21 +278,14 @@ def main(config_path=D['CONFIG']):
                     raise AssertionError(('UDP escaped selected probe family', group, host, actual))
                 finally:
                     choose(group, previous)
-            choose('哔哩哔哩', 'fixture-manual')
-            expect('domain-before-ip-and-vendor', [
-                ('cn-ip-overlap.invalid', 'direct'), ('ms-ip-overlap.invalid', 'cost-generic'),
-                ('ip-only-bilibili.invalid', 'manual'), ('whatsapp.invalid', 'cost-generic'),
-                ('viber.invalid', 'cost-generic'), ('social-ms.invalid', 'quality-generic')])
             expect('auto', [('cf.invalid', 'cost-cf'), ('gh.invalid', 'cost-github'),
                             ('dev.invalid', 'cost-generic'), ('dev.cf.invalid', 'cost-cf'),
                             ('download.invalid', 'download'), ('unknown.invalid', 'cost-generic'),
                             ('ordinary.invalid', 'quality-generic'), ('ordinary.cf.invalid', 'quality-cf'),
-                            ('netflix.invalid', high['generic']), ('disney.cf.invalid', high['cf']),
-                            ('paypal.invalid', high['generic']), ('reddit.invalid', high['generic']),
+                            ('paypal.invalid', high['generic']), ('paypal.cf.invalid', high['cf']),
                             ('wise.gh.invalid', high['github']),
-                            ('telegram.invalid', 'cost-generic'), ('youtube.invalid', 'cost-generic'),
                             ('ai.invalid', 'ai-jp-cf')])
-            dev_hosts = ['dev.invalid', 'dev.cf.invalid', 'gh.invalid', 'registry-1.docker.io', docker_r2, 'huggingface.co']
+            dev_hosts = ['dev.invalid', 'dev.cf.invalid', 'gh.invalid']
             finance_hosts = ['paypal.invalid', 'paypal.cf.invalid', 'wise.invalid', 'wise.cf.invalid', 'wise.gh.invalid']
             choose('AI', 'fixture-no-udp')
             for host in ['ai.invalid', 'opencode.ai', 'origin-tracker.githubusercontent.com',
@@ -303,21 +298,55 @@ def main(config_path=D['CONFIG']):
                 else:
                     raise AssertionError(('AI UDP escaped selected route', host, actual))
             choose('AI', 'fixture-manual')
+            expect('ai-manual', [('ai.invalid', 'manual')])
+            # 覆盖规则集、共享分类、IP 和 classical；TCP-only 不能落到其他业务。
+            defaults = {g['name']: g['proxies'][0] for g in source['proxy-groups'] if g.get('proxies')}
+            for business, hosts in [
+                ('金融', ['paypal.invalid', 'wise.invalid']),
+                ('Talkatone', ['talk.invalid', '203.0.113.123']),
+                ('Google', ['ordinary.invalid']), ('开发下载', ['dev.invalid']),
+                ('纯下载', ['download.invalid']), ('境外通信', ['comm.invalid']),
+                ('游戏平台', ['game.invalid']), ('Emby', ['emby.classical.invalid']),
+                ('通用代理', ['unknown.invalid']),
+            ]:
+                choose(business, 'fixture-socks-no-udp' if business == 'Talkatone' else 'fixture-no-udp')
+                for host in hosts:
+                    try:
+                        actual = request(mixed, host, udp_sockets)
+                    except socket.timeout:
+                        assert_rejected(host)
+                        checks.append({'mode': 'business-unsupported-udp', 'business': business,
+                                       'host': host, 'outlet': 'REJECT'})
+                    else:
+                        raise AssertionError(('UDP escaped business', business, host, actual))
+                choose(business, 'fixture-manual')
+                expect('business-supported-udp', [(host, 'manual') for host in hosts])
+                choose(business, defaults[business])
+            # 当前自动出口不支持 UDP 时也拒绝，不能借用其他探针路径。
+            for pool, host in [('机场名称3优先', 'unknown.invalid'), ('Cloudflare-自动', 'cf.invalid')]:
+                choose(pool, 'fixture-no-udp')
+                try:
+                    actual = request(mixed, host, udp_sockets)
+                except socket.timeout:
+                    assert_rejected(host)
+                    checks.append({'mode': 'automatic-unsupported-udp', 'host': host, 'outlet': 'REJECT'})
+                else:
+                    raise AssertionError(('UDP escaped automatic pool', pool, actual))
+                choose(pool, 'fixture-' + route_labels[pool])
             choose('开发下载', 'fixture-manual-dev')
-            expect('dev-github-docker-hf-unified', [(host, 'manual-dev') for host in dev_hosts]
+            expect('manual-probe-families', [(host, 'manual-dev') for host in dev_hosts]
                    + [('download.invalid', 'download'), ('cf.invalid', 'cost-cf')])
             choose('纯下载', 'fixture-manual-download')
             expect('download-independent-manual', [('download.invalid', 'manual-download'), ('gh.invalid', 'manual-dev')])
             choose('通用代理', 'fixture-manual-general')
-            expect('independent-cost-businesses', [(docker_r2, 'manual-dev'), ('download.invalid', 'manual-download'),
+            expect('independent-cost-businesses', [('dev.cf.invalid', 'manual-dev'), ('download.invalid', 'manual-download'),
                                                   ('cf.invalid', 'manual-general'), ('unknown.invalid', 'manual-general')])
             choose('金融', 'fixture-manual-finance')
             expect('finance-unified-manual', [(host, 'manual-finance') for host in finance_hosts]
                    + [('talk.invalid', high['generic'])])
             choose('开发下载', '日本·机场名称3优先')
             expect('cost-region-path', [('dev.invalid', 'jp-cost-generic'), ('dev.cf.invalid', 'jp-cost-cf'),
-                                       ('gh.invalid', 'jp-cost-github'), ('registry-1.docker.io', 'jp-cost-generic'),
-                                       (docker_r2, 'jp-cost-cf'), ('huggingface.co', 'jp-cost-generic'),
+                                       ('gh.invalid', 'jp-cost-github'),
                                        ('download.invalid', 'manual-download'),
                                        ('cf.invalid', 'manual-general')])
             choose('金融', high_japan)
@@ -325,53 +354,16 @@ def main(config_path=D['CONFIG']):
                                        ('wise.gh.invalid', high_jp['github']), ('talk.invalid', high['generic'])])
             choose('Google', '日本·机场名称1优先')
             expect('normal-region-path', [('ordinary.invalid', 'jp-normal-generic'),
-                                         ('ordinary.cf.invalid', 'jp-normal-cf'), ('fcm.invalid', 'jp-normal-generic'),
-                                         ('googlevpn.invalid', 'jp-normal-generic'), ('microsoft.invalid', 'cost-generic')])
-            choose('Microsoft', '日本·机场名称3优先')
-            expect('microsoft-cost-region-unified', [('microsoft.invalid', 'jp-cost-generic'), ('microsoft.cf.invalid', 'jp-cost-cf'),
-                                                     ('onedrive.invalid', 'jp-cost-generic'), ('ordinary.invalid', 'jp-normal-generic')])
-            choose('Microsoft', 'fixture-manual-ms')
-            expect('google-microsoft-independent', [('ordinary.invalid', 'jp-normal-generic'),
-                                                    ('microsoft.cf.invalid', 'manual-ms'), ('onedrive.invalid', 'manual-ms')])
-            choose('境外通信', '日本·机场名称3优先')
-            expect('communication-cost-region-unified', [(host, 'jp-cost-generic') for host in
-                                                          ('telegram.invalid', 'line.invalid', 'signal.invalid', 'communication.invalid')]
-                   + [('discord.cf.invalid', 'jp-cost-cf'), ('ordinary.invalid', 'jp-normal-generic'),
-                      ('microsoft.cf.invalid', 'manual-ms')])
-            choose('境外通信', 'fixture-manual-comm')
-            expect('communication-unified', [(host, 'manual-comm') for host in
-                                             ('telegram.invalid', 'line.invalid', 'discord.cf.invalid',
-                                              'signal.invalid', 'communication.invalid')]
-                   + [('tiktok.invalid', 'quality-generic'), ('ordinary.invalid', 'jp-normal-generic')])
-            choose('境外影音', '日本·机场名称3优先')
-            expect('media-unified-independent', [('youtube.invalid', 'jp-cost-generic'), ('appletv.cf.invalid', 'jp-cost-cf'),
-                                                 ('netflix.invalid', high['generic']), ('discord.cf.invalid', 'manual-comm')])
-            choose('境外社媒', 'fixture-manual-social')
-            expect('social-unified-reddit-independent', [('meta.invalid', 'manual-social'), ('x.invalid', 'manual-social'),
-                                                        ('reddit.invalid', high['generic'])])
-            choose('Reddit', high_japan)
-            expect('reddit-high-region-independent', [('reddit.invalid', high_jp['generic']), ('reddit.cf.invalid', high_jp['cf']),
-                                                      ('meta.invalid', 'manual-social')])
-            choose('NETFLIX', high_japan)
-            expect('netflix-region-independent', [('netflix.invalid', high_jp['generic']), ('netflix.cf.invalid', high_jp['cf']),
-                                                 ('disney.invalid', high['generic']), ('disney.cf.invalid', high['cf'])])
-            choose('DisneyPlus', 'fixture-manual-disney')
-            expect('disney-manual-independent', [('netflix.invalid', high_jp['generic']), ('netflix.cf.invalid', high_jp['cf']),
-                                                ('disney.invalid', 'manual-disney'), ('disney.cf.invalid', 'manual-disney')])
-            choose('NETFLIX', 'fixture-manual-netflix')
-            choose('DisneyPlus', high_japan)
-            expect('media-choices-swapped', [('netflix.invalid', 'manual-netflix'), ('netflix.cf.invalid', 'manual-netflix'),
-                                            ('disney.invalid', high_jp['generic']), ('disney.cf.invalid', high_jp['cf']),
-                                            ('reddit.cf.invalid', high_jp['cf'])])
-            choose('TVB', '日本·机场名称1优先')
-            expect('tvb-region-independent', [('mytv.com.hk', 'jp-normal-generic'), ('mytv2.invalid', 'jp-normal-generic'),
-                                             ('youtube.invalid', 'jp-cost-generic'), ('netflix.invalid', 'manual-netflix')])
-            choose('游戏平台', 'fixture-manual-game')
-            expect('steam-games-unified', [('steam.invalid', 'manual-game'), ('epic.invalid', 'manual-game'),
-                                          ('gh.invalid', 'jp-cost-github')])
+                                         ('ordinary.cf.invalid', 'jp-normal-cf')])
+            for business in ('AI', 'Google'):
+                choose(business, '自建/家宽节点')
+            for label in ('manual', 'manual-general'):
+                choose('自建/家宽节点', 'fixture-' + label)
+                expect('home-shared', [('ai.invalid', label), ('ordinary.invalid', label), ('dev.cf.invalid', 'jp-cost-cf')])
             try:
                 request(mixed, 'blocked.cf.invalid', udp_sockets)
             except socket.timeout:
+                assert_rejected('blocked.cf.invalid', outlet='隐私拦截[REJECT]')
                 checks.append({'mode': 'blocked-default', 'host': 'blocked.cf.invalid', 'outlet': 'REJECT'})
             else:
                 raise AssertionError('拦截默认应拒绝 UDP 转发')

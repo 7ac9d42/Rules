@@ -25,7 +25,7 @@ Cloudflare_Urltest_Base: &Cloudflare_Urltest_Base
   url: &cloudflare_test_url "https://cp.cloudflare.com/generate_204"
   expected-status: 204
 
-# 空池拒绝连接；连接失败可触发强制复测。
+# 空池拒绝；全部探测失败仍可能尝试首节点；连接失败可触发复测。
 Fallback_Base: &Fallback_Base
   type: fallback
   url: &google_test_url "https://www.gstatic.com/generate_204"
@@ -49,7 +49,7 @@ Cloudflare_Fallback_Base: &Cloudflare_Fallback_Base
   hidden: true
 
 # 机场名称4按地区排序兜底，未知地区排最后。
-reserve_region_order: &reserve_region_order "(?i)(香港|港|🇭🇰|\\bHK\\b|Hong ?Kong)`(?i)(日本|🇯🇵|\\bJP\\b|Japan)`(?i)(新加坡|狮城|🇸🇬|\\bSG\\b|Singapore)`(?i)(美国|🇺🇸|🇺🇲|\\bUS\\b|\\bUSA\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)`(?i)(台湾|台灣|臺灣|🇹🇼|\\bTW\\b|\\bTWN\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE\\b|Taichung|台中|臺中|\\bRMQ\\b|Tainan|台南|臺南|\\bTNN\\b|Kaohsiung|高雄|\\bKHH\\b)`(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦|欧洲|歐洲|欧盟|歐盟|英国|英國|德国|德國|法国|法國|荷兰|荷蘭|瑞士|瑞典|挪威|芬兰|芬蘭|丹麦|丹麥|意大利|義大利|西班牙|葡萄牙|波兰|波蘭|奥地利|奧地利|爱尔兰|愛爾蘭|比利时|比利時|\\b(?:United ?Kingdom|Britain|England|London|Germany|Frankfurt|Berlin|Munich|France|Paris|Netherlands|Amsterdam|Switzerland|Zurich|Sweden|Stockholm|Norway|Oslo|Finland|Helsinki|Denmark|Copenhagen|Italy|Milan|Rome|Spain|Madrid|Portugal|Lisbon|Poland|Warsaw|Austria|Vienna|Ireland|Dublin|Belgium|Brussels|Romania|Bucharest|Czech(?:ia| Republic)?|Prague|Hungary|Budapest|Greece|Athens|Iceland|Luxembourg|Russia|Moscow|Turkey|Istanbul|Ukraine|Kyiv|Kiev|UK|GB|DE|FR|NL|CH|SE|NO|FI|DK|IT|ES|PT|PL|AT|IE|BE|RO|CZ|HU|GR|IS|LU|RU|TR|UA)\\b)`.*"
+reserve_region_order: &reserve_region_order "(?i)(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong)`(?i)(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)`(?i)(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore)`(?i)(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)`(?i)(台湾|台灣|臺灣|🇹🇼|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)`(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦|欧洲|歐洲|欧盟|歐盟|英国|英國|德国|德國|法国|法國|荷兰|荷蘭|瑞士|瑞典|挪威|芬兰|芬蘭|丹麦|丹麥|意大利|義大利|西班牙|葡萄牙|波兰|波蘭|奥地利|奧地利|爱尔兰|愛爾蘭|比利时|比利時|\\b(?:United ?Kingdom|Britain|England|London|Germany|Frankfurt|Berlin|Munich|France|Paris|Netherlands|Amsterdam|Switzerland|Zurich|Sweden|Stockholm|Norway|Oslo|Finland|Helsinki|Denmark|Copenhagen|Italy|Milan|Rome|Spain|Madrid|Portugal|Lisbon|Poland|Warsaw|Austria|Vienna|Ireland|Dublin|Belgium|Brussels|Romania|Bucharest|Czech(?:ia| Republic)?|Prague|Hungary|Budapest|Greece|Athens|Iceland|Luxembourg|Russia|Moscow|Turkey|Istanbul|Ukraine|Kyiv|Kiev|UK|GB|DE|FR|NL|CH|SE|NO|FI|DK|IT|ES|PT|PL|AT|IE|BE|RO|CZ|HU|GR|IS|LU|RU|TR|UA)\\b)`.*"
 
 # 订阅与规则基础参数
 PProviders: &PProviders
@@ -85,36 +85,39 @@ Ruleset_Classical_Base: &classical
   format: text
   proxy: 规则更新
 
-# 地区筛选
-region_hk: &region_hk "(?i)(香港|港|🇭🇰|\\bHK\\b|Hong ?Kong)"
+# 地区筛选：英文地区码允许紧接数字编号，如 HK01、JP01；不匹配字母子串。
+region_hk: &region_hk "(?i)(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong)"
 
 # 香港不稳定编号仅退出自动候选。
-region_hk_stable_auto: &region_hk_stable_auto "(?i)^(?!.*Hong ?Kong 0[2-5](?:\\D|$)).*(香港|港|🇭🇰|\\bHK\\b|Hong ?Kong)"
-region_sg: &region_sg "(?i)(新加坡|狮城|🇸🇬|\\bSG\\b|Singapore)"
-region_jp: &region_jp "(?i)(日本|🇯🇵|\\bJP\\b|Japan)"
+region_hk_stable_auto: &region_hk_stable_auto "(?i)^(?!.*Hong ?Kong 0[2-5](?:\\D|$)).*(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong)"
+region_sg: &region_sg "(?i)(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore)"
+region_jp: &region_jp "(?i)(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)"
 
-# 机场名称3日新排除纯 CTCU，保留 CTCUCM。
-region_sg_no_ctcu: &region_sg_no_ctcu "(?i)^(?!.*(?<![0-9A-Za-z])CTCU(?:\\||$)).*(新加坡|狮城|🇸🇬|\\bSG\\b|Singapore)"
-region_jp_no_ctcu: &region_jp_no_ctcu "(?i)^(?!.*(?<![0-9A-Za-z])CTCU(?:\\||$)).*(日本|🇯🇵|\\bJP\\b|Japan)"
-region_us: &region_us "(?i)(美国|🇺🇸|🇺🇲|\\bUS\\b|\\bUSA\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)"
-region_download: &region_download "(?i)(香港|港|🇭🇰|\\bHK\\b|Hong ?Kong|日本|🇯🇵|\\bJP\\b|Japan|新加坡|狮城|🇸🇬|\\bSG\\b|Singapore|美国|🇺🇸|🇺🇲|\\bUS\\b|\\bUSA\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)"
-region_tw: &region_tw "(?i)(台湾|台灣|臺灣|🇹🇼|\\bTW\\b|\\bTWN\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE\\b|Taichung|台中|臺中|\\bRMQ\\b|Tainan|台南|臺南|\\bTNN\\b|Kaohsiung|高雄|\\bKHH\\b)"
+# 机场名称3日新排除独立 CTCU 标签（支持空格、连字符、竖线等分隔），保留 CTCUCM。
+region_sg_no_ctcu: &region_sg_no_ctcu "(?i)^(?!.*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z])).*(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore)"
+region_jp_no_ctcu: &region_jp_no_ctcu "(?i)^(?!.*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z])).*(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)"
+region_us: &region_us "(?i)(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)"
+region_download: &region_download "(?i)(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong|日本|🇯🇵|\\bJP[0-9]*\\b|Japan|新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore|美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)"
+region_tw: &region_tw "(?i)(台湾|台灣|臺灣|🇹🇼|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)"
 
-# 特殊用途与倍率筛选
-home_only: &home_only "(?i)(自建|CF|The_house|private|home|家宽|Self_Back|hgc|HKT|HKBN|icable|Hinet|\\bATT\\b)"
+# 家宽入口仅认明确标签；CF、运营商名称不能证明出口是家宽。
+home_only: &home_only "(?i)(自建|家宽|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))"
 
 # Emby：港日新 0<倍率≤0.5 或 MITM；倍率须带 x/倍及数字边界。
-lowrate_mitm: &lowrate_mitm "(?i)(?:(?:香港|港|🇭🇰|\\bHK\\b|Hong ?Kong|日本|🇯🇵|\\bJP\\b|Japan|新加坡|狮城|🇸🇬|\\bSG\\b|Singapore).*(?:(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub)|(?:(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub).*(?:香港|港|🇭🇰|\\bHK\\b|Hong ?Kong|日本|🇯🇵|\\bJP\\b|Japan|新加坡|狮城|🇸🇬|\\bSG\\b|Singapore))"
+lowrate_mitm: &lowrate_mitm "(?i)(?:(?:香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong|日本|🇯🇵|\\bJP[0-9]*\\b|Japan|新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore).*(?:(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub)|(?:(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub).*(?:香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong|日本|🇯🇵|\\bJP[0-9]*\\b|Japan|新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))"
 
 # 普通自动池排除 ≤0.3x、≥5x 及 BETA。
 exclude_lowrate: &exclude_lowrate "(?i)(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))"
+
+# 机场名称3美国仅豁免低倍率，不豁免 BETA、高倍率等质量限制。
+exclude_us_3: &exclude_us_3 "(?i)(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.]))"
 
 # 下载另排除 MITM 等特殊用途；倍率不代表速度。
 exclude_download: &exclude_download "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.]))"
 exclude_download_1: &exclude_download_1 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|Hong ?Kong 0[2-5](?:\\D|$))"
 
 # 机场名称3下载仅美国豁免低倍率；日新排除纯 CTCU，保留 CTCUCM。
-exclude_download_3: &exclude_download_3 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS\\b|\\bUSA\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?:\\||$))"
+exclude_download_3: &exclude_download_3 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z]))"
 
 use_ap_all: &use_ap_all [Airport_01, Airport_02, Airport_03, Airport_04]
 
@@ -133,6 +136,8 @@ proxy-providers:
     url: "订阅链接2"
     override:
       additional-prefix: '[机场名称2]'
+      # 此订阅整体为家宽；统一标签供共享家宽入口识别，不依赖原始节点名。
+      additional-suffix: ' [家宽]'
       skip-cert-verify: false
   Airport_03:
     <<: *PProviders
@@ -210,8 +215,8 @@ sniffer:
 tun:
   enable: true
   stack: system
-  device: tun0
-  mtu: 9000
+  device: tun0  # macOS 改用 utun 开头；auto-redirect 仅 Linux 生效。
+  mtu: 9000  # TUN MTU；按目标设备验证，不能直接等同物理网卡 MTU。
   dns-hijack:
     - "any:53"
     - "tcp://any:53"
@@ -331,9 +336,7 @@ dns:
 Business_Select: &Business_Select
   type: select
   use: *use_ap_all
-  filter: ".*"
-  url: *cloudflare_test_url
-  expected-status: 204
+  # 手选复用 provider 通用探测；专用自动池另行注册 CF/GitHub 探针。
   empty-fallback: REJECT
 
 Highest_policy: &Highest_policy
@@ -464,12 +467,15 @@ proxy-groups:
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
   - name: 哔哩东南亚
     <<: *Normal_policy
+    # 默认固定地区；可手选其他出口，探针不保证内容解锁。
+    proxies: [新加坡·机场名称1优先, 机场名称1优先-自动, 机场名称3优先-自动, 自建/家宽节点, 香港·机场名称1优先, 日本·机场名称1优先, 台湾·机场名称1优先, 美国·机场名称1优先, DIRECT]
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
   - name: Spotify
     <<: *High_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
   - name: TVB
     <<: *Normal_policy
+    # 规则含香港本地与海外版服务，按实际平台手选地区。
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
   - name: 境外影音
     <<: *Cost_policy
@@ -576,6 +582,7 @@ proxy-groups:
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"
 
   # 通用节点池与机场回退
+  # 独立 url-test 保存 AI 自己的选点与容差状态；provider 同 URL 探测仍共享。
   - name: AI-机场名称1-日本
     <<: *Cloudflare_Urltest_Base
     use: [Airport_01]
@@ -677,6 +684,7 @@ proxy-groups:
     <<: *Urltest_Base
     use: [Airport_03]
     filter: *region_us
+    exclude-filter: *exclude_us_3
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"
 
   - name: 机场名称3-台湾
@@ -715,7 +723,6 @@ proxy-groups:
 
   - name: 机场名称3地区优先
     <<: *Fallback_Base
-    interval: 18
     hidden: true
     proxies:
       - 机场名称3-日本
@@ -801,8 +808,6 @@ proxy-groups:
   - name: 机场名称3优先
     hidden: true
     <<: *Fallback_Base
-    interval: 45
-    lazy: false
     proxies:
       - 机场名称3地区优先
       - 机场名称1地区优先
@@ -905,10 +910,10 @@ proxy-groups:
     <<: *GitHub_Urltest_Base
     use: [Airport_03]
     filter: *region_us
+    exclude-filter: *exclude_us_3
 
   - name: GitHub-机场名称3
     <<: *GitHub_Fallback_Base
-    interval: 18
     proxies:
       - GitHub-机场名称3-日本
       - GitHub-机场名称3-新加坡
@@ -927,8 +932,6 @@ proxy-groups:
       - GitHub-机场名称1
       - GitHub-机场名称2
       - GitHub-机场名称4
-    interval: 45
-    lazy: false
 
   - name: GitHub-机场名称1优先
     <<: *GitHub_Fallback_Base
@@ -1025,10 +1028,10 @@ proxy-groups:
     <<: *Cloudflare_Urltest_Base
     use: [Airport_03]
     filter: *region_us
+    exclude-filter: *exclude_us_3
 
   - name: Cloudflare-机场名称3
     <<: *Cloudflare_Fallback_Base
-    interval: 18
     proxies:
       - Cloudflare-机场名称3-日本
       - Cloudflare-机场名称3-新加坡
@@ -1047,8 +1050,6 @@ proxy-groups:
       - Cloudflare-机场名称1
       - Cloudflare-机场名称2
       - Cloudflare-机场名称4
-    interval: 45
-    lazy: false
 
   - name: Cloudflare-机场名称1优先
     <<: *Cloudflare_Fallback_Base
@@ -1072,7 +1073,7 @@ proxy-groups:
     filter: *region_tw
     exclude-filter: *exclude_lowrate
 
-  # 纯下载：允许同机场跨地区测速
+  # 纯下载：允许同机场跨地区比较 GitHub 探针延迟，不代表下载吞吐排序。
   - name: 纯下载-机场名称3
     <<: *GitHub_Urltest_Base
     use: [Airport_03]
@@ -1105,8 +1106,6 @@ proxy-groups:
       - 纯下载-机场名称4
     url: *github_test_url
     expected-status: 200
-    interval: 60
-    lazy: false
 
   - name: GitHub-家宽优先
     <<: *GitHub_Fallback_Base
@@ -1472,185 +1471,186 @@ proxy-groups:
       - GitHub-机场名称1-美国
       - GitHub-机场名称3-美国
 
+# SUB-RULE 先确定业务；选中的出口不支持 UDP 时由外层统一拒绝。
+# 不把同一 UDP 请求继续交给后面的其他业务或直连规则。
 rules:
-  # 自定义优先规则
-  # 仅附件与源码归档走纯下载；网页、API、Git 连接及上传保留业务选路。
-  - RULE-SET,pure_download_domain,纯下载
-  # OpenCode Zen/Go 共用主域，统一走 AI。
-  - DOMAIN-SUFFIX,opencode.ai,AI
-  # Copilot API 精确补充，勿扩大到整个 GitHub。
-  - DOMAIN,origin-tracker.githubusercontent.com,AI
-  # Copilot 专属附件先于通用 Azure Blob 下载后缀。
-  - DOMAIN,copilotprodattachments.blob.core.windows.net,AI
-  # 手选节点不支持 UDP 时拒绝，保持 AI 出口边界。
-  - AND,((NETWORK,udp),(OR,((DOMAIN-SUFFIX,opencode.ai),(DOMAIN,origin-tracker.githubusercontent.com),(DOMAIN,copilotprodattachments.blob.core.windows.net)))),REJECT
-  # 香港电视例外须先于小米父域直连。
-  - DOMAIN,hk.tv.global.mi.com,通用代理
-  - DOMAIN,ykk.emby.moe,Emby
-  - IP-CIDR,189.24.106.132/32,DIRECT,no-resolve
-  - DOMAIN-SUFFIX,kuapt.top,DIRECT
-  - DOMAIN-SUFFIX,catxxp123.top,DIRECT
-  - DOMAIN-SUFFIX,c4lm0n.top,DIRECT
-  - DOMAIN-SUFFIX,maj-soul.com,DIRECT
-  - DOMAIN-SUFFIX,catmajsoul.com,DIRECT
-  - DOMAIN-SUFFIX,catmjstudio.com,DIRECT
-  - DOMAIN-SUFFIX,homdgcat.wiki,DIRECT
-  - DOMAIN-SUFFIX,bsbsb.top,DIRECT
-  - DOMAIN-SUFFIX,3ct.2ndtool.top,DIRECT
-  - DOMAIN-SUFFIX,yunmu.xiercloud.uk,DIRECT
-  - AND,((DST-PORT,7844),(OR,((DOMAIN,region1.v2.argotunnel.com),(DOMAIN,region2.v2.argotunnel.com),(DOMAIN,cftunnel.com),(DOMAIN,h2.cftunnel.com),(DOMAIN,quic.cftunnel.com)))),Cloudflare Tunnel
-  - AND,((DST-PORT,7844),(RULE-SET,cloudflare_tunnel_ip,no-resolve)),Cloudflare Tunnel
-  # 不支持 UDP 的手选节点应拒绝，避免继续下落成直连或其他出口。
-  - AND,((DST-PORT,7844),(OR,((DOMAIN,region1.v2.argotunnel.com),(DOMAIN,region2.v2.argotunnel.com),(DOMAIN,cftunnel.com),(DOMAIN,h2.cftunnel.com),(DOMAIN,quic.cftunnel.com)))),REJECT
-  - AND,((DST-PORT,7844),(RULE-SET,cloudflare_tunnel_ip,no-resolve)),REJECT
-  - DOMAIN-SUFFIX,argotunnel.com,DIRECT
-  - DOMAIN-SUFFIX,cftunnel.com,DIRECT
-  - DOMAIN-SUFFIX,trycloudflare.com,DIRECT
-  # 金融例外先于广告
-  - RULE-SET,Wise_domain,金融
-  - RULE-SET,paypal_domain,金融
+  - SUB-RULE,(NETWORK,tcp),业务分流
+  - SUB-RULE,(NETWORK,udp),业务分流
+  - NETWORK,udp,REJECT
 
-  # 高置信广告与 PCDN 先于国内父域
-  - RULE-SET,banAd_core_domain,隐私拦截
-  - RULE-SET,banAd_core_classical,隐私拦截
-
-  - RULE-SET,banAd_pcdn_domain,隐私拦截
-  - RULE-SET,banAd_pcdn_classical,隐私拦截
-
-  # 国内大集合中的具体业务
-  - RULE-SET,appleTV_domain,境外影音
-  - RULE-SET,apple_update_domain,Apple
-  - DOMAIN-SUFFIX,mytv.com.hk,TVB
-  - RULE-SET,TVB_domain,TVB
-
-  # 国内白名单：core/PCDN 之后、low 之前
-  - RULE-SET,wechat_domain,DIRECT
-  - RULE-SET,bank_cn_domain,DIRECT
-  - RULE-SET,alibaba_domain,DIRECT
-  - RULE-SET,115_domain,DIRECT
-  - RULE-SET,ifast_domain,DIRECT
-  - RULE-SET,ai_cn_domain,DIRECT
-  - RULE-SET,direct_domain,DIRECT
-  - RULE-SET,private_domain,DIRECT
-  - RULE-SET,iptv_domain,DIRECT
-  - RULE-SET,xiaomi_domain,DIRECT
-  - RULE-SET,apple_cn_domain,DIRECT
-  - RULE-SET,steam_cn_domain,DIRECT
-  - RULE-SET,game_cn_domain,DIRECT
-  - RULE-SET,steamcdn_domain,DIRECT
-  - RULE-SET,NetEaseMusic_domain,DIRECT
-  - RULE-SET,pt_domain,DIRECT
-  - RULE-SET,public-tracker_domain,DIRECT
-  - RULE-SET,media_cn_domain,DIRECT
-
-  # 其余拦截（白名单优先）
-  - RULE-SET,banAd_low_domain,隐私拦截
-
-  # 跨区业务先于国内总集合
-  - RULE-SET,apple_domain,Apple
-  - RULE-SET,biliintl_domain,哔哩东南亚
-  - RULE-SET,bilibili_domain,哔哩哔哩
-
-  # 开发产品
-  - DOMAIN-SUFFIX,huggingface.co,开发下载
-  - DOMAIN-SUFFIX,hf.co,开发下载
-  # Docker 仅含拉取、安装与更新，勿扩大到账号或其他产品。
-  - DOMAIN-SUFFIX,docker.io,开发下载
-  - DOMAIN,production.cloudfront.docker.com,开发下载
-  - DOMAIN,docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com,开发下载
-  - DOMAIN,download.docker.com,开发下载
-  - DOMAIN,desktop.docker.com,开发下载
-  - DOMAIN,get.docker.com,开发下载
-  - DOMAIN-SUFFIX,googlesource.com,开发下载
-  # 无法按 HTTPS 路径分流，此处覆盖整个共享 GCS 主机。
-  - DOMAIN,storage.googleapis.com,开发下载
-  - DOMAIN-SUFFIX,dl.google.com,开发下载
-  - RULE-SET,dev_download_domain,开发下载
-  - DOMAIN-SUFFIX,kryptex.com,Kryptex
-  - DOMAIN-SUFFIX,kryptex.org,Kryptex
-  - DOMAIN-SUFFIX,kryptex.network,Kryptex
-  - DOMAIN-SUFFIX,linux.do,通用代理
-
-  # 人工代理例外先于国内总集合
-  - RULE-SET,proxy_domain,通用代理
-
-  # 国内域名兜底
-  - RULE-SET,cn_domain,DIRECT
-
-  # Telegram 域名
-  - RULE-SET,telegram_domain,境外通信
-
-  # 具体产品先于共享平台
-  - RULE-SET,bahamut_domain,台湾限定
-  - RULE-SET,ai!cn_domain,AI
-  - AND,((NETWORK,udp),(RULE-SET,ai!cn_domain)),REJECT
-  - RULE-SET,youtube_domain,境外影音
-  - RULE-SET,fcm_domain,Google
-  - RULE-SET,googlevpn_domain,Google
-  # 内容站先于承载它们的 Google/GitHub 等平台。
-  - RULE-SET,twitch_domain,境外影音
-  - RULE-SET,porn_domain,境外影音
-  - RULE-SET,github_domain,开发下载
-  - RULE-SET,gitbook_domain,开发下载
-  - RULE-SET,onedrive_domain,Microsoft
-  - RULE-SET,line_domain,境外通信
-  - RULE-SET,talkatone_domain,Talkatone
-  - RULE-SET,discord_domain,境外通信
-  - RULE-SET,signal_domain,境外通信
-  - RULE-SET,tiktok_domain,TikTok
-  - RULE-SET,netflix_domain,NETFLIX
-  - RULE-SET,disney_domain,DisneyPlus
-  - RULE-SET,hbo_domain,HBO
-  - RULE-SET,primevideo_domain,Primevideo
-  - RULE-SET,emby_domain,Emby
-  - RULE-SET,emby_classical,Emby
-  - RULE-SET,spotify_domain,Spotify
-  - RULE-SET,steam_domain,游戏平台
-  - RULE-SET,Epic_domain,游戏平台
-  - RULE-SET,EA_domain,游戏平台
-  - RULE-SET,Blizzard_domain,游戏平台
-  - RULE-SET,UBI_domain,游戏平台
-  - RULE-SET,Sony_domain,游戏平台
-  - RULE-SET,Nintendo_domain,游戏平台
-  # 通信、社媒具体业务先于电商与厂商集合。
-  - RULE-SET,communication_domain,境外通信
-  - RULE-SET,reddit_domain,Reddit
-  - RULE-SET,social_media_non_cn_domain,境外社媒
-  - RULE-SET,amazon_commerce_domain,境外电商
-  - RULE-SET,ecommerce_domain,境外电商
-  - RULE-SET,speedtest_domain,Speedtest
-
-  # 厂商生态兜底
-  - RULE-SET,google_domain,Google
-  - RULE-SET,microsoft_domain,Microsoft
-  - RULE-SET,meta_domain,境外社媒
-
-  # 金融聚合
-  - RULE-SET,finance_domain,金融
-  - RULE-SET,cryptocurrency_domain,金融
-
-  # 业务 IP 兜底：明确域名分类优先，共享 IP 不覆盖业务选择。
-  - RULE-SET,steamcdn_ip,DIRECT,no-resolve
-  - RULE-SET,NetEaseMusic_ip,DIRECT,no-resolve
-  - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
-  - RULE-SET,telegram_ip,境外通信,no-resolve
-  - RULE-SET,talkatone_ip,Talkatone,no-resolve
-  - RULE-SET,netflix_ip,NETFLIX,no-resolve
-  - RULE-SET,google_asn_cn,Google,no-resolve
-  - RULE-SET,google_ip,Google,no-resolve
-  - RULE-SET,facebook_ip,境外社媒,no-resolve
-  - RULE-SET,twitter_ip,境外社媒,no-resolve
-
-  # 国内 IP 兜底
-  - RULE-SET,private_ip,DIRECT,no-resolve
-  # 此处允许解析，覆盖未收录的国内域名。
-  - RULE-SET,cn_ip,DIRECT
-
-  # 未匹配流量走代理
-  - MATCH,通用代理
-
-  # 按探针选择候选链；UDP 能力不匹配时明确拒绝。
 sub-rules:
+  业务分流:
+    # 自定义优先规则
+    # 仅附件与源码归档走纯下载；网页、API、Git 连接及上传保留业务选路。
+    - RULE-SET,pure_download_domain,纯下载
+    # OpenCode Zen/Go 共用主域，统一走 AI。
+    - DOMAIN-SUFFIX,opencode.ai,AI
+    # Copilot API 精确补充，勿扩大到整个 GitHub。
+    - DOMAIN,origin-tracker.githubusercontent.com,AI
+    # Copilot 专属附件先于通用 Azure Blob 下载后缀。
+    - DOMAIN,copilotprodattachments.blob.core.windows.net,AI
+    # 香港电视例外须先于小米父域直连。
+    - DOMAIN,hk.tv.global.mi.com,通用代理
+    - DOMAIN,ykk.emby.moe,Emby
+    - IP-CIDR,189.24.106.132/32,DIRECT,no-resolve
+    - DOMAIN-SUFFIX,kuapt.top,DIRECT
+    - DOMAIN-SUFFIX,catxxp123.top,DIRECT
+    - DOMAIN-SUFFIX,c4lm0n.top,DIRECT
+    - DOMAIN-SUFFIX,maj-soul.com,DIRECT
+    - DOMAIN-SUFFIX,catmajsoul.com,DIRECT
+    - DOMAIN-SUFFIX,catmjstudio.com,DIRECT
+    - DOMAIN-SUFFIX,homdgcat.wiki,DIRECT
+    - DOMAIN-SUFFIX,bsbsb.top,DIRECT
+    - DOMAIN-SUFFIX,3ct.2ndtool.top,DIRECT
+    - DOMAIN-SUFFIX,yunmu.xiercloud.uk,DIRECT
+    - AND,((DST-PORT,7844),(OR,((DOMAIN,region1.v2.argotunnel.com),(DOMAIN,region2.v2.argotunnel.com),(DOMAIN,cftunnel.com),(DOMAIN,h2.cftunnel.com),(DOMAIN,quic.cftunnel.com)))),Cloudflare Tunnel
+    - AND,((DST-PORT,7844),(RULE-SET,cloudflare_tunnel_ip,no-resolve)),Cloudflare Tunnel
+    - DOMAIN-SUFFIX,argotunnel.com,DIRECT
+    - DOMAIN-SUFFIX,cftunnel.com,DIRECT
+    - DOMAIN-SUFFIX,trycloudflare.com,DIRECT
+    # 金融例外先于广告
+    - RULE-SET,Wise_domain,金融
+    - RULE-SET,paypal_domain,金融
+
+    # 高置信广告与 PCDN 先于国内父域
+    - RULE-SET,banAd_core_domain,隐私拦截
+    - RULE-SET,banAd_core_classical,隐私拦截
+
+    - RULE-SET,banAd_pcdn_domain,隐私拦截
+    - RULE-SET,banAd_pcdn_classical,隐私拦截
+
+    # 国内大集合中的具体业务
+    - RULE-SET,appleTV_domain,境外影音
+    - RULE-SET,apple_update_domain,Apple
+    - DOMAIN-SUFFIX,mytv.com.hk,TVB
+    - RULE-SET,TVB_domain,TVB
+
+    # 国内白名单：core/PCDN 之后、low 之前
+    - RULE-SET,wechat_domain,DIRECT
+    - RULE-SET,bank_cn_domain,DIRECT
+    - RULE-SET,alibaba_domain,DIRECT
+    - RULE-SET,115_domain,DIRECT
+    - RULE-SET,ifast_domain,DIRECT
+    - RULE-SET,ai_cn_domain,DIRECT
+    - RULE-SET,direct_domain,DIRECT
+    - RULE-SET,private_domain,DIRECT
+    - RULE-SET,iptv_domain,DIRECT
+    - RULE-SET,xiaomi_domain,DIRECT
+    - RULE-SET,apple_cn_domain,DIRECT
+    - RULE-SET,steam_cn_domain,DIRECT
+    - RULE-SET,game_cn_domain,DIRECT
+    - RULE-SET,steamcdn_domain,DIRECT
+    - RULE-SET,NetEaseMusic_domain,DIRECT
+    - RULE-SET,pt_domain,DIRECT
+    - RULE-SET,public-tracker_domain,DIRECT
+    - RULE-SET,media_cn_domain,DIRECT
+
+    # 其余拦截（白名单优先）
+    - RULE-SET,banAd_low_domain,隐私拦截
+
+    # 跨区业务先于国内总集合
+    - RULE-SET,apple_domain,Apple
+    - RULE-SET,biliintl_domain,哔哩东南亚
+    - RULE-SET,bilibili_domain,哔哩哔哩
+
+    # 开发产品
+    - DOMAIN-SUFFIX,huggingface.co,开发下载
+    - DOMAIN-SUFFIX,hf.co,开发下载
+    # Docker 仅含拉取、安装与更新，勿扩大到账号或其他产品。
+    - DOMAIN-SUFFIX,docker.io,开发下载
+    - DOMAIN,production.cloudfront.docker.com,开发下载
+    - DOMAIN,docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com,开发下载
+    - DOMAIN,download.docker.com,开发下载
+    - DOMAIN,desktop.docker.com,开发下载
+    - DOMAIN,get.docker.com,开发下载
+    - DOMAIN-SUFFIX,googlesource.com,开发下载
+    # 无法按 HTTPS 路径分流，此处覆盖整个共享 GCS 主机。
+    - DOMAIN,storage.googleapis.com,开发下载
+    - DOMAIN-SUFFIX,dl.google.com,开发下载
+    - RULE-SET,dev_download_domain,开发下载
+    - DOMAIN-SUFFIX,kryptex.com,Kryptex
+    - DOMAIN-SUFFIX,kryptex.org,Kryptex
+    - DOMAIN-SUFFIX,kryptex.network,Kryptex
+    - DOMAIN-SUFFIX,linux.do,通用代理
+
+    # 人工代理例外先于国内总集合
+    - RULE-SET,proxy_domain,通用代理
+
+    # 国内域名兜底
+    - RULE-SET,cn_domain,DIRECT
+
+    # Telegram 域名
+    - RULE-SET,telegram_domain,境外通信
+
+    # 具体产品先于共享平台
+    - RULE-SET,bahamut_domain,台湾限定
+    - RULE-SET,ai!cn_domain,AI
+    - RULE-SET,youtube_domain,境外影音
+    - RULE-SET,fcm_domain,Google
+    - RULE-SET,googlevpn_domain,Google
+    # 内容站先于承载它们的 Google/GitHub 等平台。
+    - RULE-SET,twitch_domain,境外影音
+    - RULE-SET,porn_domain,境外影音
+    - RULE-SET,github_domain,开发下载
+    - RULE-SET,gitbook_domain,开发下载
+    - RULE-SET,onedrive_domain,Microsoft
+    - RULE-SET,line_domain,境外通信
+    - RULE-SET,talkatone_domain,Talkatone
+    - RULE-SET,discord_domain,境外通信
+    - RULE-SET,signal_domain,境外通信
+    - RULE-SET,tiktok_domain,TikTok
+    - RULE-SET,netflix_domain,NETFLIX
+    - RULE-SET,disney_domain,DisneyPlus
+    - RULE-SET,hbo_domain,HBO
+    - RULE-SET,primevideo_domain,Primevideo
+    - RULE-SET,emby_domain,Emby
+    - RULE-SET,emby_classical,Emby
+    - RULE-SET,spotify_domain,Spotify
+    - RULE-SET,steam_domain,游戏平台
+    - RULE-SET,Epic_domain,游戏平台
+    - RULE-SET,EA_domain,游戏平台
+    - RULE-SET,Blizzard_domain,游戏平台
+    - RULE-SET,UBI_domain,游戏平台
+    - RULE-SET,Sony_domain,游戏平台
+    - RULE-SET,Nintendo_domain,游戏平台
+    # 通信、社媒具体业务先于电商与厂商集合。
+    - RULE-SET,communication_domain,境外通信
+    - RULE-SET,reddit_domain,Reddit
+    - RULE-SET,social_media_non_cn_domain,境外社媒
+    - RULE-SET,amazon_commerce_domain,境外电商
+    - RULE-SET,ecommerce_domain,境外电商
+    - RULE-SET,speedtest_domain,Speedtest
+
+    # 厂商生态兜底
+    - RULE-SET,google_domain,Google
+    - RULE-SET,microsoft_domain,Microsoft
+    - RULE-SET,meta_domain,境外社媒
+
+    # 金融聚合
+    - RULE-SET,finance_domain,金融
+    - RULE-SET,cryptocurrency_domain,金融
+
+    # 业务 IP 兜底：明确域名分类优先，共享 IP 不覆盖业务选择。
+    - RULE-SET,steamcdn_ip,DIRECT,no-resolve
+    - RULE-SET,NetEaseMusic_ip,DIRECT,no-resolve
+    - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
+    - RULE-SET,telegram_ip,境外通信,no-resolve
+    - RULE-SET,talkatone_ip,Talkatone,no-resolve
+    - RULE-SET,netflix_ip,NETFLIX,no-resolve
+    - RULE-SET,google_asn_cn,Google,no-resolve
+    - RULE-SET,google_ip,Google,no-resolve
+    - RULE-SET,facebook_ip,境外社媒,no-resolve
+    - RULE-SET,twitter_ip,境外社媒,no-resolve
+
+    # 国内 IP 兜底
+    - RULE-SET,private_ip,DIRECT,no-resolve
+    # 此处允许解析，覆盖未收录的国内域名。
+    - RULE-SET,cn_ip,DIRECT
+
+    # 未匹配流量走代理
+    - MATCH,通用代理
+
+  # 自动链路按探针选择候选；UDP 能力不匹配时明确拒绝。
 
   机场名称2自动:
     - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-家宽优先
@@ -1923,7 +1923,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/steam.mrs"
   ai!cn_domain:
     <<: *domain
-    url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/category-ai-!cn.mrs"
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-ai-!cn.mrs"
   youtube_domain:
     <<: *domain
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/youtube.mrs"
