@@ -70,9 +70,9 @@ def main():
         ],
     }
     if "Airport_02" in SOURCE["proxy-providers"]:
-        examples["Airport_02"] = [("香港家宽 1x", {"hk2", "home"}), ("日本家宽 1x", {"jp2", "home"}),
+        examples["Airport_02"] = [("香港家宽 1x", {"hk2", "home", "download2"}), ("日本家宽 1x", {"jp2", "home", "download2"}),
                                   ("香港家宽 BETA", {"home"}), ("日本家宽 0.3x", {"home"}),
-                                  ("HK01", {"hk2", "home"}), ("JP01", {"jp2", "home"}),
+                                  ("HK01", {"hk2", "home", "download2"}), ("JP01", {"jp2", "home", "download2"}),
                                   ("德国01", {"home"})]
     notices = ["剩余流量: 100 GB", "套餐到期: 2027-01-01", "Email: support@example.invalid", "Expired"]
     core = None
@@ -85,6 +85,8 @@ def main():
                 suffix = provider["override"].get("additional-suffix", "")
                 for raw_name, memberships in cases:
                     manual.add(prefix + raw_name + suffix)
+                    if name == "Airport_04":
+                        expected.setdefault("download4", set()).add(prefix + raw_name + suffix)
                     for membership in memberships:
                         expected.setdefault(membership, set()).add(prefix + raw_name + suffix)
                 path = Path(directory) / f"{name}.json"
@@ -98,15 +100,21 @@ def main():
                 provider.update(type="file", path=str(path), **{"health-check": {"enable": False}})
                 providers[name] = provider
             subjects = {"纯下载-机场名称1": "download1", "纯下载-机场名称3": "download3",
+                        "纯下载-机场名称4": "download4",
                         "开发下载": "manual", "自建/家宽节点": "home", "台湾限定": "tw4"}
             for family in ("机场名称", "GitHub-机场名称", "Cloudflare-机场名称"):
                 subjects.update({f"{family}1-香港": "hk1", f"{family}1-日本": "jp1", f"{family}3-日本": "jp3",
                                  f"{family}3-新加坡": "sg3", f"{family}3-美国": "us3"})
             if "Airport_02" in examples:
+                subjects["纯下载-机场名称2"] = "download2"
                 for family in ("机场名称", "GitHub-机场名称", "Cloudflare-机场名称"):
                     subjects.update({f"{family}2-香港": "hk2", f"{family}2-日本": "jp2"})
-            groups = [copy.deepcopy(group) for group in SOURCE["proxy-groups"] if group["name"] in subjects]
-            assert len(groups) == len(subjects)
+            required = set(subjects)
+            for group in SOURCE["proxy-groups"]:
+                if group["name"] in subjects and group["name"].startswith("纯下载-"):
+                    required.update(group["proxies"])
+            groups = [copy.deepcopy(group) for group in SOURCE["proxy-groups"] if group["name"] in required]
+            assert len(groups) == len(required)
             for group in groups:
                 if group["name"] in ("开发下载", "台湾限定"):
                     group.pop("proxies")  # 本测试仅核对入口的原始订阅候选。
@@ -140,6 +148,8 @@ def main():
             for name, membership in subjects.items():
                 want = manual if membership == "manual" else expected[membership]
                 members = set(actual[name]["all"])
+                if membership.startswith("download"):
+                    members = {node for child in members for node in actual[child]["all"] if node != "REJECT"}
                 if members != want:
                     failures.append({"group": name, "unexpected": sorted(members - want), "missing": sorted(want - members)})
             print(json.dumps({"passed": not failures, "groups": len(subjects), "raw_nodes": len(manual),

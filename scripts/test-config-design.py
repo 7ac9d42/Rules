@@ -115,6 +115,15 @@ def static_checks(source):
     assert update["url"] == source["GitHub_Urltest_Base"]["url"] and update["expected-status"] == 200
     assert all(name.startswith("GitHub-") for name in update["proxies"][:-1])
     assert all(p["proxy"] == "规则更新" for p in source["rule-providers"].values() if p["type"] == "http")
+    for provider in source["proxy-providers"]:
+        name = f'纯下载-机场名称{int(provider[-2:])}'
+        regions = ["日本", "新加坡", "美国", "香港"] + (["其他"] if provider == "Airport_04" else [])
+        assert groups[name]["type"] == "fallback"
+        assert groups[name]["proxies"] == [name + "-" + region for region in regions]
+        for child in groups[name]["proxies"]:
+            pool = groups[child]
+            assert pool["type"] == "url-test" and pool["use"] == [provider]
+            assert pool["url"] == update["url"] and pool["expected-status"] == 200
 
 
 def main(config=CONFIG):
@@ -139,6 +148,7 @@ def main(config=CONFIG):
                         ("1-fast", "1", "HongKong 06"), ("1-excluded", "1", "HongKong 05"),
                         ("3-JP", "3", "日本01|CTCUCM"), ("3-JP2", "3", "日本02|BGP"),
                         ("3-US", "3", "美国01|0.1x"), ("3-SG", "3", "新加坡01|BGP"),
+                        ("3-HK", "3", "香港01"),
                         ("3-excluded", "3", "日本01|CTCU"), ("3-outside", "3", "德国01"),
                         ("4-DE", "4", "德国备用"), ("4-JP-A", "4", "日本备用01"), ("4-JP-B", "4", "日本备用02")]
             if with_home:
@@ -240,7 +250,7 @@ def main(config=CONFIG):
                     H["NODE_FAILED"].clear()
 
             H["until"](lambda: api("/version"))
-            for host, label in [("github.com", "3-JP2"), ("codeload.github.com", "3-US"),
+            for host, label in [("github.com", "3-JP2"), ("codeload.github.com", "3-JP2"),
                                 ("cloudflare.com", "3-JP"), ("google.com", "1-jp")]:
                 expect(host, label)
 
@@ -275,11 +285,11 @@ def main(config=CONFIG):
             assert "[机场名称1]日本01" in tested
             assert "[机场名称1]HongKong 05" not in tested
             checks.append("手选不注册全量 CF 探测；专用池仍探测日本，排除的香港节点不额外探测")
-            checks.append("开发默认成本政策；GitHub地区稳定，纯下载允许同机场跨区择优")
+            checks.append("开发与纯下载默认成本政策；各自保留独立的日本自动池")
 
             choose("开发下载", "机场名称1优先-自动")
             expect("github.com", "1-jp")
-            expect("codeload.github.com", "3-US")
+            expect("codeload.github.com", "3-JP2")
             expect("youtube.com", "3-JP")
             assert "[机场名称1]HongKong 05" not in group("GitHub-机场名称1-香港")["all"]
             fail(GITHUB, labels=["1-jp"])
@@ -308,18 +318,41 @@ def main(config=CONFIG):
             recover()
             checks.append("机场名称4按顺序耗尽同区备用再换地区")
 
-            # 香港明显更快时，仅纯下载跨区择优；普通 GitHub 仍优先日本。
+            # 香港探针明显更快也不能抢过可用日本；日本故障才在同机场换地区。
             by_label["1-jp"].probe_delays = {GITHUB: .4}
             choose("开发下载", "机场名称1优先-自动")
             choose("纯下载", "机场名称1优先-自动")
             for host in ["codeload.github.com", "release-assets.githubusercontent.com"]:
-                expect(host, "1-fast")
+                expect(host, "1-jp")
             expect("github.com", "1-jp")
+            fail(GITHUB, labels=["1-jp"])
+            expect("codeload.github.com", "1-fast")
+            recover()
             del by_label["1-jp"].probe_delays
-            expect("github.com", "1-jp")
+            expect("codeload.github.com", "1-jp")
             choose("纯下载", "机场名称3优先-自动")
             choose("开发下载", "机场名称3优先-自动")
-            checks.append("纯下载同机场跨区择优，普通 GitHub 仍优先日本")
+            expect("codeload.github.com", "3-JP2")
+            for failed, expected in [("3-JP2", "3-JP"), ("3-JP", "3-SG"),
+                                     ("3-SG", "3-US"), ("3-US", "3-HK"), ("3-HK", "1-jp")]:
+                fail(GITHUB, labels=[failed])
+                expect("codeload.github.com", expected)
+            if with_home:
+                fail(GITHUB, airports=["1"])
+                expect("codeload.github.com", "2-JP")
+                fail(GITHUB, labels=["2-JP"])
+                expect("codeload.github.com", "2-HK")
+            fail(GITHUB, airports=["1", "2", "3"])
+            expect("codeload.github.com", "4-JP-B")
+            fail(GITHUB, labels=["4-JP-B"])
+            expect("codeload.github.com", "4-JP-A")
+            fail(GITHUB, labels=["4-JP-A"])
+            expect("codeload.github.com", "4-DE")
+            fail(GITHUB, labels=["4-DE"])
+            H["until"](lambda: request("codeload.github.com")[0] != 0)
+            recover()
+            expect("codeload.github.com", "3-JP2")
+            checks.append("纯下载先同区换节点，再日本→新加坡→美国→香港，耗尽本机场后跨机场；备用机场保留其他地区兜底，恢复后回到日本")
             if with_home:
                 expect("wise.cf.invalid", "2-HK")
                 fail(CF, airports=["2"])
@@ -391,7 +424,7 @@ def main(config=CONFIG):
             expect("google.com", "1-jp")
             expect("google.cf.invalid", "1-jp")
             expect("github.com", "3-JP2")
-            expect("codeload.github.com", "3-US")
+            expect("codeload.github.com", "3-JP2")
             choose("纯下载", "日本·机场名称3优先")
             expect("codeload.github.com", "3-JP2")
             expect("unpkg.com", "3-JP")
@@ -437,8 +470,9 @@ def main(config=CONFIG):
             api("/providers/proxies/Airport_03", method="PUT")
             H["until"](lambda: group("GitHub-机场名称3-日本")["all"] == ["REJECT"])
             expect("github.com", "3-SG")
-            expect("codeload.github.com", "3-US")
-            checks.append("订阅更新使地区筛空后先留同机场换地区；纯下载例外不变")
+            expect("codeload.github.com", "3-SG")
+            H["until"](lambda: group("纯下载-机场名称3-日本")["all"] == ["REJECT"])
+            checks.append("订阅更新使日本池筛空后，开发和纯下载均留同机场回退新加坡")
 
             # 末尾才加入台湾候选，避免改变前面机场名称4地区顺序的测试条件。
             for label, name in [("4-TW-beta", "台湾 BETA"), ("4-TW-low", "台湾 0.3x"),

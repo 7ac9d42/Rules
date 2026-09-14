@@ -1,6 +1,6 @@
 # 三机场配置：层级决定业务默认顺序，业务入口独立手选。
 # 使用支持 rematch 的 Mihomo；固定验证版本为 v1.19.30。
-# 机场名称1、机场名称3仅同地区测速；先同机场换地区，再跨机场；纯下载例外。
+# 机场名称1、机场名称3仅同地区测速；先同机场换地区，再跨机场；纯下载地区顺序独立。
 # 使用说明与维护入口见 README.md。
 
 # 探测与回退
@@ -911,22 +911,105 @@ proxy-groups:
     filter: *region_tw
     exclude-filter: *exclude_lowrate
 
-  # 纯下载：允许同机场跨地区比较 GitHub 探针延迟，不代表下载吞吐排序。
+  # 纯下载：同机场按日本 → 新加坡 → 美国 → 香港回退，同地区内比较 GitHub 探针。
+  # 地区优先级来自带宽使用体验；探针只判断可达性/延迟，不测吞吐。
   - name: 纯下载-机场名称3
+    <<: *GitHub_Fallback_Base
+    proxies:
+      - 纯下载-机场名称3-日本
+      - 纯下载-机场名称3-新加坡
+      - 纯下载-机场名称3-美国
+      - 纯下载-机场名称3-香港
+
+  - name: 纯下载-机场名称3-日本
     <<: *GitHub_Urltest_Base
     use: [Airport_03]
-    filter: *region_download
+    filter: *region_jp
+    exclude-filter: *exclude_download_3
+
+  - name: 纯下载-机场名称3-新加坡
+    <<: *GitHub_Urltest_Base
+    use: [Airport_03]
+    filter: *region_sg
+    exclude-filter: *exclude_download_3
+
+  - name: 纯下载-机场名称3-美国
+    <<: *GitHub_Urltest_Base
+    use: [Airport_03]
+    filter: *region_us
+    exclude-filter: *exclude_download_3
+
+  - name: 纯下载-机场名称3-香港
+    <<: *GitHub_Urltest_Base
+    use: [Airport_03]
+    filter: *region_hk
     exclude-filter: *exclude_download_3
 
   - name: 纯下载-机场名称1
+    <<: *GitHub_Fallback_Base
+    proxies:
+      - 纯下载-机场名称1-日本
+      - 纯下载-机场名称1-新加坡
+      - 纯下载-机场名称1-美国
+      - 纯下载-机场名称1-香港
+
+  - name: 纯下载-机场名称1-日本
     <<: *GitHub_Urltest_Base
     use: [Airport_01]
-    filter: *region_download
+    filter: *region_jp
+    exclude-filter: *exclude_download_1
+
+  - name: 纯下载-机场名称1-新加坡
+    <<: *GitHub_Urltest_Base
+    use: [Airport_01]
+    filter: *region_sg
+    exclude-filter: *exclude_download_1
+
+  - name: 纯下载-机场名称1-美国
+    <<: *GitHub_Urltest_Base
+    use: [Airport_01]
+    filter: *region_us
+    exclude-filter: *exclude_download_1
+
+  - name: 纯下载-机场名称1-香港
+    <<: *GitHub_Urltest_Base
+    use: [Airport_01]
+    filter: *region_hk
     exclude-filter: *exclude_download_1
 
   - name: 纯下载-机场名称4
+    <<: *GitHub_Fallback_Base
+    proxies:
+      - 纯下载-机场名称4-日本
+      - 纯下载-机场名称4-新加坡
+      - 纯下载-机场名称4-美国
+      - 纯下载-机场名称4-香港
+      - 纯下载-机场名称4-其他
+
+  - name: 纯下载-机场名称4-日本
     <<: *GitHub_Urltest_Base
     use: [Airport_04]
+    filter: *region_jp
+
+  - name: 纯下载-机场名称4-新加坡
+    <<: *GitHub_Urltest_Base
+    use: [Airport_04]
+    filter: *region_sg
+
+  - name: 纯下载-机场名称4-美国
+    <<: *GitHub_Urltest_Base
+    use: [Airport_04]
+    filter: *region_us
+
+  - name: 纯下载-机场名称4-香港
+    <<: *GitHub_Urltest_Base
+    use: [Airport_04]
+    filter: *region_hk
+
+  - name: 纯下载-机场名称4-其他
+    <<: *GitHub_Urltest_Base
+    use: [Airport_04]
+    exclude-filter: *region_download
 
   - name: 纯下载-自动
     hidden: true
