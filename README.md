@@ -89,7 +89,7 @@ TCP 手选实际节点时，连接页可显示命中的业务规则，例如 `Ru
 python3 scripts/check-proxy-route.py check-smart --controller http://192.168.1.1:9090
 ```
 
-检查仅在**规则模式且 Smart 组为零**时返回成功；鉴权失败、控制器不可达不会被当作通过。它不修改配置或选择，也不证明线路自身稳定。需要持续连接稳定时仍应手选经过实际业务验证的节点，Google 204 健康不代表 Telegram 通话或 MTProto 长连接正常。
+检查仅在**规则模式且 Smart 组为零**时返回成功；鉴权失败、控制器不可达或响应字段异常均返回工具错误（退出码 2）。即使 ASN、LightGBM 等开关已关闭，只要运行配置中存在 Smart 组，检查仍返回 1。它不修改配置或选择，也不证明线路自身稳定。需要持续连接稳定时仍应手选经过实际业务验证的节点，Google 204 健康不代表 Telegram 通话或 MTProto 长连接正常。
 
 ## 通过实际规则路径测速
 
@@ -114,7 +114,7 @@ python3 scripts/check-proxy-route.py probe --proxy http://127.0.0.1:7890 \
 
 - 手工直连、代理补充分别维护在 `scripts/data/direct.list`、`scripts/data/proxy.list`；修改后运行 `bash scripts/build/direct.sh`、`bash scripts/build/proxy.sh`，同步发布列表及 YAML/MRS。
 - `rules/`：发布的规则产物；`scripts/`：构建和验证脚本；`icon/`：图标资源。
-- `.github/workflows/main.yml`：每日同步上游规则并构建验证，使用最新稳定版及固定 v1.19.30 内核检查；两者相同时只执行一轮。发布前运行完整回退、节点筛选、UDP、DNS 和真实规则分流测试。
+- `.github/workflows/main.yml`：每日同步上游规则并构建验证，使用最新稳定版及固定 v1.19.30 内核检查；两者相同时只执行一轮。发布前运行回退、生命周期、工具错误处理、进程清理、节点筛选、UDP、DNS 和真实规则分流测试。
 - `docs/`：本地临时研究笔记，不纳入 Git，也不是使用或构建依赖。正式用法以本 README 和配置为准。
 
 修改配置后，可先运行静态检查（需 Python 3、Ruby）：
@@ -130,11 +130,24 @@ python3 scripts/test-config-design.py --static --config cinfigfull_new_4.yaml
 | --- | --- |
 | `test-real-rule-routing.py` | 真实规则的业务归属、Fake-IP/DNS 后的业务 IP 兜底、TCP 业务规则信息、手选隔离、默认出口及 Tunnel TCP 边界；`--rules-dir` 指定完整规则快照，`--prepare-rules` 可新建快照 |
 | `test-config-design.py` | 结构约束、探针隔离、地区及机场回退、AI 边界、下载与规则更新选路、实际规则测速工具 |
+| `test-runtime-lifecycle.py` | 保留真实缓存、HTTP 订阅和完整自动组链，验证重启/重载、候选删除恢复、共享家宽、离线 MRS 缓存与实际更新路径；`--upgrade-from` 接受旧配置，`--timing` 测原周期下 CONNECT 故障与恢复 |
+| `test-maintenance.py` | 控制器异常响应的退出码、Smart 组与非规则模式拒绝；Linux 下 SIGTERM 取消 UDP 测试后回收内核，终止超时则强制回收 |
 | `test-rematch-udp.py` | UDP 转发与拒绝、共享手选、全局切换及 Tunnel UDP 边界 |
 | `test-node-filters.py` | 节点准入、家宽筛选与订阅 UDP 声明 |
 | `test-dns-policy.py` | 国内／海外、私有域、STUN 与 Tunnel 的 DNS 策略 |
 
 完整规则产物校验运行 `ruby scripts/validate-rules.rb`。两份配置均需验证，参数见各脚本或 CI；`proxy-fixture.py` 是共享工具。
+
+生命周期测试始终保留配置中的探测周期、超时、lazy 和失败次数，不使用真实订阅。CI 从 `289bb078`、`83ab9daa`、`dd046fa4` 提取旧配置，分别验证旧缓存升级；本地可按需运行：
+
+```sh
+python3 scripts/test-maintenance.py
+git show dd046fa4:configfull_new.yaml > /tmp/before-configfull_new.yaml
+python3 scripts/test-runtime-lifecycle.py --config configfull_new.yaml --timing \
+  --upgrade-from /tmp/before-configfull_new.yaml
+```
+
+`--timing` 记录本地代理拒绝 CONNECT 后的请求、探针、回退及恢复时间；HTTP 规则更新的逐机场枚举则主动触发健康检查。两者不能混作生产恢复时限，也不证明真实带宽、TUN 或长连接稳定性。Smart 内核的连接关闭行为仍通过上述设置规避，工具回归测试只验证能正确识别规避条件。
 
 真实规则快照只需建立一次，两份配置及两个内核版本复用同一份快照。例如：
 

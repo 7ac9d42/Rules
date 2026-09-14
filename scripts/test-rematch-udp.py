@@ -11,10 +11,12 @@ import ipaddress
 import json
 from pathlib import Path
 import runpy
+import signal
 import socket
 import socketserver
 import struct
 import subprocess
+import sys
 import tempfile
 import threading
 import urllib.parse
@@ -386,14 +388,14 @@ def main(config_path=D['CONFIG']):
                               'checks': checks, 'scope': '回环 SOCKS5 UDP 转发；不证明公网 UDP/QUIC 或原健康池回退'}, ensure_ascii=False, indent=2))
         finally:
             if core is not None:
-                core.terminate()
-                core.wait(timeout=5)
+                H['stop_core'](core)
             for server in servers:
                 server.shutdown()
                 server.server_close()
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(128 + signal.SIGTERM))
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path, default=D['CONFIG'], help='直接读取实际配置文件')
     main(parser.parse_args().config)

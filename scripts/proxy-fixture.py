@@ -4,6 +4,7 @@
 import os
 import socket
 import socketserver
+import subprocess
 import threading
 import time
 import urllib.parse
@@ -97,6 +98,15 @@ def free_port():
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
+
+
+def stop_core(core):
+    core.terminate()
+    try:
+        core.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        core.kill()
+        core.wait(timeout=5)
 
 
 def until(check, seconds=18):

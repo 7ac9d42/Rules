@@ -71,12 +71,17 @@ def check_smart(args):
         with opener.open(request, timeout=args.timeout) as response:
             return json.load(response)
 
+    def text_field(data, key):
+        if not isinstance(data, dict) or not isinstance(data.get(key), str) or not data[key].strip():
+            raise ValueError(f'控制器字段 {key} 必须是非空字符串')
+        return data[key]
+
     version, config, proxies = get('/version'), get('/configs'), get('/proxies')['proxies']
     if not isinstance(proxies, dict) or not proxies:
         raise ValueError('控制器未返回有效的运行中代理列表')
-    smart = sorted(name for name, item in proxies.items() if item['type'].lower() == 'smart')
-    mode = config['mode'].lower()
-    record = {'version': version['version'], 'mode': mode,
+    smart = sorted(name for name, item in proxies.items() if text_field(item, 'type').lower() == 'smart')
+    mode = text_field(config, 'mode').lower()
+    record = {'version': text_field(version, 'version'), 'mode': mode,
               'smart_groups': smart, 'ok': not smart and mode == 'rule'}
     if args.json:
         print(json.dumps(record, ensure_ascii=False))

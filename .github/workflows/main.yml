@@ -142,30 +142,48 @@ jobs:
             --rules-dir "${RUNNER_TEMP}/rule-snapshot" \
             --config cinfigfull_new_4.yaml
 
-      - name: Verify fallback, node filters, UDP routing and DNS policy
+      - name: Verify fallback, lifecycle, maintenance tools, UDP routing and DNS policy
+        timeout-minutes: 30
         run: |
           set -euo pipefail
+          python3 scripts/test-maintenance.py
           for config in configfull_new.yaml cinfigfull_new_4.yaml; do
             python3 scripts/test-config-design.py --config "$config"
             MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-node-filters.py
             MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-rematch-udp.py
+            # 真实旧配置生成选择/Fake-IP 缓存，覆盖新增 Telegram、下载组类型和节点改名。
+            for before in 289bb078 83ab9daa dd046fa4; do
+              git show "${before}:${config}" > "${RUNNER_TEMP}/${before}-${config}"
+            done
+            timeout --signal=TERM --kill-after=15s 10m \
+              python3 scripts/test-runtime-lifecycle.py --config "$config" --timing \
+              --upgrade-from "${RUNNER_TEMP}/289bb078-${config}" \
+              --upgrade-from "${RUNNER_TEMP}/83ab9daa-${config}" \
+              --upgrade-from "${RUNNER_TEMP}/dd046fa4-${config}"
           done
           # 两份 DNS 配置由静态检查保证一致。
           python3 scripts/test-dns-policy.py
 
       - name: Verify runtime with pinned mihomo v1.19.30
         if: steps.mihomo-version.outputs.version != 'v1.19.30'
+        timeout-minutes: 30
         env:
           MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo
         run: |
           set -euo pipefail
           ruby scripts/validate-rules.rb
+          python3 scripts/test-maintenance.py
           for config in configfull_new.yaml cinfigfull_new_4.yaml; do
             python3 scripts/test-config-design.py --config "$config"
             MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-node-filters.py
             python3 scripts/test-rematch-udp.py --config "$config"
             python3 scripts/test-real-rule-routing.py \
               --rules-dir "${RUNNER_TEMP}/rule-snapshot" --config "$config"
+            timeout --signal=TERM --kill-after=15s 10m \
+              python3 scripts/test-runtime-lifecycle.py --config "$config" --timing \
+              --upgrade-from "${RUNNER_TEMP}/289bb078-${config}" \
+              --upgrade-from "${RUNNER_TEMP}/83ab9daa-${config}" \
+              --upgrade-from "${RUNNER_TEMP}/dd046fa4-${config}"
           done
           python3 scripts/test-dns-policy.py
 
