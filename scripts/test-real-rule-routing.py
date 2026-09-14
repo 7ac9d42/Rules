@@ -131,7 +131,9 @@ CASES = [
     ('onedrive.live.com', 'Microsoft', '机场名称3优先'),
     ('facebook.com', '境外社媒', '机场名称1优先'),
     ('reddit.com', 'Reddit', '机场名称1优先'),
-    ('telegram.org', '境外通信', '机场名称3优先'),
+    ('telegram.org', 'Telegram', '机场名称3优先'),
+    ('t.me', 'Telegram', '机场名称3优先'),
+    ('149.154.167.51', 'Telegram', '机场名称3优先'),
     ('line.me', '境外通信', '机场名称3优先'),
     ('signal.org', '境外通信', '机场名称3优先'),
     ('talkatone.com', 'Talkatone', '机场名称1优先'),
@@ -264,6 +266,7 @@ def prepare_rules(source, rules_dir, runtime):
 
 def policy_targets(source):
     names = {group['name'] for group in source['proxy-groups']}
+    rematches = {proxy['name'] for proxy in source['proxies'] if proxy['type'] == 'rematch'}
     targets = set()
     for rules in [source['rules'], *source.get('sub-rules', {}).values()]:
         for rule in rules:
@@ -273,7 +276,7 @@ def policy_targets(source):
             target = parts[-2] if parts[-1] == 'no-resolve' else parts[-1]
             if target in names:
                 targets.add(target)
-            elif target not in {'DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'}:
+            elif target not in rematches | {'DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'}:
                 raise AssertionError(f'未识别规则出口: {rule}')
     return sorted(targets)
 
@@ -320,15 +323,21 @@ class Handler(socketserver.StreamRequestHandler):
             host = urllib.parse.urlsplit('//' + headers.get('host', '')).hostname
             if host not in self.server.hosts:
                 return
+            tracing = urllib.parse.urlsplit(first.split(' ', 2)[1]).path == '/rule-trace'
             body = json.dumps({'policy': label, 'host': host}, ensure_ascii=False).encode()
-            self.wfile.write((f'HTTP/1.1 200 OK\r\nContent-Length: {len(body)}\r\n'
-                              'Connection: close\r\n\r\n').encode() + body)
+            self.wfile.write((f'HTTP/1.1 200 OK\r\nContent-Length: {len(body) + int(tracing)}\r\n'
+                              f'Connection: {"keep-alive" if tracing else "close"}\r\n\r\n').encode() + body)
+            self.wfile.flush()
+            if tracing:
+                # 留一个响应字节不发送，客户端检查连接元数据后关闭。
+                self.rfile.read(1)
         except (OSError, ValueError, KeyError):
             return
 
 
-def get_json(port, target):
+def get_json(port, target, *, controller=None):
     connection = http.client.HTTPConnection('127.0.0.1', port, timeout=3)
+    response = None
     try:
         address = urllib.parse.urlsplit(target)
         if address.hostname in HOST_IPS:
@@ -353,13 +362,23 @@ def get_json(port, target):
             length = read(1)[0] if reply[3] == 3 else {1: 4, 4: 16}[reply[3]]
             read(length)
             read(2)
-        connection.request('GET', target, headers={'Connection': 'close'})
+        connection.request('GET', target, headers={'Connection': 'keep-alive' if controller else 'close'})
+        source_port = connection.sock.getsockname()[1]
         response = connection.getresponse()
-        body = response.read()
+        body = response.read(int(response.getheader('Content-Length')) - 1) if controller else response.read()
         if response.status != 200:
             raise AssertionError(f'HTTP {response.status}: {body[:160]!r}')
-        return json.loads(body)
+        result = json.loads(body)
+        if controller is not None:
+            def current_connection():
+                return next((item for item in get_json(controller, '/connections')['connections'] or []
+                             if int(item['metadata']['sourcePort']) == source_port), None)
+            info = H['until'](current_connection, seconds=2)
+            result.update(rule=info['rule'], rulePayload=info['rulePayload'])
+        return result
     finally:
+        if response is not None:
+            response.close()
         connection.close()
 
 
@@ -379,7 +398,7 @@ def run(args):
         raise AssertionError('真实域名见证引用的业务入口缺失')
     if any(g['type'] != 'select' for g in controlled):
         raise AssertionError('业务入口必须持有独立的 select 选择')
-    checked, independence_checked = [], []
+    checked, independence_checked, rule_checked = [], [], []
     with tempfile.TemporaryDirectory(prefix='mihomo-real-rules-') as directory:
         runtime = Path(directory)
         providers = prepare_rules(source, args.rules_dir, runtime)
@@ -440,6 +459,19 @@ def run(args):
                                               'expected': business, 'actual': actual})
                     checked.append({'host': host, 'business': business})
 
+                # 手选实际出口时应保留业务规则，不能只看到外层 TCP SubRules。
+                for host, business, kind, payload in [
+                    ('telegram.org', 'Telegram', 'RuleSet', 'telegram_domain'),
+                    ('t.me', 'Telegram', 'RuleSet', 'telegram_domain'),
+                    ('149.154.167.51', 'Telegram', 'RuleSet', 'telegram_ip'),
+                    ('google.com', 'Google', 'RuleSet', 'google_domain'),
+                    ('opencode.ai', 'AI', 'DomainSuffix', 'opencode.ai'),
+                ]:
+                    actual = get_json(mixed, f'http://{host}:{port}/rule-trace', controller=controller)
+                    expected = {'host': host, 'policy': business, 'rule': kind, 'rulePayload': payload}
+                    assert actual == expected, ('tcp_business_rule', expected, actual)
+                    rule_checked.append(actual)
+
                 def select_state(group, automatic=True):
                     connection = http.client.HTTPConnection('127.0.0.1', controller, timeout=3)
                     try:
@@ -481,7 +513,9 @@ def run(args):
                                              'microsoft.com', 'onedrive.live.com'}),
                     ('境外影音', 'NETFLIX', {'youtube.com', 'tv.apple.com', 'twitch.tv',
                                             'cavporn.github.io', 'netflix.com'}),
-                    ('境外通信', '境外社媒', {'telegram.org', 'line.me', 'signal.org',
+                    ('Telegram', '境外通信', {'telegram.org', 't.me', '149.154.167.51',
+                                            'line.me', 'signal.org', 'discord.com', 'whatsapp.com'}),
+                    ('境外通信', '境外社媒', {'line.me', 'signal.org',
                                             'discord.com', 'api.discord.com', 'whatsapp.com', 'viber.com', 'facebook.com'}),
                     ('Reddit', '境外社媒', {'reddit.com', 'facebook.com'}),
                     ('游戏平台', '境外影音', {'store.steampowered.com', 'epicgames.com',
@@ -521,11 +555,13 @@ def run(args):
             server.shutdown()
             server.server_close()
     report = {'config': str(args.config), 'mihomo': version, 'checks': checked,
-              'business_independence': independence_checked, 'tunnel_tcp_checks': 2 * len(H['TUNNEL_CASES'])}
+              'business_independence': independence_checked, 'tcp_business_rules': rule_checked,
+              'tunnel_tcp_checks': 2 * len(H['TUNNEL_CASES'])}
     if args.report:
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     print(f'PASS: {args.config.name}，{len(checked)} 个域名 × 业务/自动两阶段，'
-          f'{len(independence_checked)} 次选择隔离，{report["tunnel_tcp_checks"]} 次 Tunnel TCP 检查')
+          f'{len(independence_checked)} 次选择隔离，{len(rule_checked)} 次 TCP 业务规则检查，'
+          f'{report["tunnel_tcp_checks"]} 次 Tunnel TCP 检查')
 
 
 def interrupted(signum, _frame):

@@ -409,6 +409,7 @@ Direct_Select: &Direct_Select
 
 # 自动链路按 CF/GitHub/通用探针分流；GLOBAL 使用可直接拨号的池。
 proxies:
+  - {name: 业务分流入口, type: rematch, target-sub-rule: 业务分流}
   - {name: 机场名称2优先-自动, type: rematch, target-sub-rule: 机场名称2自动}
   - {name: 机场名称1优先-自动, type: rematch, target-sub-rule: 机场名称1自动}
   - {name: 机场名称3优先-自动, type: rematch, target-sub-rule: 机场名称3自动}
@@ -447,6 +448,9 @@ proxy-groups:
   - name: Microsoft
     <<: *Cost_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
+  - name: Telegram
+    <<: *Cost_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
   - name: 境外通信
     <<: *Cost_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
@@ -1471,10 +1475,11 @@ proxy-groups:
       - GitHub-机场名称1-美国
       - GitHub-机场名称3-美国
 
-# SUB-RULE 先确定业务；选中的出口不支持 UDP 时由外层统一拒绝。
+# TCP 经 rematch 直接匹配业务规则，保留具体规则信息。
+# UDP 用 SUB-RULE 先确定业务；选中的出口不支持 UDP 时由外层统一拒绝。
 # 不把同一 UDP 请求继续交给后面的其他业务或直连规则。
 rules:
-  - SUB-RULE,(NETWORK,tcp),业务分流
+  - NETWORK,tcp,业务分流入口
   - SUB-RULE,(NETWORK,udp),业务分流
   - NETWORK,udp,REJECT
 
@@ -1580,7 +1585,7 @@ sub-rules:
     - RULE-SET,cn_domain,DIRECT
 
     # Telegram 域名
-    - RULE-SET,telegram_domain,境外通信
+    - RULE-SET,telegram_domain,Telegram
 
     # 具体产品先于共享平台
     - RULE-SET,bahamut_domain,台湾限定
@@ -1634,7 +1639,7 @@ sub-rules:
     - RULE-SET,steamcdn_ip,DIRECT,no-resolve
     - RULE-SET,NetEaseMusic_ip,DIRECT,no-resolve
     - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
-    - RULE-SET,telegram_ip,境外通信,no-resolve
+    - RULE-SET,telegram_ip,Telegram,no-resolve
     - RULE-SET,talkatone_ip,Talkatone,no-resolve
     - RULE-SET,netflix_ip,NETFLIX,no-resolve
     - RULE-SET,google_asn_cn,Google,no-resolve

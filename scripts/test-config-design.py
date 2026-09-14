@@ -57,7 +57,7 @@ def static_checks(source):
     for name, group in groups.items():
         visible = not group.get("hidden", False)
         assert (group["type"] == "select") == visible, name
-        assert group["type"] != "load-balance", name
+        assert group["type"] in {"select", "url-test", "fallback"}, name
         if visible:
             assert group.get("icon", "").startswith("https://"), name
         children = group.get("proxies", [])
@@ -65,7 +65,7 @@ def static_checks(source):
         assert set(children) <= known, name
         assert set(group.get("use", [])) <= set(source["proxy-providers"]), name
 
-    # GLOBAL 和 rematch 的终点必须可直接拨号，不能再次进入 rematch。
+    # GLOBAL 和自动策略的终点必须可直接拨号；业务入口允许进入自动 rematch。
     def dialable(name, ancestors=()):
         assert name not in ancestors, (name, ancestors)
         assert name not in outbounds, name
@@ -78,15 +78,16 @@ def static_checks(source):
         target = outbound["target-sub-rule"]
         assert target in source["sub-rules"], target
         referenced.add(target)
-    # SUB-RULE 只返回首个业务；外层拒绝不支持 UDP 的选择，禁止跨业务下落。
-    assert source["rules"] == ["SUB-RULE,(NETWORK,tcp),业务分流",
+    # TCP 保留业务规则信息；UDP 仍只取首个业务，不支持 UDP 时由外层拒绝。
+    assert outbounds["业务分流入口"]["target-sub-rule"] == "业务分流"
+    assert source["rules"] == ["NETWORK,tcp,业务分流入口",
                                "SUB-RULE,(NETWORK,udp),业务分流", "NETWORK,udp,REJECT"]
-    assert referenced | {"业务分流"} == set(source["sub-rules"])
+    assert referenced == set(source["sub-rules"])
     assert source["sub-rules"]["业务分流"][-1] == "MATCH,通用代理"
     for rule in source["sub-rules"]["业务分流"]:
         parts = rule.split(",")
         assert (parts[-2] if parts[-1] == "no-resolve" else parts[-1]) in known, rule
-    for name in referenced:
+    for name in referenced - {"业务分流"}:
         rules = source["sub-rules"][name]
         assert rules[-1] == "NETWORK,udp,REJECT"
         for rule in rules:

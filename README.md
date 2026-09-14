@@ -18,7 +18,7 @@
 
 规则先确定业务分组，业务 `select` 保存用户选择，自动链路再按 CF、GitHub 或通用探针选择节点。
 
-TCP、UDP 共用 `sub-rules.业务分流` 的规则顺序。它先确定首个命中的业务，UDP 选择不支持该协议的节点时统一拒绝，不再落到后面的其他业务或直连规则；对应 v1.19.30 的 [子规则匹配](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/rules/logic/logic.go) 与 [UDP 出口检查](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/tunnel/tunnel.go)。自动池也不会按 UDP 能力另选节点；通话、游戏需要手选实际支持 UDP 的节点，保留订阅原有的能力声明。
+TCP、UDP 共用 `sub-rules.业务分流` 的规则顺序。TCP 通过 `NETWORK,tcp,业务分流入口` 的 rematch 直接进入业务表，保留具体业务规则信息。UDP 继续用 SUB-RULE 确定首个业务，选择不支持该协议的节点时由外层拒绝，不再落到后面的其他业务或直连规则；对应 v1.19.30 的 [子规则匹配](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/rules/logic/logic.go) 与 [UDP 出口检查](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/tunnel/tunnel.go)。官方自动池也不会按 UDP 能力另选节点；通话、游戏需要手选实际支持 UDP 的节点，保留订阅原有的能力声明。
 
 | 默认政策 | 三机场顺序 | 四机场顺序 |
 |---|---|---|
@@ -33,6 +33,7 @@ TCP、UDP 共用 `sub-rules.业务分流` 的规则顺序。它先确定首个�
 - 哔哩东南亚默认新加坡：它属于[官方列出的东南亚服务地区](https://www.bilibili.tv/en/about)，也是配置现有的东南亚地区池；不同地区的内容可能不同，通用探针不保证内容解锁。已有保存的选择优先，升级后如需新默认请手动切换。
 - TVB 使用普通政策，默认机场名称1优先自动链；规则同时包含 myTV SUPER、TVBAnywhere 和北美版服务，需按实际平台手选地区。[myTV SUPER 香港版](https://promo.mytvsuper.com/tc/faq_webview)可选香港；[TVBAnywhere 全球版](https://staticsfm.tvbanywhere.com.sg/html/en/payment-tnc.html)应选套餐支持的海外地区，不能把香港作为所有 TVB 服务的通用出口。
 - Google 包含 GoogleVPN、FCM；Microsoft 包含 OneDrive；开发下载包含 GitHub、Docker、HuggingFace；普通境外影音、通信、社媒及游戏平台按各自分组共用选择。
+- Telegram 独立为可见业务组，域名和 IP 规则共用该组；沿用成本优先政策及完整手选候选，选择与境外通信互不影响。
 - `自建/家宽节点` 是共享手选入口：修改它会影响所有选择该入口的业务。普通业务之间的独立选择互不影响。
 - 家宽入口只认明确的“自建”“家宽”或独立英文标签 `home`、`private`、`The_house`、`Self_Back`；CF、HKT、ATT 等线路或运营商名称不作为依据。四机场版给机场名称2统一追加 ` [家宽]`，原始名称只有 `HK01` 等地区编号的节点也可进入家宽入口；使用前须确认该订阅整体为家宽，修改显示前缀时保留此后缀。旧版机场名称2的节点名称会因此改变，原有节点手选可能需要重选。
 - 英文地区码支持紧接数字编号，如 `HK01`、`JP01`、`SG01`、`US01`、`TW01`；仍拒绝 `XHK01`、`JP01test` 等字母子串。机场名称3的日新自动池将空格、连字符、竖线、括号等分隔的独立 `CTCU` 标签排除，继续保留 `CTCUCM`。
@@ -58,7 +59,9 @@ HTTP 探针只比较可达性和响应延迟，不验证 AI/媒体解锁、下�
 
 Tunnel 专用规则限定端点及 TCP/UDP 7844，并保留地址发现所需的真实 IP 解析。普通 CF 204 探针不能证明 Tunnel 的连接注册、UDP 可用性或长连接稳定性。
 
-连接页的 `SubRules`、`MATCH` 可能来自公共业务入口或 `rematch` 子规则，不能据此判断未命中业务。公共入口会合并顶层规则计数，排查时应结合业务选择、目标域名及实际出口链。
+TCP 手选实际节点时，连接页可显示命中的业务规则，例如 `RuleSet(telegram_domain)`、`RuleSet(telegram_ip)`；选择自动链路后仍可能显示后续 rematch 的 `MATCH` 或 CF/GitHub 分类规则。UDP 公共入口仍可能显示 `SubRules`。顶层入口计数不等于业务计数，排查时应结合目标域名及实际出口链。
+
+配置与验收以官方 Mihomo 为主，Smart 仅作为路由器 OpenClash 的兼容场景。OpenClash 的[自动转换](https://github.com/vernesong/OpenClash/blob/master/luci-app-openclash/root/usr/share/openclash/yml_rules_change.sh)可将 `url-test`、`load-balance` 改为 Smart；ASN、LightGBM 和探针覆写由路由端管理。TCP 入口避免所有业务共用外层 `SubRules [(NETWORK,tcp)]` 目标，但后续 CF/GitHub 分类、UDP 包装及共用自动池仍可能共享状态。Telegram 的独立 select 只隔离手选结果，不保证底层 Smart 状态或长连接独立；Smart 的选点及关联连接关闭需按路由端版本实测，官方内核测试不能替代这项验证。
 
 ## 维护与验证
 
@@ -78,7 +81,7 @@ python3 scripts/test-config-design.py --static --config cinfigfull_new_4.yaml
 
 | `scripts/` 下的脚本 | 验证内容 |
 | --- | --- |
-| `test-real-rule-routing.py` | 真实规则的业务归属、手选隔离、默认出口及 Tunnel TCP 边界；`--rules-dir` 指定完整规则快照，`--prepare-rules` 可新建快照 |
+| `test-real-rule-routing.py` | 真实规则的业务归属、TCP 业务规则信息、手选隔离、默认出口及 Tunnel TCP 边界；`--rules-dir` 指定完整规则快照，`--prepare-rules` 可新建快照 |
 | `test-config-design.py` | 结构约束、探针隔离、地区及机场回退、AI 边界、下载与规则更新选路 |
 | `test-rematch-udp.py` | UDP 转发与拒绝、共享手选、全局切换及 Tunnel UDP 边界 |
 | `test-node-filters.py` | 节点准入、家宽筛选与订阅 UDP 声明 |

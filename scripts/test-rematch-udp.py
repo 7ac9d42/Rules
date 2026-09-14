@@ -179,7 +179,9 @@ def main(config_path=D['CONFIG']):
                 'Wise_domain': ['wise.invalid', 'wise.cf.invalid', 'wise.gh.invalid'],
                 'talkatone_domain': ['talk.invalid'],
                 'talkatone_ip': ['203.0.113.123/32'],
-                'communication_domain': ['talk.invalid', 'comm.invalid'],
+                'telegram_domain': ['tg.invalid'],
+                'telegram_ip': ['203.0.113.124/32'],
+                'communication_domain': ['talk.invalid', 'tg.invalid', 'comm.invalid'],
                 'ecommerce_domain': ['paypal.invalid'],
                 'steam_domain': ['game.invalid'],
                 'emby_classical': ['DOMAIN,emby.classical.invalid'],
@@ -284,6 +286,7 @@ def main(config_path=D['CONFIG']):
                             ('ordinary.invalid', 'quality-generic'), ('ordinary.cf.invalid', 'quality-cf'),
                             ('paypal.invalid', high['generic']), ('paypal.cf.invalid', high['cf']),
                             ('wise.gh.invalid', high['github']),
+                            ('tg.invalid', 'cost-generic'), ('203.0.113.124', 'cost-generic'),
                             ('ai.invalid', 'ai-jp-cf')])
             dev_hosts = ['dev.invalid', 'dev.cf.invalid', 'gh.invalid']
             finance_hosts = ['paypal.invalid', 'paypal.cf.invalid', 'wise.invalid', 'wise.cf.invalid', 'wise.gh.invalid']
@@ -304,6 +307,7 @@ def main(config_path=D['CONFIG']):
             for business, hosts in [
                 ('金融', ['paypal.invalid', 'wise.invalid']),
                 ('Talkatone', ['talk.invalid', '203.0.113.123']),
+                ('Telegram', ['tg.invalid', '203.0.113.124']),
                 ('Google', ['ordinary.invalid']), ('开发下载', ['dev.invalid']),
                 ('纯下载', ['download.invalid']), ('境外通信', ['comm.invalid']),
                 ('游戏平台', ['game.invalid']), ('Emby', ['emby.classical.invalid']),
