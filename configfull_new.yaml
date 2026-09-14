@@ -1298,17 +1298,17 @@ sub-rules:
     - RULE-SET,finance_domain,金融
     - RULE-SET,cryptocurrency_domain,金融
 
-    # 业务 IP 兜底：明确域名分类优先，共享 IP 不覆盖业务选择。
-    - RULE-SET,steamcdn_ip,DIRECT,no-resolve
-    - RULE-SET,NetEaseMusic_ip,DIRECT,no-resolve
-    - RULE-SET,bilibili_ip,哔哩哔哩,no-resolve
-    - RULE-SET,telegram_ip,Telegram,no-resolve
-    - RULE-SET,talkatone_ip,Talkatone,no-resolve
-    - RULE-SET,netflix_ip,NETFLIX,no-resolve
-    - RULE-SET,google_asn_cn,Google,no-resolve
-    - RULE-SET,google_ip,Google,no-resolve
-    - RULE-SET,facebook_ip,境外社媒,no-resolve
-    - RULE-SET,twitter_ip,境外社媒,no-resolve
+    # 域名分类优先；进入业务 IP 兜底后按需解析，后续规则复用结果。
+    - RULE-SET,steamcdn_ip,DIRECT
+    - RULE-SET,NetEaseMusic_ip,DIRECT
+    - RULE-SET,bilibili_ip,哔哩哔哩
+    - RULE-SET,telegram_ip,Telegram
+    - RULE-SET,talkatone_ip,Talkatone
+    - RULE-SET,netflix_ip,NETFLIX
+    - RULE-SET,google_asn_cn,Google
+    - RULE-SET,google_ip,Google
+    - RULE-SET,facebook_ip,境外社媒
+    - RULE-SET,twitter_ip,境外社媒
 
     # 国内 IP 兜底
     - RULE-SET,private_ip,DIRECT,no-resolve

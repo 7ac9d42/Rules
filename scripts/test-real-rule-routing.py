@@ -13,6 +13,7 @@ import copy
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import http.client
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -31,6 +32,7 @@ import urllib.parse
 
 ROOT = Path(__file__).resolve().parent.parent
 H = runpy.run_path(str(Path(__file__).with_name('proxy-fixture.py')))
+DNS = runpy.run_path(str(Path(__file__).with_name('test-dns-policy.py')))
 DIRECT_PROXY = 'fixture-DIRECT'
 FIXTURE_IP = '1.1.1.1'
 # Deliberate CDN/IP overlaps: domain classification must win; unknown hosts retain IP fallback.
@@ -41,6 +43,13 @@ HOST_IPS = {
     'www.disneyplus.com': '23.246.0.1',
     'ip-only-bilibili.example.com': '106.75.74.76',
 }
+
+# 不预填 hosts：先取得 Fake-IP，再由真实 DNS 查询触发尾部业务 IP 兜底。
+DNS_IP_CASES = [
+    ('ip-fallback-tg.fixture.net', '149.154.167.51', 'Telegram', 'telegram_ip'),
+    ('ip-fallback-google.fixture.net', '8.8.8.8', 'Google', 'google_ip'),
+    ('ip-fallback-bili.fixture.net', '106.75.74.76', '哔哩哔哩', 'bilibili_ip'),
+]
 
 
 # 每例明确给出业务入口与默认自动终结出口；预期独立于待测配置。
@@ -109,9 +118,9 @@ CASES = [
     ('huggingface.co', '开发下载', '机场名称3优先'),
     ('hf.co', '开发下载', '机场名称3优先'),
     ('registry.ollama.com', '开发下载', '机场名称3优先'),
-    ('coderabbit.gallery.vsassets.io', '开发下载', '机场名称3优先'),
-    ('openaiassets.blob.core.windows.net', '开发下载', '机场名称3优先'),
-    ('openaicomproductionae4b.blob.core.windows.net', '开发下载', '机场名称3优先'),
+    ('coderabbit.gallery.vsassets.io', 'AI', 'AI'),
+    ('openaiassets.blob.core.windows.net', 'AI', 'AI'),
+    ('openaicomproductionae4b.blob.core.windows.net', 'AI', 'AI'),
     ('github.com', '开发下载', 'GitHub-自动'),
     ('raw.githubusercontent.com', '开发下载', 'GitHub-自动'),
     ('release-assets.githubusercontent.com', '纯下载', '纯下载-自动'),
@@ -153,6 +162,8 @@ CASES = [
     ('bilibili.com', '哔哩哔哩', 'DIRECT'),
     ('amazon.com', '境外电商', '机场名称1优先'),
     ('store.steampowered.com', '游戏平台', '机场名称3优先'),
+    ('steamcloudsweden.blob.core.windows.net', '游戏平台', '机场名称3优先'),
+    ('steamugcquincy.blob.core.windows.net', '游戏平台', '机场名称3优先'),
     ('epicgames.com', '游戏平台', '机场名称3优先'),
     ('ea.com', '游戏平台', '机场名称3优先'),
     ('steamchina.com', 'DIRECT', 'DIRECT'),
@@ -335,12 +346,12 @@ class Handler(socketserver.StreamRequestHandler):
             return
 
 
-def get_json(port, target, *, controller=None):
+def get_json(port, target, *, controller=None, destination_ip=None):
     connection = http.client.HTTPConnection('127.0.0.1', port, timeout=3)
     response = None
     try:
         address = urllib.parse.urlsplit(target)
-        if address.hostname in HOST_IPS:
+        if address.hostname in HOST_IPS or destination_ip is not None:
             # SOCKS ingress exercises address metadata in addition to HTTP domain routing.
             connection.sock = socket.create_connection(('127.0.0.1', port), timeout=3)
             def read(size):
@@ -353,8 +364,12 @@ def get_json(port, target, *, controller=None):
                 return data
             connection.sock.sendall(b'\x05\x01\x00')
             assert read(2) == b'\x05\x00'
-            host = address.hostname.encode()
-            connection.sock.sendall(b'\x05\x01\x00\x03' + bytes([len(host)]) + host
+            if destination_ip is not None:
+                destination = b'\x01' + socket.inet_aton(destination_ip)
+            else:
+                host = address.hostname.encode()
+                destination = b'\x03' + bytes([len(host)]) + host
+            connection.sock.sendall(b'\x05\x01\x00' + destination
                                     + struct.pack('!H', address.port or 80))
             reply = read(4)
             assert reply[:3] == b'\x05\x00\x00', reply
@@ -398,19 +413,32 @@ def run(args):
         raise AssertionError('真实域名见证引用的业务入口缺失')
     if any(g['type'] != 'select' for g in controlled):
         raise AssertionError('业务入口必须持有独立的 select 选择')
-    checked, independence_checked, rule_checked = [], [], []
+    checked, independence_checked, rule_checked, dns_checked = [], [], [], []
     with tempfile.TemporaryDirectory(prefix='mihomo-real-rules-') as directory:
         runtime = Path(directory)
         providers = prepare_rules(source, args.rules_dir, runtime)
         server = Server(('127.0.0.1', 0), Handler)
-        server.labels, server.hosts = labels, hosts
+        server.labels, server.hosts = labels, hosts | {case[0] for case in DNS_IP_CASES}
         threading.Thread(target=server.serve_forever, daemon=True).start()
+        dns_server = socketserver.UDPServer(('127.0.0.1', 0), DNS['DNSHandler'])
+        dns_server.answer, dns_server.queries = FIXTURE_IP, set()
+        dns_server.answers = {host: [ip] for host, ip, _, _ in DNS_IP_CASES}
+        threading.Thread(target=dns_server.serve_forever, kwargs={'poll_interval': .05}, daemon=True).start()
+        dns_port = free_port()
+        dns_config = copy.deepcopy(source['dns'])
+        nameserver = [f'udp://127.0.0.1:{dns_server.server_address[1]}#DIRECT']
+        for field in ('nameserver', 'default-nameserver', 'proxy-server-nameserver', 'direct-nameserver'):
+            dns_config[field] = nameserver
+        dns_config['listen'] = f'127.0.0.1:{dns_port}'
+        dns_config['nameserver-policy'] = {
+            key: value if isinstance(value, str) and value.startswith('rcode://') else nameserver
+            for key, value in dns_config['nameserver-policy'].items()}
         port = server.server_address[1]
         mixed, controller = free_port(), free_port()
         fixture = {
             'mixed-port': mixed, 'external-controller': f'127.0.0.1:{controller}',
             'bind-address': '127.0.0.1', 'allow-lan': False, 'mode': 'rule', 'ipv6': True,
-            'log-level': 'warning', 'dns': {'enable': False}, 'tun': {'enable': False},
+            'log-level': 'warning', 'dns': dns_config, 'tun': {'enable': False},
             'profile': {'store-selected': False, 'store-fake-ip': False},
             'hosts': {host: HOST_IPS.get(host, FIXTURE_IP) for host in hosts},
             'proxies': [{'name': DIRECT_PROXY if label == 'DIRECT' else 'fixture-' + label if label in {g['name'] for g in controlled} else label,
@@ -458,6 +486,18 @@ def run(args):
                         raise AssertionError({'phase': 'business', 'host': host,
                                               'expected': business, 'actual': actual})
                     checked.append({'host': host, 'business': business})
+
+                for host, ip, business, payload in DNS_IP_CASES:
+                    rcode, fake = DNS['query'](dns_port, host)
+                    assert rcode == 0 and len(fake) == 1, (host, rcode, fake)
+                    assert ipaddress.ip_address(fake[0]) in ipaddress.ip_network(
+                        source['dns']['fake-ip-range']), (host, fake)
+                    actual = get_json(mixed, f'http://{host}:{port}/rule-trace',
+                                      controller=controller, destination_ip=fake[0])
+                    expected = {'host': host, 'policy': business, 'rule': 'RuleSet', 'rulePayload': payload}
+                    assert actual == expected, ('dns_ip_fallback', expected, actual)
+                    assert (host, 1) in dns_server.queries, host
+                    dns_checked.append(actual)
 
                 # 手选实际出口时应保留业务规则，不能只看到外层 TCP SubRules。
                 for host, business, kind, payload in [
@@ -554,13 +594,17 @@ def run(args):
                     core.wait(timeout=5)
             server.shutdown()
             server.server_close()
+            dns_server.shutdown()
+            dns_server.server_close()
     report = {'config': str(args.config), 'mihomo': version, 'checks': checked,
               'business_independence': independence_checked, 'tcp_business_rules': rule_checked,
+              'dns_ip_fallback': dns_checked,
               'tunnel_tcp_checks': 2 * len(H['TUNNEL_CASES'])}
     if args.report:
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     print(f'PASS: {args.config.name}，{len(checked)} 个域名 × 业务/自动两阶段，'
           f'{len(independence_checked)} 次选择隔离，{len(rule_checked)} 次 TCP 业务规则检查，'
+          f'{len(dns_checked)} 次 Fake-IP/DNS 兜底检查，'
           f'{report["tunnel_tcp_checks"]} 次 Tunnel TCP 检查')
 
 

@@ -39,9 +39,8 @@
 +.registry.terraform.io
 +.releases.hashicorp.com
 
-# 容器注册表与镜像包体；只收录明确的 registry/blob 域。
+# 容器注册表；共享云存储父域不作为开发下载依据。
 +.azurecr.io
-+.blob.core.windows.net
 +.data.azurecr.io
 +.gcr.io
 +.ghcr.io
@@ -69,7 +68,6 @@
 # Microsoft 开发包与 VS Code/Visual Studio 资源；大陆直连的系统更新/CDN 不纳入。
 +.packages.microsoft.com
 +.powershellgallery.com
-+.vsassets.io
 +.vscode-cdn.net
 
 # IDE、AI 工具链和模型包体。
