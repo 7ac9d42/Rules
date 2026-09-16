@@ -87,14 +87,20 @@ def main():
             for key, value in dns['nameserver-policy'].items():
                 if isinstance(value, str) and value.startswith('rcode://'):
                     continue
-                assert value == dns['direct-nameserver'], (key, value)
-                dns['nameserver-policy'][key] = [local[0]]
+                assert value in (dns['direct-nameserver'], dns['nameserver']), (key, value)
+                dns['nameserver-policy'][key] = [local[1] if value == dns['nameserver'] else local[0]]
             port = H['free_port']()
             dns.update({'listen': f'127.0.0.1:{port}', 'default-nameserver': [local[0]],
                         'proxy-server-nameserver': [local[0]], 'direct-nameserver': [local[0]], 'nameserver': [local[1]]})
             providers = {name: {'type': 'inline', 'behavior': p['behavior'], 'payload': []}
                          for name, p in source['rule-providers'].items()}
-            for name, values in {'cn_domain': ['+.cn.fixture.test'],
+            for name, values in {'cn_domain': ['+.cn.fixture.test', '+.cn', '+.bilibili.tv', 'hk.tv.global.mi.com'],
+                                 'google_domain': ['+.googleapis.cn', '+.gstatic.cn', '+.xn--ngstr-lra8j.com'],
+                                 'biliintl_domain': ['+.bilibili.tv'],
+                                 'TVB_domain': ['tvbc.com.cn'],
+                                 'proxy_domain': ['+.services.googleapis.cn', 'proxy.cn.fixture.test'],
+                                 'xiaomi_domain': ['+.mi.com'],
+                                 'media_cn_domain': ['+.bilibili.tv'],
                                  'private_domain': ['+.lan', '+.plex.direct'],
                                  'stun_domain': ['stun.external.fixture.test', 'stun.cn.fixture.test',
                                                  'stun.wechat.fixture.test'],
@@ -111,6 +117,14 @@ def main():
             for host, expected in [
                 ('ordinary.cn.fixture.test', [domestic.answer]),
                 ('ordinary.external.fixture.test', 'fake'),
+                ('services.googleapis.cn', 'fake'),
+                ('fonts.gstatic.cn', 'fake'),
+                ('redirector.xn--ngstr-lra8j.com', 'fake'),
+                ('www.bilibili.tv', 'fake'),
+                ('tvbc.com.cn', 'fake'),
+                ('proxy.cn.fixture.test', 'fake'),
+                ('hk.tv.global.mi.com', 'fake'),
+                ('www.mi.com', [domestic.answer]),
                 ('stun.external.fixture.test', [foreign.answer]),
                 ('stun.cn.fixture.test', [domestic.answer]),
                 ('stun.wechat.fixture.test', [domestic.answer]),
@@ -129,7 +143,13 @@ def main():
             for host, qtype in [('_v2-origintunneld._tcp.argotunnel.com', 33), ('cfd-features.argotunnel.com', 16)]:
                 assert query(port, host, qtype) == (0, [])
                 assert (host, qtype) in domestic.queries and (host, qtype) not in foreign.queries
-            print(f'PASS: {D["CONFIG"].name} DNS 国内/海外、STUN 规则交集、Android 探测、私有域与 Tunnel 发现策略')
+            # TXT 不经过 Fake-IP 合成，验证相同交集的真实解析策略。
+            for host in ['services.googleapis.cn', 'fonts.gstatic.cn', 'redirector.xn--ngstr-lra8j.com',
+                         'www.bilibili.tv', 'tvbc.com.cn',
+                         'proxy.cn.fixture.test', 'hk.tv.global.mi.com']:
+                assert query(port, host, 16) == (0, [])
+                assert (host, 16) in foreign.queries and (host, 16) not in domestic.queries, host
+            print(f'PASS: {D["CONFIG"].name} DNS 跨区/国内交集、Fake-IP 与真实解析器、STUN/探测及 Tunnel 策略')
         finally:
             if core is not None:
                 core.terminate()

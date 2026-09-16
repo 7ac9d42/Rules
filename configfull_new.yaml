@@ -263,6 +263,13 @@ dns:
     - "DOMAIN-SUFFIX,mcdn.bilivideo.cn,real-ip"
     - "DOMAIN-SUFFIX,proxy.golang.org,real-ip"
     - "DOMAIN-SUFFIX,steamserver.net,real-ip"
+    # 跨区业务先于国内集合；保留前面的 STUN、探测等 Real-IP 例外。
+    - "RULE-SET,google_domain,fake-ip"
+    - "RULE-SET,biliintl_domain,fake-ip"
+    - "RULE-SET,TVB_domain,fake-ip"
+    - "RULE-SET,proxy_domain,fake-ip"
+    - "DOMAIN,hk.tv.global.mi.com,fake-ip"
+
     - "RULE-SET,game_cn_domain,real-ip"
     - "RULE-SET,steam_cn_domain,real-ip"
     - "RULE-SET,pt_domain,real-ip"
@@ -304,6 +311,13 @@ dns:
       - "https://dns.alidns.com/dns-query#DIRECT"
       - "https://doh.pub/dns-query#DIRECT"
     "rule-set:private_domain": "rcode://name_error"
+    # 与提前匹配的跨区流量规则保持一致，不由国内父域决定解析器。
+    "hk.tv.global.mi.com":
+      - https://cloudflare-dns.com/dns-query
+      - https://dns.google/dns-query
+    "rule-set:google_domain,biliintl_domain,TVB_domain,proxy_domain":
+      - https://cloudflare-dns.com/dns-query
+      - https://dns.google/dns-query
     "rule-set:cn_domain":
       - "https://dns.alidns.com/dns-query#DIRECT"
       - "https://doh.pub/dns-query#DIRECT"
@@ -1324,11 +1338,11 @@ sub-rules:
     - DOMAIN-SUFFIX,kryptex.network,Kryptex
     - DOMAIN-SUFFIX,linux.do,通用代理
 
-    # 人工代理例外先于国内总集合
-    - RULE-SET,proxy_domain,通用代理
+    # Google 保留后续细分业务（AI、YouTube 等），不被人工代理集合覆盖。
+    - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),通用代理
 
-    # 国内域名兜底
-    - RULE-SET,cn_domain,DIRECT
+    # 国内地域兜底不得覆盖 Google 业务。
+    - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
 
     # Telegram 域名
     - RULE-SET,telegram_domain,Telegram
