@@ -129,14 +129,16 @@ python3 scripts/test-config-design.py --static --config cinfigfull_new_4.yaml
 | `scripts/` 下的脚本 | 验证内容 |
 | --- | --- |
 | `test-real-rule-routing.py` | 真实规则的业务归属、Fake-IP/DNS 后的业务 IP 兜底、TCP 业务规则信息、手选隔离、默认出口及 Tunnel TCP 边界；`--rules-dir` 指定完整规则快照，`--prepare-rules` 可新建快照 |
-| `test-config-design.py` | 结构约束、探针隔离、地区及机场回退、AI 边界、下载与规则更新选路、实际规则测速工具 |
+| `test-config-design.py` | 结构约束、缺省 URL 继承与延迟反转选点、探针隔离、地区及机场回退、AI 边界、下载与规则更新选路、实际规则测速工具 |
 | `test-runtime-lifecycle.py` | 保留真实缓存、HTTP 订阅和完整自动组链，验证重启/重载、候选删除恢复、共享家宽、离线 MRS 缓存与实际更新路径；`--upgrade-from` 接受旧配置，`--timing` 测原周期下 CONNECT 故障与恢复 |
-| `test-maintenance.py` | 控制器异常响应的退出码、Smart 组与非规则模式拒绝；Linux 下 SIGTERM 取消 UDP 测试后回收内核，终止超时则强制回收 |
+| `test-maintenance.py` | 延迟订阅加载的启动竞态、控制器异常响应的退出码、Smart 组与非规则模式拒绝；Linux 下 SIGTERM 取消 UDP 测试后回收内核，终止超时则强制回收 |
 | `test-rematch-udp.py` | UDP 转发与拒绝、共享手选、全局切换及 Tunnel UDP 边界 |
 | `test-node-filters.py` | 节点准入、家宽筛选与订阅 UDP 声明 |
-| `test-dns-policy.py` | 国内／海外、私有域、STUN 与 Tunnel 的 DNS 策略 |
+| `test-dns-policy.py` | 国内／海外、私有域、STUN 与国内/微信规则交集、Android 探测与 Tunnel 的 DNS 策略 |
 
 完整规则产物校验运行 `ruby scripts/validate-rules.rb`。两份配置均需验证，参数见各脚本或 CI；`proxy-fixture.py` 是共享工具。
+
+测试不能把控制器 `/version` 可访问当成配置已加载：策略操作须等待组注册，节点过滤检查还须等待夹具订阅载入后重新读取候选；筛空组仍按原有断言检查。
 
 生命周期测试始终保留配置中的探测周期、超时、lazy 和失败次数，不使用真实订阅。CI 从 `289bb078`、`83ab9daa`、`dd046fa4` 提取旧配置，分别验证旧缓存升级；本地可按需运行：
 

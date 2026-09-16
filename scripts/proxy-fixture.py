@@ -120,3 +120,34 @@ def until(check, seconds=18):
             pass
         time.sleep(.15)
     raise AssertionError("等待运行时状态超时")
+
+
+def wait_ready(api, groups, providers=(), rule_providers=(), seconds=18):
+    """等待回环夹具加载；此处订阅均有节点，inline 规则集可有意为空。
+
+    /version 先于配置加载开放；组存在也不代表 file/HTTP 订阅已初始化。
+    就绪后再读取组快照，避免把初始化期间的 REJECT 占位当成筛选结果。
+    """
+    pending = []
+
+    def check():
+        pending.clear()
+        try:
+            if providers:
+                loaded = api("/providers/proxies")["providers"] or {}
+                pending.extend(f"订阅:{name}" for name in providers
+                               if not loaded.get(name, {}).get("proxies"))
+            if rule_providers:
+                loaded = api("/providers/rules")["providers"] or {}
+                pending.extend(f"规则集:{name}" for name in rule_providers if name not in loaded)
+            proxies = api("/proxies")["proxies"] or {}
+            pending.extend(f"策略组:{name}" for name in groups if name not in proxies)
+        except OSError as error:
+            pending.append(f"控制器:{error}")
+            return None
+        return proxies if not pending else None
+
+    try:
+        return until(check, seconds)
+    except AssertionError as error:
+        raise AssertionError(f"夹具未加载完成：{pending}") from error

@@ -131,12 +131,11 @@ def main():
                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
-            def snapshot():
-                with opener.open(f"http://127.0.0.1:{control}/proxies", timeout=2) as response:
-                    value = json.load(response)["proxies"]
-                    return value if all(name in value for name in subjects) else None
+            def api(path):
+                with opener.open(f"http://127.0.0.1:{control}{path}", timeout=2) as response:
+                    return json.load(response)
 
-            actual = H["until"](snapshot)
+            actual = H["wait_ready"](api, required, providers)
             failures = []
             with opener.open(f"http://127.0.0.1:{control}/providers/proxies", timeout=2) as response:
                 actual_nodes = {node["name"]: node for provider in json.load(response)["providers"].values()

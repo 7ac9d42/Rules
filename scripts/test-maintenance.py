@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""回环控制器错误分类、Smart 规避检查及 UDP 测试取消后的子进程回收。"""
+"""启动就绪、控制器错误分类、Smart 规避检查及 UDP 测试子进程回收。"""
 
+import concurrent.futures
+import contextlib
 import copy
 import http.server
 import json
@@ -16,6 +18,7 @@ import tempfile
 import threading
 import time
 import unittest
+import urllib.request
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -24,6 +27,9 @@ ROOT = Path(__file__).resolve().parent.parent
 class Controller(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         status, body, delay = self.server.responses[self.path]
+        if hasattr(self.server, 'release'):
+            self.server.requested.set()
+            self.server.release.wait(timeout=10)
         time.sleep(delay)
         try:
             self.send_response(status)
@@ -37,6 +43,84 @@ class Controller(http.server.BaseHTTPRequestHandler):
 
 
 class MaintenanceTests(unittest.TestCase):
+    def test_readiness_waits_for_registration(self):
+        fixture = runpy.run_path(str(ROOT / 'scripts/proxy-fixture.py'))
+        # 控制器已监听，但尚未注册 provider/组时，核心会返回 null 或空映射。
+        stages = iter([
+            (None, None, None),
+            ({}, {}, {}),
+            ({'nodes': {'proxies': []}}, {'rules': {'ruleCount': 0}}, {'pool': {'all': ['REJECT']}}),
+            ({'nodes': {'proxies': [{'name': 'node'}]}}, {'rules': {'ruleCount': 0}}, {'pool': {'all': ['node']}}),
+        ])
+        current = None
+
+        def api(path):
+            nonlocal current
+            if path == '/providers/proxies':
+                current = next(stages)
+                return {'providers': current[0]}
+            if path == '/providers/rules':
+                return {'providers': current[1]}
+            self.assertEqual(path, '/proxies')
+            return {'proxies': current[2]}
+
+        actual = fixture['wait_ready'](api, ['pool'], ['nodes'], ['rules'])
+        self.assertEqual(actual['pool']['all'], ['node'])
+
+    def test_readiness_waits_for_subscription(self):
+        # 确定性重现：/version 和策略组已开放，HTTP 订阅仍在下载。
+        fixture = runpy.run_path(str(ROOT / 'scripts/proxy-fixture.py'))
+        server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Controller)
+        server.release, server.requested = threading.Event(), threading.Event()
+        server.responses = {'/subscription': (200, {'proxies': [
+            {'name': 'loaded-node', 'type': 'socks5', 'server': '127.0.0.1', 'port': 9}]}, 0)}
+        threading.Thread(target=server.serve_forever, kwargs={'poll_interval': .05}, daemon=True).start()
+        try:
+            with tempfile.TemporaryDirectory(prefix='mihomo-readiness-') as directory, contextlib.ExitStack() as cleanup:
+                control = fixture['free_port']()
+                config = Path(directory) / 'config.json'
+                config.write_text(json.dumps({
+                    'external-controller': f'127.0.0.1:{control}', 'log-level': 'silent',
+                    'dns': {'enable': False}, 'tun': {'enable': False},
+                    'proxy-providers': {'delayed': {'type': 'http', 'path': './nodes.json', 'proxy': 'DIRECT',
+                        'url': f'http://127.0.0.1:{server.server_address[1]}/subscription',
+                        'health-check': {'enable': False}}},
+                    'proxy-groups': [
+                        {'name': 'pool', 'type': 'select', 'use': ['delayed'], 'empty-fallback': 'REJECT'},
+                        {'name': 'empty-pool', 'type': 'select', 'use': ['delayed'],
+                         'filter': '^absent$', 'empty-fallback': 'REJECT'}],
+                    'rules': ['MATCH,REJECT']}))
+                core = subprocess.Popen([fixture['MIHOMO'], '-d', directory, '-f', str(config)],
+                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                cleanup.callback(fixture['stop_core'], core)
+                cleanup.callback(server.release.set)
+                opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+                def api(path):
+                    with opener.open(f'http://127.0.0.1:{control}{path}', timeout=1) as response:
+                        return json.load(response)
+
+                fixture['until'](lambda: api('/version'))
+                self.assertTrue(server.requested.wait(timeout=5))
+                self.assertEqual(api('/proxies')['proxies']['pool']['all'], ['REJECT'])
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as worker:
+                    ready = worker.submit(fixture['wait_ready'], api, ['pool', 'empty-pool'], ['delayed'], seconds=5)
+                    try:
+                        with self.assertRaises(concurrent.futures.TimeoutError):
+                            ready.result(timeout=.3)
+                    finally:
+                        server.release.set()
+                    actual = ready.result(timeout=6)
+                self.assertEqual(actual['pool']['all'], ['loaded-node'])
+                # 等待初始化不能变成“等到过滤断言正确”；真正的空池仍需交给调用者检查。
+                self.assertEqual(actual['empty-pool']['all'], ['REJECT'])
+                with self.assertRaisesRegex(AssertionError, '策略组:missing'):
+                    fixture['wait_ready'](api, ['missing'], seconds=.2)
+        finally:
+            server.release.set()
+            server.shutdown()
+            server.server_close()
+
     def test_unresponsive_core_is_killed_and_reaped(self):
         fixture = runpy.run_path(str(ROOT / 'scripts/proxy-fixture.py'))
         child = subprocess.Popen([sys.executable, '-c',

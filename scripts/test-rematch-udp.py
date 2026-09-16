@@ -226,7 +226,7 @@ def main(config_path=D['CONFIG']):
                 req = urllib.request.Request(f'http://127.0.0.1:{controller}{path}', data=data,
                                              method=method, headers={'Content-Type': 'application/json'})
                 with opener.open(req, timeout=3) as response:
-                    return response.status
+                    return json.load(response) if response.status != 204 else None
             def choose(group, target):
                 api('/proxies/' + urllib.parse.quote(group, safe=''), {'name': target}, 'PUT')
 
@@ -246,7 +246,7 @@ def main(config_path=D['CONFIG']):
                 assert any(f' --> {address}:{port} match ' in line and f'using {outlet}"' in line
                            for line in lines), ('UDP timed out without a REJECT match', host, lines[-10:])
 
-            H['until'](lambda: api('/version'))
+            H['wait_ready'](api, [group['name'] for group in groups], rule_providers=providers)
             for manual in (False, True):
                 choose('Cloudflare Tunnel', 'fixture-manual' if manual else 'fixture-direct')
                 choose('通用代理', 'fixture-manual-general' if manual else '机场名称3优先-自动')

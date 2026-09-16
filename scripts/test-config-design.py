@@ -139,8 +139,8 @@ def main(config=CONFIG):
             urls = {source["Fallback_Base"]["url"]: GENERIC, source["GitHub_Urltest_Base"]["url"]: GITHUB,
                     source["Cloudflare_Urltest_Base"]["url"]: CF}
             for item in groups:
-                if "url" in item or item["type"] in ("url-test", "load-balance"):
-                    item["url"] = urls.get(item.get("url"), GENERIC)
+                if "url" in item:
+                    item["url"] = urls.get(item["url"], GENERIC)
                 if item["type"] in ("fallback", "url-test"):
                     item.update(interval=1, lazy=False)
             nodes = {name: [] for name in source["proxy-providers"]}
@@ -197,6 +197,7 @@ def main(config=CONFIG):
             for name, payload in membership.items():
                 rules[name]["payload"] = payload
             hosts = CF_HOSTS | {"github.com", "codeload.github.com", "release-assets.githubusercontent.com"}
+            hosts.add("inheritance.invalid")
             hosts.update(host for values in membership.values() for host in values if not host.startswith("+."))
             mixed, control = H["free_port"](), H["free_port"]()
             runtime_config = Path(directory) / "config.json"
@@ -204,7 +205,8 @@ def main(config=CONFIG):
                 "bind-address": "127.0.0.1", "allow-lan": False, "log-level": "silent", "dns": {"enable": False},
                 "tun": {"enable": False}, "unified-delay": source["unified-delay"],
                 "profile": {"store-selected": False, "store-fake-ip": False}, "proxy-providers": providers,
-                "proxies": source["proxies"], "proxy-groups": groups, "rule-providers": rules, "rules": source["rules"], "sub-rules": source["sub-rules"],
+                "proxies": source["proxies"], "proxy-groups": groups, "rule-providers": rules,
+                "rules": ["DOMAIN,inheritance.invalid,机场名称1-香港", *source["rules"]], "sub-rules": source["sub-rules"],
                 "hosts": dict.fromkeys(hosts, "127.0.0.1")}, ensure_ascii=False))
             validation = subprocess.run([H["MIHOMO"], "-t", "-d", directory, "-f", str(runtime_config)],
                                         capture_output=True, text=True, timeout=10)
@@ -249,7 +251,25 @@ def main(config=CONFIG):
                     H["FAILED"].clear()
                     H["NODE_FAILED"].clear()
 
-            H["until"](lambda: api("/version"))
+            ready = H["wait_ready"](api, [item["name"] for item in groups], providers, rules)
+            inherited = [item for item in groups if item["type"] == "url-test" and "url" not in item]
+            assert inherited, "缺少保留原始 URL 缺省状态的测试组"
+            for item in inherited:
+                expected_url = providers[item["use"][0]]["health-check"]["url"]
+                assert ready[item["name"]]["testUrl"] == expected_url, (item["name"], ready[item["name"]])
+
+            # 香港池的首节点初始较慢；反转延迟后必须重选，并核对实际 HTTP 出口。
+            # 只调整通用探针，不影响后续 GitHub / Cloudflare 业务断言。
+            by_label["1-steady"].probe_delays = {}
+            try:
+                expect("inheritance.invalid", "1-fast")
+                by_label["1-steady"].probe_delays = {GENERIC: .005}
+                by_label["1-fast"].probe_delays[GENERIC] = .25
+                expect("inheritance.invalid", "1-steady")
+            finally:
+                del by_label["1-steady"].probe_delays
+                by_label["1-fast"].probe_delays[GENERIC] = .005
+            checks.append(f"{len(inherited)} 个缺省 URL 的 url-test 继承订阅探针；延迟反转后重选且 HTTP 出口一致")
             for host, label in [("github.com", "3-JP2"), ("codeload.github.com", "3-JP2"),
                                 ("cloudflare.com", "3-JP"), ("google.com", "1-jp")]:
                 expect(host, label)

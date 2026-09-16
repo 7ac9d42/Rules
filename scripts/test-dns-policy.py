@@ -96,7 +96,9 @@ def main():
                          for name, p in source['rule-providers'].items()}
             for name, values in {'cn_domain': ['+.cn.fixture.test'],
                                  'private_domain': ['+.lan', '+.plex.direct'],
-                                 'stun_domain': ['stun.external.fixture.test'],
+                                 'stun_domain': ['stun.external.fixture.test', 'stun.cn.fixture.test',
+                                                 'stun.wechat.fixture.test'],
+                                 'wechat_domain': ['+.wechat.fixture.test'],
                                  'fakeip_filter_domain': ['legacy.external.fixture.test']}.items():
                 providers[name]['payload'] = values
             config = Path(directory) / 'config.json'
@@ -110,6 +112,9 @@ def main():
                 ('ordinary.cn.fixture.test', [domestic.answer]),
                 ('ordinary.external.fixture.test', 'fake'),
                 ('stun.external.fixture.test', [foreign.answer]),
+                ('stun.cn.fixture.test', [domestic.answer]),
+                ('stun.wechat.fixture.test', [domestic.answer]),
+                ('connectivitycheck.gstatic.com', [foreign.answer]),
                 ('legacy.external.fixture.test', [foreign.answer]),
                 ('router.lan', 'nxdomain'), ('public.plex.direct', [domestic.answer]),
                 ('other.argotunnel.com', 'fake'), *tunnel.items(),
@@ -124,7 +129,7 @@ def main():
             for host, qtype in [('_v2-origintunneld._tcp.argotunnel.com', 33), ('cfd-features.argotunnel.com', 16)]:
                 assert query(port, host, qtype) == (0, [])
                 assert (host, qtype) in domestic.queries and (host, qtype) not in foreign.queries
-            print(f'PASS: {D["CONFIG"].name} DNS 国内/海外、STUN、私有域与 Tunnel 发现策略')
+            print(f'PASS: {D["CONFIG"].name} DNS 国内/海外、STUN 规则交集、Android 探测、私有域与 Tunnel 发现策略')
         finally:
             if core is not None:
                 core.terminate()
