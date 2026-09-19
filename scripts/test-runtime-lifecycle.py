@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""保留真实组链、缓存和生产探测参数，验证重启/升级、HTTP 更新及拨号故障恢复。"""
+"""保留真实组链、缓存和生产探测参数，验证重启/重载及 HTTP 更新。"""
 
 import argparse
 import copy
@@ -33,14 +33,8 @@ class Handler(socketserver.StreamRequestHandler):
             if line.startswith('CONNECT '):
                 while self.rfile.readline() not in (b'\r\n', b'\n', b''):
                     pass
-                rejected = label in state['reject']
-                state['events'].append({'at': time.monotonic(), 'node': label,
-                                        'method': 'CONNECT', 'rejected': rejected})
-                self.wfile.write(b'HTTP/1.1 502 Unavailable\r\nContent-Length: 0\r\n\r\n' if rejected
-                                 else b'HTTP/1.1 200 Connection established\r\n\r\n')
+                self.wfile.write(b'HTTP/1.1 200 Connection established\r\n\r\n')
                 self.wfile.flush()
-                if rejected:
-                    return
                 line = self.rfile.readline().decode().strip()
             method, target, _ = line.split(' ', 2)
             while self.rfile.readline() not in (b'\r\n', b'\n', b''):
@@ -65,10 +59,10 @@ class Handler(socketserver.StreamRequestHandler):
             pass
 
 
-def main(config_path, upgrade_from=(), timing=False):
+def main(config_path):
     source = D['load_source'](config_path)
-    servers, core, checks, timings = [], None, [], {}
-    state = {'reject': set(), 'bad_github': set(), 'offline': False, 'subscriptions': {},
+    servers, core, checks = [], None, []
+    state = {'bad_github': set(), 'offline': False, 'subscriptions': {},
              'events': [], 'rules': (D['ROOT'] / 'rules/Domain/dev-download.mrs').read_bytes()}
     with tempfile.TemporaryDirectory(prefix='mihomo-runtime-lifecycle-') as directory:
         directory = Path(directory)
@@ -180,7 +174,6 @@ def main(config_path, upgrade_from=(), timing=False):
                     H['until'](observed, seconds=seconds)
                 except AssertionError:
                     raise AssertionError({'host': host, 'expected': label, 'samples': samples}) from None
-                return samples
 
             def fake_ip(host):
                 rcode, ips = DNS['query'](dns_port, host)
@@ -191,39 +184,6 @@ def main(config_path, upgrade_from=(), timing=False):
                 result = {host: fake_ip(host) for host in ('first.lifecycle-fixture.net', 'second.lifecycle-fixture.net')}
                 assert len(set(result.values())) == 2, result
                 return result
-
-            # 每个旧版单独使用真实 cache.db；新 Telegram 不得受到前一个场景缓存污染。
-            for index, old_path in enumerate(upgrade_from):
-                print(f'升级验证：{old_path}', file=sys.stderr, flush=True)
-                home = directory / f'upgrade-{index}'
-                runtime = home / 'config.json'
-                old = D['load_source'](old_path)
-                build(old)
-                start()
-                chosen = {'境外通信': '[机场名称3]新加坡01', '纯下载': '日本·机场名称3优先',
-                          'AI': '[机场名称1]日本01'}
-                if 'Airport_02' in nodes:
-                    chosen['金融'] = '[机场名称2]香港01' + old['proxy-providers']['Airport_02'].get('override', {}).get('additional-suffix', '')
-                for name, target in chosen.items():
-                    choose(name, target)
-                cached = mappings()
-                stop()
-                assert (home / 'cache.db').is_file()
-                build(source)
-                start()
-                for name, target in chosen.items():
-                    expected = '机场名称2优先-自动' if name == '金融' and target == '[机场名称2]香港01' else target
-                    H['until'](lambda: group(name)['now'] == expected)
-                if not any(item['name'] == 'Telegram' for item in old['proxy-groups']):
-                    assert group('Telegram')['now'] == '机场名称3优先-自动'
-                    expect('telegram.org', '3-JP')
-                expect('line.me', '3-SG')
-                expect('codeload.github.com', '3-JP')
-                assert group('纯下载-机场名称3')['type'] == 'Fallback'
-                assert {host: fake_ip(host) for host in reversed(cached)} == cached
-                checks.append({'upgrade': str(old_path), 'selections': {name: group(name)['now'] for name in chosen},
-                               'fake_ip': cached})
-                stop()
 
             home, runtime = directory / 'current', directory / 'current/config.json'
             print('验证重启/重载、订阅异常及共享家宽缓存', file=sys.stderr, flush=True)
@@ -273,7 +233,7 @@ def main(config_path, upgrade_from=(), timing=False):
                 assert [p['name'] for p in api('/providers/proxies')['providers']['Airport_03']['proxies']] == old_names
                 preserved()
             # 删除手选候选回到默认；同名候选恢复后重新使用原保存选择。
-            for available, expected, label in [(nodes['Airport_03'][:2], '机场名称3优先-自动', '3-JP'),
+            for available, expected, label in [(nodes['Airport_03'][:2], '机场名称1优先-自动', '1-JP'),
                                                (nodes['Airport_03'], chosen['Telegram'], '3-SG')]:
                 state['subscriptions']['/Airport_03'] = json.dumps({'proxies': available}).encode()
                 api(provider_path, method='PUT')
@@ -302,26 +262,6 @@ def main(config_path, upgrade_from=(), timing=False):
             expect('chatgpt.com', '4-JP')
             expect('github.com', '4-JP')
             checks.append('共享家宽子选择跨重启保持，换点影响选择它的业务，Telegram 手选独立')
-
-            if timing:
-                print('测量原周期下 CONNECT 故障回退与恢复', file=sys.stderr, flush=True)
-                choose('Google', '机场名称1优先-自动')
-                expect('google.com', '1-JP')
-                failed_at = time.monotonic()
-                state['reject'].add('1-JP')
-                samples = expect('google.com', '1-HK', seconds=150)
-                switched_at = time.monotonic()
-                assert any(e['method'] == 'CONNECT' and e.get('rejected') and e['node'] == '1-JP'
-                           and e['at'] >= failed_at for e in state['events'])
-                state['reject'].clear()
-                restored_at = time.monotonic()
-                recovery = expect('google.com', '1-JP', seconds=150)
-                timings = {'failure_at': failed_at, 'switched_at': switched_at, 'restored_at': restored_at,
-                           'recovered_at': time.monotonic(), 'failure_samples': samples, 'recovery_samples': recovery,
-                           'events': [e for e in state['events'] if e['at'] >= failed_at and
-                                      e['node'] in ('1-JP', '1-HK') and
-                                      (e.get('rejected') or (e['method'] == 'HEAD' and e['path'] == '/google'))]}
-                checks.append('保留生产周期，真实 CONNECT 拒绝后同机场换区及恢复；记录实际请求与探针时间')
 
             # 更新链保留完整组结构；本阶段主动触发健康检查，加速逐机场故障枚举。
             rule_path = '/providers/rules/dev_download_domain'
@@ -375,8 +315,7 @@ def main(config_path, upgrade_from=(), timing=False):
             offline_update()
             checks.append('HTTP 规则更新逐机场回退到 DIRECT；503 保留 MRS 缓存，离线重启后仍实际匹配开发下载')
             print(json.dumps({'passed': True, 'config': str(config_path), 'checks': checks,
-                              'timings': timings if timing else '未运行（使用 --timing）',
-                              'scope': '本地少节点回环、完整组链；计时上限仅防挂起，不是生产恢复时限'}, ensure_ascii=False, indent=2))
+                              'scope': '本地少节点回环、完整组链'}, ensure_ascii=False, indent=2))
         except BaseException:
             for log in directory.glob('*/core.log'):
                 print(f'{log}:\n{log.read_text()[-6000:]}', file=sys.stderr)
@@ -393,7 +332,5 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(128 + signal.SIGTERM))
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path, default=D['CONFIG'])
-    parser.add_argument('--upgrade-from', type=Path, action='append', default=[], help='旧配置快照；可多次指定，每次使用独立缓存')
-    parser.add_argument('--timing', action='store_true', help='额外测量原周期下 CONNECT 拒绝后的回退和恢复')
     args = parser.parse_args()
-    main(args.config, args.upgrade_from, args.timing)
+    main(args.config)

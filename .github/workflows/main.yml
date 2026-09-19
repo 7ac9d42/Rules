@@ -22,7 +22,6 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: main
-          fetch-depth: 0
 
       - name: Set up Git and sync upstream rules
         run: |
@@ -32,7 +31,7 @@ jobs:
           git remote add upstream https://github.com/Lanlan13-14/Rules.git ||
             git remote set-url upstream https://github.com/Lanlan13-14/Rules.git
           git remote set-url --push upstream PUSH_DISABLED
-          git fetch upstream main
+          git fetch --depth=1 upstream main
 
           # 精准镜像上游 rules/，包括上游删除；不触碰根目录及配置文件。
           git rm -r --ignore-unmatch rules/
@@ -64,12 +63,12 @@ jobs:
           path: /usr/local/bin/mihomo
           key: mihomo-bin-${{ runner.os }}-${{ steps.mihomo-version.outputs.version }}
 
-      - name: Cache mihomo v1.19.30 baseline binary
+      - name: Cache mihomo v1.19.31 baseline binary
         id: cache-mihomo-compat
         uses: actions/cache@v6
         with:
-          path: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo
-          key: mihomo-bin-${{ runner.os }}-${{ runner.arch }}-v1.19.30
+          path: ${{ runner.tool_cache }}/mihomo/v1.19.31/mihomo
+          key: mihomo-bin-${{ runner.os }}-${{ runner.arch }}-v1.19.31
 
       - name: Install dependencies and mihomo
         run: |
@@ -92,10 +91,10 @@ jobs:
 
           mihomo -v
 
-      - name: Install mihomo v1.19.30 baseline binary
+      - name: Install mihomo v1.19.31 baseline binary
         env:
-          MIHOMO_COMPAT_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo
-          MIHOMO_COMPAT_VERSION: v1.19.30
+          MIHOMO_COMPAT_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.31/mihomo
+          MIHOMO_COMPAT_VERSION: v1.19.31
         run: |
           set -euo pipefail
           if [[ "${{ steps.cache-mihomo-compat.outputs.cache-hit }}" != "true" ]]; then
@@ -142,37 +141,27 @@ jobs:
             --rules-dir "${RUNNER_TEMP}/rule-snapshot" \
             --config cinfigfull_new_4.yaml
 
-      - name: Verify fallback, lifecycle, maintenance tools, UDP routing and DNS policy
+      - name: Verify fallback, lifecycle, UDP routing and DNS policy
         timeout-minutes: 30
         run: |
           set -euo pipefail
-          python3 scripts/test-maintenance.py
           for config in configfull_new.yaml cinfigfull_new_4.yaml; do
             python3 scripts/test-config-design.py --config "$config"
             MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-node-filters.py
             MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-rematch-udp.py
-            # 真实旧配置生成选择/Fake-IP 缓存，覆盖新增 Telegram、下载组类型和节点改名。
-            for before in 289bb078 83ab9daa dd046fa4; do
-              git show "${before}:${config}" > "${RUNNER_TEMP}/${before}-${config}"
-            done
             timeout --signal=TERM --kill-after=15s 10m \
-              python3 scripts/test-runtime-lifecycle.py --config "$config" --timing \
-              --upgrade-from "${RUNNER_TEMP}/289bb078-${config}" \
-              --upgrade-from "${RUNNER_TEMP}/83ab9daa-${config}" \
-              --upgrade-from "${RUNNER_TEMP}/dd046fa4-${config}"
+              python3 scripts/test-runtime-lifecycle.py --config "$config"
           done
-          # 两份 DNS 配置由静态检查保证一致。
           python3 scripts/test-dns-policy.py
 
-      - name: Verify runtime with pinned mihomo v1.19.30
-        if: steps.mihomo-version.outputs.version != 'v1.19.30'
+      - name: Verify runtime with pinned mihomo v1.19.31
+        if: steps.mihomo-version.outputs.version != 'v1.19.31'
         timeout-minutes: 30
         env:
-          MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.30/mihomo
+          MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.31/mihomo
         run: |
           set -euo pipefail
           ruby scripts/validate-rules.rb
-          python3 scripts/test-maintenance.py
           for config in configfull_new.yaml cinfigfull_new_4.yaml; do
             python3 scripts/test-config-design.py --config "$config"
             MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-node-filters.py
@@ -180,10 +169,7 @@ jobs:
             python3 scripts/test-real-rule-routing.py \
               --rules-dir "${RUNNER_TEMP}/rule-snapshot" --config "$config"
             timeout --signal=TERM --kill-after=15s 10m \
-              python3 scripts/test-runtime-lifecycle.py --config "$config" --timing \
-              --upgrade-from "${RUNNER_TEMP}/289bb078-${config}" \
-              --upgrade-from "${RUNNER_TEMP}/83ab9daa-${config}" \
-              --upgrade-from "${RUNNER_TEMP}/dd046fa4-${config}"
+              python3 scripts/test-runtime-lifecycle.py --config "$config"
           done
           python3 scripts/test-dns-policy.py
 

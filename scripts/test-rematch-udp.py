@@ -288,7 +288,7 @@ def main(config_path=D['CONFIG']):
                             ('ordinary.invalid', 'quality-generic'), ('ordinary.cf.invalid', 'quality-cf'),
                             ('paypal.invalid', high['generic']), ('paypal.cf.invalid', high['cf']),
                             ('wise.gh.invalid', high['github']),
-                            ('tg.invalid', 'cost-generic'), ('203.0.113.124', 'cost-generic'),
+                            ('tg.invalid', 'quality-generic'), ('203.0.113.124', 'quality-generic'),
                             ('ai.invalid', 'ai-jp-cf')])
             dev_hosts = ['dev.invalid', 'dev.cf.invalid', 'gh.invalid']
             finance_hosts = ['paypal.invalid', 'paypal.cf.invalid', 'wise.invalid', 'wise.cf.invalid', 'wise.gh.invalid']
@@ -329,7 +329,8 @@ def main(config_path=D['CONFIG']):
                 expect('business-supported-udp', [(host, 'manual') for host in hosts])
                 choose(business, defaults[business])
             # 当前自动出口不支持 UDP 时也拒绝，不能借用其他探针路径。
-            for pool, host in [('机场名称3优先', 'unknown.invalid'), ('Cloudflare-自动', 'cf.invalid')]:
+            for pool, host in [('机场名称1优先', 'unknown.invalid'),
+                               ('Cloudflare-机场名称1优先', 'cf.invalid')]:
                 choose(pool, 'fixture-no-udp')
                 try:
                     actual = request(mixed, host, udp_sockets)
@@ -341,7 +342,7 @@ def main(config_path=D['CONFIG']):
                 choose(pool, 'fixture-' + route_labels[pool])
             choose('开发下载', 'fixture-manual-dev')
             expect('manual-probe-families', [(host, 'manual-dev') for host in dev_hosts]
-                   + [('download.invalid', 'download'), ('cf.invalid', 'cost-cf')])
+                   + [('download.invalid', 'download'), ('cf.invalid', 'quality-cf')])
             choose('纯下载', 'fixture-manual-download')
             expect('download-independent-manual', [('download.invalid', 'manual-download'), ('gh.invalid', 'manual-dev')])
             choose('通用代理', 'fixture-manual-general')

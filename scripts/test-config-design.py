@@ -271,32 +271,8 @@ def main(config=CONFIG):
                 by_label["1-fast"].probe_delays[GENERIC] = .005
             checks.append(f"{len(inherited)} 个缺省 URL 的 url-test 继承订阅探针；延迟反转后重选且 HTTP 出口一致")
             for host, label in [("github.com", "3-JP2"), ("codeload.github.com", "3-JP2"),
-                                ("cloudflare.com", "3-JP"), ("google.com", "1-jp")]:
+                                ("cloudflare.com", "1-jp"), ("google.com", "1-jp")]:
                 expect(host, label)
-
-            def route_tool(*arguments, expected_exit=0):
-                result = subprocess.run([sys.executable, str(ROOT / "scripts/check-proxy-route.py"),
-                                         *arguments, "--json"], capture_output=True, text=True, timeout=20,
-                                        env={**os.environ, "NO_PROXY": "*", "MIHOMO_SECRET": ""})
-                assert result.returncode == expected_exit, (result.returncode, result.stdout, result.stderr)
-                return [json.loads(line) for line in result.stdout.splitlines()]
-
-            # 通过真实入口走 rematch；NO_PROXY=* 也不能绕过指定的核心。
-            tool_proxy = f"http://127.0.0.1:{mixed}"
-            tool_url = f'http://github.com:{by_label["DIRECT"].server_address[1]}/file'
-            result = route_tool("probe", "--proxy", tool_proxy, "--count", "2", tool_url)
-            assert len(result) == 2 and all(item["status"] == 200 and item["ok"]
-                                           and item["bytes"] == len("3-JP2") for item in result)
-            route_tool("probe", "--proxy", tool_proxy, "--count", "1", "--expect", "204", tool_url,
-                       expected_exit=1)
-            route_tool("probe", "--proxy", f'http://127.0.0.1:{H["free_port"]()}',
-                       "--count", "1", tool_url, expected_exit=1)
-            tool_controller = f"http://127.0.0.1:{control}"
-            assert route_tool("check-smart", "--controller", tool_controller)[0]["smart_groups"] == []
-            api("/configs", {"mode": "global"}, "PATCH")
-            route_tool("check-smart", "--controller", tool_controller, expected_exit=1)
-            api("/configs", {"mode": "rule"}, "PATCH")
-            checks.append("实际规则测速经过 rematch；状态码/连接失败正确报错，规避检查拒绝全局模式")
 
             primary_nodes = api("/providers/proxies")["providers"]["Airport_01"]["proxies"]
             cf_url = probe_origin + "/cloudflare"

@@ -1,5 +1,5 @@
 # 四机场模板：填写真实的机场名称2家宽订阅后使用。
-# 使用支持 rematch 的 Mihomo；固定验证版本为 v1.19.30。
+# 使用支持 rematch 的 Mihomo；固定验证版本为 v1.19.31。
 # 机场名称1、机场名称2、机场名称3仅同地区测速；先同机场换地区，再跨机场；纯下载地区顺序独立。
 # 使用说明与维护入口见 README.md。
 
@@ -303,8 +303,8 @@ dns:
     - "MATCH,fake-ip"
   default-nameserver:
     # IP 字面量 DoH 仅用于引导，避免外部 53 端口回环。
+    # 当前 WRT 直连 1.1.1.1:443 超时，不将其作为引导备用。
     - https://223.5.5.5/dns-query
-    - https://1.1.1.1/dns-query
   proxy-server-nameserver:
     - "https://dns.alidns.com/dns-query#DIRECT"
     - "https://doh.pub/dns-query#DIRECT"
@@ -460,13 +460,13 @@ proxy-groups:
     <<: *Normal_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   - name: Microsoft
-    <<: *Cost_policy
+    <<: *Normal_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
   - name: Telegram
-    <<: *Cost_policy
+    <<: *Normal_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
   - name: 境外通信
-    <<: *Cost_policy
+    <<: *Normal_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
   - name: TikTok
     <<: *Normal_policy
@@ -523,7 +523,7 @@ proxy-groups:
     <<: *Cost_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
   - name: 通用代理
-    <<: *Cost_policy
+    <<: *Normal_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
 
   - name: 台湾限定
@@ -1680,6 +1680,10 @@ sub-rules:
     - RULE-SET,apple_domain,Apple
     - RULE-SET,biliintl_domain,哔哩东南亚
     - RULE-SET,bilibili_domain,哔哩哔哩
+
+    # Pixiv 页面与静态资源共用社媒出口；通用探针不能证明 pximg 可用。
+    - DOMAIN-SUFFIX,pixiv.net,境外社媒
+    - DOMAIN-SUFFIX,pximg.net,境外社媒
 
     # 开发产品
     - DOMAIN-SUFFIX,huggingface.co,开发下载
