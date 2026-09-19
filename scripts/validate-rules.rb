@@ -246,7 +246,7 @@ end
 config_paths = if ENV["MIHOMO_TEST_CONFIG"]
                  [ENV.fetch("MIHOMO_TEST_CONFIG")]
                else
-                 %w[configfull_new.yaml cinfigfull_new_4.yaml].map { |name| File.join(ROOT, name) }
+                 %w[configfull_new.yaml configfull_new_4.yaml].map { |name| File.join(ROOT, name) }
                end
 config_paths.each do |config_path|
   begin

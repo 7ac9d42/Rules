@@ -31,7 +31,7 @@ def load_source(config=CONFIG):
 
 def static_shared_checks():
     three = load_source(ROOT / "configfull_new.yaml")
-    four = load_source(ROOT / "cinfigfull_new_4.yaml")
+    four = load_source(ROOT / "configfull_new_4.yaml")
     assert set(three["proxy-providers"]) == {"Airport_01", "Airport_03", "Airport_04"}
     assert set(four["proxy-providers"]) == {"Airport_01", "Airport_02", "Airport_03", "Airport_04"}
     common = {"dns", "tun", "sniffer", "profile", "rules", "rule-providers", "unified-delay", "tcp-concurrent",

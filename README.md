@@ -7,7 +7,7 @@
 | 文件 | 用途 |
 |---|---|
 | [configfull_new.yaml](configfull_new.yaml) | 三机场主配置：机场名称1、3、4 |
-| [cinfigfull_new_4.yaml](cinfigfull_new_4.yaml) | 四机场独立模板：增加机场名称2家宽 |
+| [configfull_new_4.yaml](configfull_new_4.yaml) | 四机场独立模板：增加机场名称2家宽 |
 
 每次加载一份完整配置，无需拼接。模板使用官方 Mihomo 的 `rematch`，固定验收版本为 **v1.19.31**，CI 同时检查最新稳定版。使用前填写订阅，核对节点过滤条件，并调整监听地址、控制器密钥、DNS 和 TUN 参数。首次订阅需能直连获取。
 
@@ -49,7 +49,7 @@ OpenClash 的对应设置为 `auto_smart_switch=0`。加载后在面板核对实
 ```text
 .github/workflows/main.yml   同步、构建、验证和发布
 configfull_new.yaml          三机场配置
-cinfigfull_new_4.yaml        四机场配置
+configfull_new_4.yaml        四机场配置
 rules/                      发布规则，保留构建输入及 YAML/MRS 等产物
 icon/                       两份配置引用的 29 个图标
 sources/Telegram/           Telegram 构建源
@@ -86,7 +86,7 @@ LICENSE
 
 ```sh
 python3 scripts/test-config-design.py --static
-python3 scripts/test-config-design.py --static --config cinfigfull_new_4.yaml
+python3 scripts/test-config-design.py --static --config configfull_new_4.yaml
 ```
 
 运行回归需要本机允许监听回环端口，不使用真实机场订阅。用 `MIHOMO_BIN` 指定内核，`MIHOMO_DESIGN_CONFIG` 或脚本的 `--config` 选择模板；完整调用见 CI。两份配置都要验证，DNS 配置由静态检查保证一致，因此 DNS 运行测试只执行一次。
@@ -95,7 +95,7 @@ python3 scripts/test-config-design.py --static --config cinfigfull_new_4.yaml
 
 ```sh
 python3 scripts/test-real-rule-routing.py --prepare-rules --rules-dir /tmp/rules-snapshot
-python3 scripts/test-real-rule-routing.py --rules-dir /tmp/rules-snapshot --config cinfigfull_new_4.yaml
+python3 scripts/test-real-rule-routing.py --rules-dir /tmp/rules-snapshot --config configfull_new_4.yaml
 ```
 
 新建快照目录必须尚不存在。本仓库规则读取当前工作区产物，外部规则从配置 URL 下载；测试核对来源、SHA256 和内核加载结果。增加测试应对应具体配置风险，不重复实现内核自身的测试。
