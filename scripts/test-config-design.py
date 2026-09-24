@@ -184,6 +184,7 @@ def main(config=CONFIG):
             membership = {
                 "github_domain": ["+.github.com", "+.githubusercontent.com", "wise.gh.invalid"],
                 "google_domain": ["google.com", "google.cf.invalid"],
+                "microsoft_domain": ["microsoft.com", "microsoft.cf.invalid"],
                 "youtube_domain": ["youtube.com"],
                 "bahamut_domain": ["gamer.com.tw", "bahamut.cf.invalid"],
                 "dev_download_domain": ["unpkg.com"],
@@ -197,7 +198,7 @@ def main(config=CONFIG):
             for name, payload in membership.items():
                 rules[name]["payload"] = payload
             hosts = CF_HOSTS | {"github.com", "codeload.github.com", "release-assets.githubusercontent.com"}
-            hosts.add("inheritance.invalid")
+            hosts.update({"inheritance.invalid", "aur.archlinux.org"})
             hosts.update(host for values in membership.values() for host in values if not host.startswith("+."))
             mixed, control = H["free_port"](), H["free_port"]()
             runtime_config = Path(directory) / "config.json"
@@ -271,7 +272,8 @@ def main(config=CONFIG):
                 by_label["1-fast"].probe_delays[GENERIC] = .005
             checks.append(f"{len(inherited)} 个缺省 URL 的 url-test 继承订阅探针；延迟反转后重选且 HTTP 出口一致")
             for host, label in [("github.com", "3-JP2"), ("codeload.github.com", "3-JP2"),
-                                ("cloudflare.com", "1-jp"), ("google.com", "1-jp")]:
+                                ("aur.archlinux.org", "3-JP2"),
+                                ("cloudflare.com", "1-jp"), ("google.com", "3-JP")]:
                 expect(host, label)
 
             primary_nodes = api("/providers/proxies")["providers"]["Airport_01"]["proxies"]
@@ -412,13 +414,13 @@ def main(config=CONFIG):
 
             # 指定日本同时验证地区边界和三层不同机场顺序。
             choose("金融", "日本·" + high_preference)
-            choose("Google", "日本·机场名称1优先")
+            choose("Microsoft", "日本·机场名称1优先")
             choose("开发下载", "日本·机场名称3优先")
             expect("wise.invalid", "2-JP" if with_home else "1-jp")
             expect("paypal.cf.invalid", "2-JP" if with_home else "1-jp")
             expect("wise.gh.invalid", "2-JP" if with_home else "1-jp")
-            expect("google.com", "1-jp")
-            expect("google.cf.invalid", "1-jp")
+            expect("microsoft.com", "1-jp")
+            expect("microsoft.cf.invalid", "1-jp")
             expect("github.com", "3-JP2")
             expect("codeload.github.com", "3-JP2")
             choose("纯下载", "日本·机场名称3优先")
@@ -439,14 +441,14 @@ def main(config=CONFIG):
             assert request("codeload.github.com")[0] != 0
             recover()
             fail(GENERIC, labels=["1-jp"])
-            expect("google.com", "2-JP" if with_home else "3-JP")
+            expect("microsoft.com", "2-JP" if with_home else "3-JP")
             if with_home:
                 fail(GENERIC, labels=["2-JP"])
-            expect("google.com", "3-JP")
+            expect("microsoft.com", "3-JP")
             fail(GENERIC, labels=["3-JP", "3-JP2"])
-            expect("google.com", "4-JP-A")
+            expect("microsoft.com", "4-JP-A")
             fail(GENERIC, labels=["4-JP-A", "4-JP-B"])
-            assert request("google.com")[0] != 0
+            assert request("microsoft.com")[0] != 0
             assert request("gamer.com.tw")[0] != 0
             recover()
             if with_home:

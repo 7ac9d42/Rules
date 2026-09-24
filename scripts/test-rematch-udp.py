@@ -171,11 +171,12 @@ def main(config_path=D['CONFIG']):
                          for name, provider in source['rule-providers'].items()}
             members = {
                 'cloudflare_domain': ['cf.invalid', 'dev.cf.invalid', 'paypal.cf.invalid',
-                                      'wise.cf.invalid', 'ordinary.cf.invalid', 'blocked.cf.invalid'],
+                                      'wise.cf.invalid', 'ordinary.cf.invalid', 'microsoft.cf.invalid', 'blocked.cf.invalid'],
                 'github_domain': ['gh.invalid', 'download.invalid', 'wise.gh.invalid'],
                 'dev_download_domain': ['dev.invalid', 'dev.cf.invalid'],
                 'pure_download_domain': ['download.invalid'],
                 'google_domain': ['ordinary.invalid', 'ordinary.cf.invalid'],
+                'microsoft_domain': ['microsoft.invalid', 'microsoft.cf.invalid'],
                 'ai!cn_domain': ['ai.invalid'],
                 'paypal_domain': ['paypal.invalid', 'paypal.cf.invalid'],
                 'Wise_domain': ['wise.invalid', 'wise.cf.invalid', 'wise.gh.invalid'],
@@ -285,7 +286,7 @@ def main(config_path=D['CONFIG']):
             expect('auto', [('cf.invalid', 'cost-cf'), ('gh.invalid', 'cost-github'),
                             ('dev.invalid', 'cost-generic'), ('dev.cf.invalid', 'cost-cf'),
                             ('download.invalid', 'download'), ('unknown.invalid', 'cost-generic'),
-                            ('ordinary.invalid', 'quality-generic'), ('ordinary.cf.invalid', 'quality-cf'),
+                            ('ordinary.invalid', 'cost-generic'), ('ordinary.cf.invalid', 'cost-cf'),
                             ('paypal.invalid', high['generic']), ('paypal.cf.invalid', high['cf']),
                             ('wise.gh.invalid', high['github']),
                             ('tg.invalid', 'quality-generic'), ('203.0.113.124', 'quality-generic'),
@@ -359,9 +360,9 @@ def main(config_path=D['CONFIG']):
             choose('金融', high_japan)
             expect('high-region-path', [('wise.invalid', high_jp['generic']), ('paypal.cf.invalid', high_jp['cf']),
                                        ('wise.gh.invalid', high_jp['github']), ('talk.invalid', high['generic'])])
-            choose('Google', '日本·机场名称1优先')
-            expect('normal-region-path', [('ordinary.invalid', 'jp-normal-generic'),
-                                         ('ordinary.cf.invalid', 'jp-normal-cf')])
+            choose('Microsoft', '日本·机场名称1优先')
+            expect('normal-region-path', [('microsoft.invalid', 'jp-normal-generic'),
+                                         ('microsoft.cf.invalid', 'jp-normal-cf')])
             for business in ('AI', 'Google'):
                 choose(business, '自建/家宽节点')
             for label in ('manual', 'manual-general'):

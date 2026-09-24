@@ -429,7 +429,7 @@ proxy-groups:
     <<: *High_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
   - name: Google
-    <<: *Normal_policy
+    <<: *Cost_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   - name: Microsoft
     <<: *Normal_policy
@@ -1246,7 +1246,7 @@ rules:
 sub-rules:
   业务分流:
     # 自定义优先规则
-    # 仅附件与源码归档走纯下载；网页、API、Git 连接及上传保留业务选路。
+    # GitHub 仅附件与源码归档走纯下载；AUR 的网页、RPC、Git 统一走纯下载。
     - RULE-SET,pure_download_domain,纯下载
     # OpenCode Zen/Go 共用主域，统一走 AI。
     - DOMAIN-SUFFIX,opencode.ai,AI
@@ -1571,7 +1571,7 @@ rule-providers:
   pure_download_domain:
     type: inline
     behavior: domain
-    payload: [release-assets.githubusercontent.com, codeload.github.com]
+    payload: [release-assets.githubusercontent.com, codeload.github.com, '+.aur.archlinux.org']
   # 已确认使用 CF 的主机；按明确域名维护。
   cloudflare_cdn_domain:
     type: inline
