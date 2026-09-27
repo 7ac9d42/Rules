@@ -22,8 +22,8 @@ import mihomo_fixture as F
 
 ROOT = F.ROOT
 CONFIGS = ('configfull_new.yaml.bak', 'configfull_new_4.yaml.bak', 'configfull_new.yaml', 'configfull_new_4.yaml')
-CANDIDATE = 'configfull_new.yaml'
-FAMILIES = ('通用', 'Cloudflare', 'GitHub网页', 'GitHubRaw', 'GitHub归档')
+PRIMARY_CONFIG = 'configfull_new.yaml'
+FAMILIES = ('Google', 'CF', 'GitHub', 'GitHubRaw', 'GitHub归档')
 URLS = dict(zip(FAMILIES, (
     'https://www.gstatic.com/generate_204', 'https://cp.cloudflare.com/generate_204',
     'https://github.com/robots.txt',
@@ -37,6 +37,10 @@ SAMPLES = ('日本 fast 1x', '日本 slow 1x', '日本 CTCU 1x', '日本 CTCUCM 
            '日本 0.3x', '日本 MITM 1x', '日本 BETA 1x', '日本 6x',
            '新加坡 1x', '香港 1x', 'HongKong 05 1x', '美国 0.1x', '美国 1x',
            '台湾 1x', '台湾 BETA 1x', '德国 1x')
+
+
+def pool_name(airport, region, family):
+    return f"机场名称{airport}-{region}-{family}"
 
 
 def static(source, name):
@@ -62,37 +66,48 @@ def static(source, name):
     for n in groups:
         visit(n)
     visit('GLOBAL', global_mode=True)
-    if name != CANDIDATE:
+    if name != PRIMARY_CONFIG:
         return
     assert source['tun']['device'] == 'tun0'
     assert source['profile']['store-selected'] and source['profile']['store-fake-ip']
     for g in groups.values():
         if g['type'] != 'select':
             assert g['timeout'] == 5000 and g['empty-fallback'] == 'REJECT', g['name']
-            assert g.get('url', URLS['通用']) in URLS.values(), g['name']
-            family = next(f for f in FAMILIES if URLS[f] == g.get('url', URLS['通用']))
+            assert g.get('url', URLS['Google']) in URLS.values(), g['name']
+            family = next(f for f in FAMILIES if URLS[f] == g.get('url', URLS['Google']))
             assert g['expected-status'] == STATUS[family], g['name']
             if g['type'] == 'url-test':
                 assert g['tolerance'] == 50, g['name']
-            if g.get('use') and family != '通用':
+            if g.get('use') and family != 'Google':
                 assert 'exclude-filter' not in g, g['name']
     for family in FAMILIES:
-        for policy, airports in [('质量优先', (1, 3)), ('成本优先', (3, 1))]:
-            order = [f'节点池-机场名称{a}-{r}-{family}探针' for a in airports
+        for policy, airports in [('机场名称1优先', (1, 3)), ('机场名称3优先', (3, 1))]:
+            order = [pool_name(a, r, family) for a in airports
                      for r in (('日本', '香港', '新加坡', '美国') if a == 1 else ('日本', '新加坡', '香港', '美国'))]
-            assert groups[f'回退-{policy}-{family}探针']['proxies'] == order + [f'备用池-机场名称4-{family}探针']
+            assert groups[f'{policy}-{family}']['proxies'] == order + [f'机场名称4-备用-{family}']
             for region in REGIONS:
-                g = groups[f'地区回退-{region}-{policy}-{family}探针']
-                assert g['proxies'] == [f'节点池-机场名称{a}-{region}-{family}探针' for a in airports]
+                g = groups[f'{region}-{policy}-{family}']
+                assert g['proxies'] == [pool_name(a, region, family) for a in airports]
                 assert g['use'] == ['Airport_04']
-            if family in ('通用', 'Cloudflare', 'GitHub归档'):
-                order = [f'下载池-机场名称{a}-{r}-{family}探针' for a in (*airports, 4)
+            if family in ('Google', 'CF', 'GitHub归档'):
+                order = [f'下载-机场名称{a}-{r}-{family}' for a in (*airports, 4)
                          for r in (('日本', '新加坡', '美国', '香港', '其他') if a == 4 else ('日本', '新加坡', '美国', '香港'))]
-                assert groups[f'下载回退-{policy}-{family}探针']['proxies'] == order
+                assert groups[f'下载-{policy}-{family}']['proxies'] == order
+    required = {'机场名称1优先', '机场名称3优先', '下载-机场名称1优先', '下载-机场名称3优先',
+                '自建/家宽节点', '低倍率/MITM节点', '机场名称1-日本-Google', '机场名称1-日本-CF', 'DIRECT'}
+    required.update(f'{r}-机场名称{a}优先' for r in REGIONS for a in (1, 3))
+    for n, g in groups.items():
+        if g['type'] != 'select' or n in ('GLOBAL', '自建/家宽节点', '低倍率/MITM节点'):
+            continue
+        assert set(g['proxies']) == required | ({'REJECT', 'REJECT-DROP'} if n == '隐私拦截' else set()), n
+        assert g['use'] == ['Airport_01', 'Airport_03', 'Airport_04']
+        assert not any(k in g for k in ('filter', 'exclude-filter', 'url', 'interval')), n
+    physical = {n + '-Google' if n in outbounds else n for n in required}
+    assert set(groups['GLOBAL']['proxies']) == physical
+    assert not any(re.search(r'质量|成本|节点池|探针$', n) for n in known)
     for n in ('AI', '金融', 'Talkatone'):
-        assert groups[n]['proxies'] == ['节点池-机场名称1-日本-Cloudflare探针', 'DIRECT']
-        assert groups[n]['use'] == ['Airport_01', 'Airport_03', 'Airport_04']
-    assert groups['规则更新']['proxies'] == groups['回退-成本优先-GitHubRaw探针']['proxies'] + ['DIRECT']
+        assert groups[n]['proxies'][:2] == ['机场名称1-日本-Google', '机场名称1-日本-CF']
+    assert groups['规则更新']['proxies'] == groups['机场名称3优先-GitHubRaw']['proxies'] + ['DIRECT']
     assert groups['规则更新']['url'] == URLS['GitHubRaw']
 
 
@@ -169,15 +184,15 @@ def node_filters(source, mihomo):
             p.pop('url')
             p['health-check'] = {'enable': False}
             providers[provider] = p
-        subjects = {'开发下载': 'manual', '手选-自建家宽': 'home', '台湾限定': 'tw4',
+        subjects = {'开发下载': 'manual', '自建/家宽节点': 'home', '台湾限定': 'manual',
                     'Google FCM': 'manual', 'OneDrive': 'manual'}
         for family in FAMILIES:
             for airport, region, membership in ((1, '香港', 'hk1'), (1, '日本', 'jp1'),
                     (3, '日本', 'jp3'), (3, '新加坡', 'sg3'), (3, '美国', 'us3')):
-                subjects[f'节点池-机场名称{airport}-{region}-{family}探针'] = membership
+                subjects[pool_name(airport, region, family)] = membership
         groups = []
         for g in source['proxy-groups']:
-            if g['name'] in subjects or g['name'].startswith('下载池-'):
+            if g['name'] in subjects or (g['type'] == 'url-test' and g['name'].startswith('下载-')):
                 g = copy.deepcopy(g)
                 g.pop('proxies', None)
                 g.update(url='http://127.0.0.1:9/probe', interval=86400, lazy=True)
@@ -191,10 +206,10 @@ def node_filters(source, mihomo):
         for name, membership in subjects.items():
             want = manual if membership == 'manual' else expected[membership]
             assert set(actual[name]['all']) == want, (name, set(actual[name]['all']) ^ want)
-        for family in ('通用', 'Cloudflare', 'GitHub归档'):
+        for family in ('Google', 'CF', 'GitHub归档'):
             for airport in (1, 3, 4):
-                members = {node for g in groups if g['name'].startswith(f'下载池-机场名称{airport}-')
-                           and g['name'].endswith(f'-{family}探针') for node in actual[g['name']]['all'] if node != 'REJECT'}
+                members = {node for g in groups if g['name'].startswith(f'下载-机场名称{airport}-')
+                           and g['name'].endswith(f'-{family}') for node in actual[g['name']]['all'] if node != 'REJECT'}
                 assert members == expected[f'download{airport}'], (airport, family, members)
         actual_nodes = {n['name']: n for p in rt.api('/providers/proxies')['providers'].values() for n in p['proxies']}
         for name, udp in capabilities.items():
@@ -212,7 +227,7 @@ def health(source, mihomo):
             path = Path(directory) / (provider + '.json')
             path.write_text(json.dumps({'proxies': nodes[provider]}))
             config['proxy-providers'][provider] = dict(type='file', path=str(path), **{'health-check': dict(
-                enable=True, url=LOCAL['通用'], interval=86400, timeout=5000, lazy=False, **{'expected-status': 204})})
+                enable=True, url=LOCAL['Google'], interval=86400, timeout=5000, lazy=False, **{'expected-status': 204})})
         config['proxy-groups'] = copy.deepcopy(source['proxy-groups'])
         for g in config['proxy-groups']:
             if 'url' in g:
@@ -222,8 +237,8 @@ def health(source, mihomo):
         config['rules'] = ['MATCH,通用代理']
         rt.start(config)
         fast = '[机场名称3]日本 fast 1x'
-        F.until(lambda: all(rt.group(f'节点池-机场名称3-日本-{f}探针')['now'] == fast for f in FAMILIES))
-        expected = {(p, f): {n['name'] for n in nodes[p]} if f == '通用' else set()
+        F.until(lambda: all(rt.group(pool_name(3, '日本', f))['now'] == fast for f in FAMILIES))
+        expected = {(p, f): {n['name'] for n in nodes[p]} if f == 'Google' else set()
                     for p in nodes for f in FAMILIES}
         # 准入已由独立案例验证；此处只验证额外探针遵守各组候选并集且不重复测。
         for g in source['proxy-groups']:
@@ -248,7 +263,7 @@ def health(source, mihomo):
                     assert delta == int(name in expected[provider, f]), (name, f, delta)
         def probe(name, family):
             return rt.probe(name, LOCAL[family], STATUS[family])
-        pairs = [(f'节点池-机场名称{a}-{r}-{f}探针', f) for f in FAMILIES for a in (3, 1)
+        pairs = [(pool_name(a, r, f), f) for f in FAMILIES for a in (3, 1)
                  for r in ('日本', '新加坡', '香港', '美国')]
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
             list(pool.map(lambda pair: probe(*pair), pairs))
@@ -257,14 +272,14 @@ def health(source, mihomo):
                 if name.startswith('[机场名称3]'):
                     node.statuses[PATHS[family]] = 503
             rt.api('/providers/proxies/Airport_03/healthcheck')
-            children = [name for name, f in pairs if f == family and name.startswith('节点池-机场名称3-')]
+            children = [name for name, f in pairs if f == family and name.startswith('机场名称3-')]
             for child in children:
                 probe(child, family)
-            root = f'回退-成本优先-{family}探针'
-            assert rt.group(root)['now'] == f'节点池-机场名称1-日本-{family}探针', family
+            root = f'机场名称3优先-{family}'
+            assert rt.group(root)['now'] == pool_name(1, '日本', family), family
             for other in FAMILIES:
                 if other != family:
-                    assert rt.group(f'回退-成本优先-{other}探针')['now'].startswith('节点池-机场名称3-'), other
+                    assert rt.group(f'机场名称3优先-{other}')['now'].startswith('机场名称3-'), other
             for node in rt.http.nodes.values():
                 node.statuses.clear()
             rt.api('/providers/proxies/Airport_03/healthcheck')
@@ -274,15 +289,34 @@ def health(source, mihomo):
         for status in (403, 429, 503):
             rt.http.nodes[fast].statuses[PATHS['GitHubRaw']] = status
             assert not probe(fast, 'GitHubRaw'), status
-            assert probe(fast, '通用')
+            assert probe(fast, 'Google')
         rt.http.nodes[fast].statuses.clear()
         rt.http.nodes[fast].delays[PATHS['GitHubRaw']] = 5.3
         assert not probe(fast, 'GitHubRaw'), '超时'
         rt.http.nodes[fast].delays.clear()
         assert not rt.probe(fast, 'https://tls.invalid/3', 200), 'TLS 握手失败'
         assert probe(fast, 'GitHubRaw')
+        # 两种探针分别失败：默认不更换探针，用户可以主动选择 CF。
+        scoped = '机场名称1-日本-Google'
+        cf_pool = '机场名称1-日本-CF'
+        for failed, healthy in [('CF', 'Google'), ('Google', 'CF')]:
+            for name, node in rt.http.nodes.items():
+                if name.startswith('[机场名称1]日本'):
+                    node.statuses[PATHS[failed]] = 503
+            assert not probe(pool_name(1, '日本', failed), failed)
+            assert probe(pool_name(1, '日本', healthy), healthy)
+            for business_name in ('AI', '金融', 'Talkatone'):
+                assert rt.group(business_name)['now'] == scoped
+            if healthy == 'CF':
+                rt.select('AI', cf_pool)
+                assert rt.group('AI')['now'] == cf_pool
+                assert rt.group('金融')['now'] == scoped
+                rt.select('AI', scoped)
+            for node in rt.http.nodes.values():
+                node.statuses.clear()
+            assert probe(pool_name(1, '日本', failed), failed)
         rt.select('金融', fast)
-        scoped = '节点池-机场名称1-日本-Cloudflare探针'
+        rt.select('AI', cf_pool)
         for restart in (False, True):
             if restart:
                 rt.stop()
@@ -290,7 +324,8 @@ def health(source, mihomo):
             else:
                 rt.reload(config)
             F.until(lambda: rt.group('金融')['now'] == fast)
-            assert rt.group('AI')['now'] == scoped and rt.group('Talkatone')['now'] == scoped
+            assert rt.group('AI')['now'] == cf_pool and rt.group('Talkatone')['now'] == scoped
+        rt.select('AI', scoped)
         path = Path(directory) / 'Airport_01.json'
         path.write_text(json.dumps({'proxies': [n for n in nodes['Airport_01'] if '日本' not in n['name']]}))
         rt.api('/providers/proxies/Airport_01', 'PUT')
@@ -331,15 +366,15 @@ VARIANT_CASES = {
     'netflix.com': ('NETFLIX', 'NETFLIX', 'Netflix', 'NETFLIX'),
 }
 DEFAULTS = {
-    'google.com': ('机场名称3优先', '机场名称3优先', '回退-成本优先-通用探针', '机场名称3优先'),
-    'wise.com': ('机场名称1优先', '家宽优先', '节点池-机场名称1-日本-Cloudflare探针', '金融-机场名称2-香港'),
-    'talkatone.com': ('机场名称1优先', '家宽优先', '节点池-机场名称1-日本-Cloudflare探针', 'Talkatone-机场名称2-香港'),
-    'github.com': ('GitHub-自动', 'GitHub-自动', '回退-成本优先-GitHub网页探针', 'GitHub-自动'),
-    'raw.githubusercontent.com': ('GitHub-自动', 'GitHub-自动', '回退-成本优先-GitHubRaw探针', 'GitHub-自动'),
-    'codeload.github.com': ('纯下载-自动', '纯下载-自动', '下载回退-成本优先-GitHub归档探针', '纯下载-自动'),
-    'cloudflare.com': ('Cloudflare-机场名称1优先', 'Cloudflare-机场名称1优先', '回退-质量优先-Cloudflare探针', 'Cloudflare-机场名称1优先'),
-    'bilibili.tv': ('新加坡-机场名称1优先', '新加坡-机场名称1优先', '地区回退-新加坡-质量优先-通用探针', '新加坡-机场名称1优先'),
-    'gamer.com.tw': ('台湾-机场名称1优先', '台湾-机场名称1优先', '地区回退-台湾-质量优先-通用探针', '台湾-机场名称1优先'),
+    'google.com': ('机场名称3优先', '机场名称3优先', '机场名称3优先-Google', '机场名称3优先'),
+    'wise.com': ('机场名称1优先', '家宽优先', '机场名称1-日本-Google', '金融-机场名称2-香港'),
+    'talkatone.com': ('机场名称1优先', '家宽优先', '机场名称1-日本-Google', 'Talkatone-机场名称2-香港'),
+    'github.com': ('GitHub-自动', 'GitHub-自动', '机场名称3优先-GitHub', 'GitHub-自动'),
+    'raw.githubusercontent.com': ('GitHub-自动', 'GitHub-自动', '机场名称3优先-GitHubRaw', 'GitHub-自动'),
+    'codeload.github.com': ('纯下载-自动', '纯下载-自动', '下载-机场名称3优先-GitHub归档', '纯下载-自动'),
+    'cloudflare.com': ('Cloudflare-机场名称1优先', 'Cloudflare-机场名称1优先', '机场名称1优先-CF', 'Cloudflare-机场名称1优先'),
+    'bilibili.tv': ('新加坡-机场名称1优先', '新加坡-机场名称1优先', '新加坡-机场名称1优先-Google', '新加坡-机场名称1优先'),
+    'gamer.com.tw': ('台湾-机场名称1优先', '台湾-机场名称1优先', '台湾-机场名称1优先-Google', '台湾-机场名称1优先'),
 }
 TUNNEL = [('region1.v2.argotunnel.com', 7844, 'Cloudflare Tunnel'),
           ('region1.v2.argotunnel.com', 443, 'DIRECT'), ('unknown.argotunnel.com', 7844, 'DIRECT'),
@@ -395,7 +430,7 @@ def business(source, config_name, mihomo, rules_dir):
             actual = rt.request(host, port)
             assert actual == expected, (config_name, host, port, expected, actual)
         if not config_name.endswith('.bak'):
-            fcm = 'Google FCM' if config_name == CANDIDATE else 'FCM'
+            fcm = 'Google FCM' if config_name == PRIMARY_CONFIG else 'FCM'
             for host, port, expected in [('8.8.8.8', 5228, fcm), ('203.208.40.1', 5230, fcm),
                     ('8.8.8.8', 443, 'Google'), ('1.1.1.1', 5228, '通用代理'),
                     ('45.121.184.1', 5230, 'DIRECT')]:
@@ -407,6 +442,14 @@ def business(source, config_name, mihomo, rules_dir):
         for host, choices in DEFAULTS.items():
             actual = rt.request(host)
             assert actual == choices[index], (config_name, host, choices[index], actual)
+        if config_name == PRIMARY_CONFIG:
+            for name in ('AI', '金融', 'Talkatone'):
+                rt.select(name, '机场名称1-日本-Google')
+            rt.select('AI', '自建/家宽节点')
+            assert rt.request('chatgpt.com') == '自建/家宽节点'
+            for name, host in [('金融', 'wise.com'), ('Talkatone', 'talkatone.com')]:
+                assert rt.group(name)['now'] == '机场名称1-日本-Google'
+                assert rt.request(host) == '机场名称1-日本-Google'
     print(f'PASS: {config_name} 关键业务、默认出口与 Tunnel/FCM 边界', flush=True)
 
 
@@ -429,7 +472,7 @@ def routing(source, mihomo, rules_dir):
                 label = 'fixture-' + name
                 config['proxies'].append(rt.proxy(label, name))
                 choices = [label]
-                if name.startswith('回退-成本优先-'):
+                if name.startswith('机场名称3优先-'):
                     config['proxies'].append(rt.udp_proxy(label + '-udp', name))
                     choices.append(label + '-udp')
                 config['proxy-groups'].append(dict(name=name, type='select', proxies=choices))
@@ -444,36 +487,41 @@ def routing(source, mihomo, rules_dir):
         rt.start(config)
         cases = dict(zip(('www.google.com', 'dash.cloudflare.com', 'github.com',
                           'raw.githubusercontent.com', 'codeload.github.com'), FAMILIES))
-        entries = [('通用代理', '自动-质量优先', '回退-质量优先'),
-                   ('通用代理', '自动-成本优先', '回退-成本优先'),
-                   ('通用代理', '地区-日本-质量优先', '地区回退-日本-质量优先'),
-                   ('Google', '地区-台湾-成本优先', '地区回退-台湾-成本优先'),
-                   ('纯下载', '自动-下载-质量优先', '下载回退-质量优先'),
-                   ('纯下载', '自动-下载-成本优先', '下载回退-成本优先')]
+        entries = [('通用代理', '机场名称1优先', '机场名称1优先'),
+                   ('通用代理', '机场名称3优先', '机场名称3优先'),
+                   ('通用代理', '日本-机场名称1优先', '日本-机场名称1优先'),
+                   ('Google', '台湾-机场名称3优先', '台湾-机场名称3优先'),
+                   ('纯下载', '下载-机场名称1优先', '下载-机场名称1优先'),
+                   ('纯下载', '下载-机场名称3优先', '下载-机场名称3优先'),
+                   ('AI', '机场名称1优先', '机场名称1优先'),
+                   ('金融', '日本-机场名称3优先', '日本-机场名称3优先'),
+                   ('Talkatone', '美国-机场名称1优先', '美国-机场名称1优先'),
+                   ('台湾限定', '日本-机场名称3优先', '日本-机场名称3优先'),
+                   ('纯下载', '机场名称3优先', '机场名称3优先')]
         for business_name, entry, target in entries:
             config['rules'] = [f'NETWORK,tcp,{business_name}', f'NETWORK,udp,{business_name}', 'MATCH,DIRECT']
             rt.reload(config)
             rt.select(business_name, entry)
             for host, family in cases.items():
-                if business_name == '纯下载' and family in ('GitHub网页', 'GitHubRaw'):
+                if entry.startswith('下载-') and family in ('GitHub', 'GitHubRaw'):
                     try:
                         rt.request(host)
                     except (OSError, http.client.HTTPException, AssertionError):
                         continue
                     raise AssertionError(('下载入口不应接受此分支', entry, family))
-                expected = f'{target}-{family}探针'
+                expected = f'{target}-{family}'
                 actual = rt.request(host)
                 assert actual == expected, (entry, host, expected, actual)
         config['rules'] = ['NETWORK,tcp,通用代理', 'NETWORK,udp,通用代理', 'MATCH,DIRECT']
         rt.reload(config)
-        rt.select('通用代理', '自动-成本优先')
-        for host, family in [('api.github.com', 'GitHub网页'), ('release-assets.githubusercontent.com', 'GitHub归档'),
-                ('foo.github.io', 'GitHub网页'), ('gitbook.com', '通用'), ('foo.pages.dev', 'Cloudflare'),
-                ('unknown-cf.fixture.test', 'Cloudflare'), ('dns-failed.fixture.test', '通用')]:
-            assert rt.request(host) == f'回退-成本优先-{family}探针', (host, family)
+        rt.select('通用代理', '机场名称3优先')
+        for host, family in [('api.github.com', 'GitHub'), ('release-assets.githubusercontent.com', 'GitHub归档'),
+                ('foo.github.io', 'GitHub'), ('gitbook.com', 'Google'), ('foo.pages.dev', 'CF'),
+                ('unknown-cf.fixture.test', 'CF'), ('dns-failed.fixture.test', 'Google')]:
+            assert rt.request(host) == f'机场名称3优先-{family}', (host, family)
         # 每类一组 UDP 正反例，不再对同类所有域名重复等待超时。
         for host, family in cases.items():
-            name = f'回退-成本优先-{family}探针'
+            name = f'机场名称3优先-{family}'
             rt.select(name, 'fixture-' + name + '-udp')
             assert F.udp_request(rt.mixed, host, sockets) == name, host
             rt.select(name, 'fixture-' + name)
@@ -485,12 +533,12 @@ def routing(source, mihomo, rules_dir):
                 raise AssertionError(('UDP 不应泄漏', host, result))
         code, ips = F.query(dns_port, 'unknown-cf.fixture.test')
         assert code == 0 and ips[0].startswith('198.18.'), ips
-        name = '回退-成本优先-Cloudflare探针'
+        name = '机场名称3优先-CF'
         rt.select(name, 'fixture-' + name + '-udp')
         assert F.udp_request(rt.mixed, ips[0], sockets) == name
         rt.api('/configs', 'PATCH', {'mode': 'global'})
-        rt.select('GLOBAL', '地区回退-日本-成本优先-通用探针')
-        assert rt.request('github.com') == '地区回退-日本-成本优先-通用探针'
+        rt.select('GLOBAL', '日本-机场名称3优先-Google')
+        assert rt.request('github.com') == '日本-机场名称3优先-Google'
     print('PASS: 五类分类、固定地区/下载边界、UDP、Fake-IP/CF 与 GLOBAL', flush=True)
 
 
@@ -599,11 +647,11 @@ def main():
         F.snapshot(sources.values(), rules_dir)
         for name, source in sources.items():
             business(source, name, args.mihomo, rules_dir)
-        routing(sources[CANDIDATE], args.mihomo, rules_dir)
+        routing(sources[PRIMARY_CONFIG], args.mihomo, rules_dir)
         if args.suite == 'full':
-            node_filters(sources[CANDIDATE], args.mihomo)
-            health(sources[CANDIDATE], args.mihomo)
-            dns_policy(sources[CANDIDATE], args.mihomo)
+            node_filters(sources[PRIMARY_CONFIG], args.mihomo)
+            health(sources[PRIMARY_CONFIG], args.mihomo)
+            dns_policy(sources[PRIMARY_CONFIG], args.mihomo)
     print(f'PASS: {args.suite}', flush=True)
 
 
