@@ -3,6 +3,7 @@
 
 require "ipaddr"
 require "open3"
+require "optparse"
 require "set"
 require "tmpdir"
 require "yaml"
@@ -43,6 +44,32 @@ def duplicate_mapping_keys(path)
 
   walk.call(document.root, "$")
   duplicates
+end
+
+# 配置基础校验与产物校验互斥，兼容检查不能再次扫描/转换整库 MRS。
+config_paths = []
+OptionParser.new do |options|
+  options.banner = "Usage: ruby scripts/validate-rules.rb [--config FILE ...]"
+  options.on("--config FILE", "Only validate this configuration; repeat for multiple files") { |file| config_paths << file }
+end.parse!
+abort "Unexpected arguments: #{ARGV.join(' ')}" unless ARGV.empty?
+unless config_paths.empty?
+  config_paths.each do |config_path|
+    begin
+      duplicate_mapping_keys(config_path).each { |error| errors << "#{config_path}: #{error}" }
+      Dir.mktmpdir("mihomo-config-validation-") do |directory|
+        # 系统 timeout 同时终止内核，避免仅中止 Ruby 等待而遗留子进程。
+        stdout, stderr, status = Open3.capture3("timeout", "--kill-after=5s", "30s",
+                                              MIHOMO_BIN, "-t", "-d", directory, "-f", File.expand_path(config_path))
+        errors << "#{config_path}: mihomo test failed: #{stderr.strip}\n#{stdout.strip}" unless status.success?
+      end
+    rescue StandardError => e
+      errors << "#{config_path}: #{e.message}"
+    end
+  end
+  abort errors.join("\n") unless errors.empty?
+  puts "Validated #{config_paths.length} configurations."
+  exit 0
 end
 
 def add_duplicate_value_errors(errors, label, values)
@@ -243,27 +270,6 @@ Dir.mktmpdir("rules-validate") do |tmp_dir|
   end
 end
 
-config_paths = if ENV["MIHOMO_TEST_CONFIG"]
-                 [ENV.fetch("MIHOMO_TEST_CONFIG")]
-               else
-                 %w[configfull_new.yaml configfull_new_4.yaml].map { |name| File.join(ROOT, name) }
-               end
-config_paths.each do |config_path|
-  begin
-    duplicate_mapping_keys(config_path).each { |error| errors << "config: #{error}" }
-    stdout, stderr, status = Open3.capture3(
-      "python3", File.join(ROOT, "scripts/test-config-design.py"), "--static", "--config", config_path
-    )
-    errors << "config: design checks failed: #{stderr.strip}\n#{stdout.strip}" unless status.success?
-    Dir.mktmpdir("mihomo-config-validation-") do |directory|
-      stdout, stderr, status = Open3.capture3(MIHOMO_BIN, "-t", "-d", directory, "-f", config_path)
-      errors << "config: mihomo test failed: #{stderr.strip}\n#{stdout.strip}" unless status.success?
-    end
-  rescue StandardError => e
-    errors << "config: #{e.message}"
-  end
-end
-
 dev_source_path = File.join(ROOT, "scripts/data/dev-download.list")
 dev_yaml_path = File.join(ROOT, "rules/Domain/dev-download.yaml")
 dev_builder_path = File.join(ROOT, "scripts/build/dev-download.sh")
@@ -435,7 +441,7 @@ Dir.glob(File.join(ROOT, "scripts", "build", "*.sh")).sort.each do |script|
 end
 
 if errors.empty?
-  puts "Validated #{yaml_files.length} YAML and #{mrs_files.length} MRS files; config and ordering are consistent."
+  puts "Validated #{yaml_files.length} YAML and #{mrs_files.length} MRS files; source and generated rules are consistent."
   exit 0
 end
 

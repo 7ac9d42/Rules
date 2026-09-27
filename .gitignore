@@ -9,3 +9,7 @@
 
 # Local research and analysis notes
 /docs/
+
+# Python test caches
+__pycache__/
+*.py[cod]

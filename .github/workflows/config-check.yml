@@ -1,0 +1,75 @@
+name: Check Configurations
+
+on:
+  push:
+    branches: [main]
+    paths: &config_paths
+      - 'configfull*.yaml'
+      - 'configfull*.yaml.bak'
+      - 'scripts/test-config.py'
+      - 'scripts/mihomo_fixture.py'
+      - 'scripts/validate-rules.rb'
+      - '.github/workflows/config-check.yml'
+  pull_request:
+    branches: [main]
+    paths: *config_paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: config-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ runner.tool_cache }}/mihomo/v1.19.30
+          key: mihomo-${{ runner.os }}-${{ runner.arch }}-v1.19.30
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ runner.tool_cache }}/mihomo/v1.19.31
+          key: mihomo-${{ runner.os }}-${{ runner.arch }}-v1.19.31
+
+      - name: Install test dependencies and fixed kernels
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ruby python3
+          for version in v1.19.30 v1.19.31; do
+            binary="${RUNNER_TOOL_CACHE}/mihomo/${version}/mihomo"
+            if [[ ! -f "$binary" ]]; then
+              mkdir -p "${binary%/*}"
+              curl --fail --show-error --silent --location --max-time 120 \
+                "https://github.com/MetaCubeX/mihomo/releases/download/${version}/mihomo-linux-amd64-${version}.gz" \
+                -o "${RUNNER_TEMP}/mihomo-${version}.gz"
+              gunzip -c "${RUNNER_TEMP}/mihomo-${version}.gz" > "$binary"
+            fi
+            chmod +x "$binary"
+            version_output=$("$binary" -v)
+            printf '%s\n' "$version_output"
+            [[ "$version_output" == *"Mihomo Meta ${version} "* || "$version_output" == *"Mihomo Meta ${version#v} "* ]]
+          done
+
+      - name: Baseline runtime checks and shared rule snapshot
+        run: |
+          python3 scripts/test-config.py --suite full \
+            --mihomo "${RUNNER_TOOL_CACHE}/mihomo/v1.19.30/mihomo" \
+            --rules-dir "${RUNNER_TEMP}/config-rules"
+
+      - name: Compatibility checks using the same snapshot
+        run: |
+          python3 scripts/test-config.py --suite smoke \
+            --mihomo "${RUNNER_TOOL_CACHE}/mihomo/v1.19.31/mihomo" \
+            --rules-dir "${RUNNER_TEMP}/config-rules"

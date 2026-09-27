@@ -1,5 +1,10 @@
 name: Sync and Build Rules
 
+on:
+  schedule:
+    - cron: "0 0 * * *"  # 每天北京时间 08:00
+  workflow_dispatch:
+
 permissions:
   contents: write
 
@@ -7,173 +12,63 @@ concurrency:
   group: rules-write
   cancel-in-progress: false
 
-on:
-  schedule:
-    - cron: "0 0 * * *"  # 每天北京时间 08:00 执行
-  workflow_dispatch:
-
 jobs:
   sync_and_build:
-    name: Sync upstream and build all rules
     runs-on: ubuntu-latest
-
+    timeout-minutes: 45
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           ref: main
 
-      - name: Set up Git and sync upstream rules
+      - name: Sync upstream rules
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote add upstream https://github.com/Lanlan13-14/Rules.git ||
-            git remote set-url upstream https://github.com/Lanlan13-14/Rules.git
+          git remote add upstream https://github.com/Lanlan13-14/Rules.git
           git remote set-url --push upstream PUSH_DISABLED
           git fetch --depth=1 upstream main
-
-          # 精准镜像上游 rules/，包括上游删除；不触碰根目录及配置文件。
           git rm -r --ignore-unmatch rules/
           git checkout upstream/main -- rules/
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
 
-      - name: Resolve latest stable mihomo release
-        id: mihomo-version
-        run: |
-          set -euo pipefail
-          release_url=$(curl --fail --show-error --silent --location \
-            --output /dev/null --write-out '%{url_effective}' \
-            https://github.com/MetaCubeX/mihomo/releases/latest)
-          version=${release_url##*/}
-          if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Unexpected mihomo release tag: $version" >&2
-            exit 1
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Cache mihomo binary
-        id: cache-mihomo
-        uses: actions/cache@v6
+      - uses: actions/cache@v6
         with:
-          path: /usr/local/bin/mihomo
-          key: mihomo-bin-${{ runner.os }}-${{ steps.mihomo-version.outputs.version }}
+          path: ${{ runner.tool_cache }}/mihomo/v1.19.30
+          key: mihomo-${{ runner.os }}-${{ runner.arch }}-v1.19.30
 
-      - name: Cache mihomo v1.19.31 baseline binary
-        id: cache-mihomo-compat
-        uses: actions/cache@v6
-        with:
-          path: ${{ runner.tool_cache }}/mihomo/v1.19.31/mihomo
-          key: mihomo-bin-${{ runner.os }}-${{ runner.arch }}-v1.19.31
-
-      - name: Install dependencies and mihomo
+      - name: Install build dependencies and fixed baseline
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y jq ruby python3
-
-          if [[ "${{ steps.cache-mihomo.outputs.cache-hit }}" != "true" ]]; then
-            version="${{ steps.mihomo-version.outputs.version }}"
-            asset="mihomo-linux-amd64-v1-${version}.gz"
-            curl --fail --show-error --silent --location \
-              "https://github.com/MetaCubeX/mihomo/releases/download/${version}/${asset}" \
-              -o mihomo.gz
-            gunzip -c mihomo.gz > mihomo
-            chmod +x mihomo
-            sudo mv mihomo /usr/local/bin/
-          else
-            sudo chmod +x /usr/local/bin/mihomo
+          sudo apt-get install -y jq ruby
+          binary="${RUNNER_TOOL_CACHE}/mihomo/v1.19.30/mihomo"
+          if [[ ! -f "$binary" ]]; then
+            mkdir -p "${binary%/*}"
+            curl --fail --show-error --silent --location --max-time 120 \
+              https://github.com/MetaCubeX/mihomo/releases/download/v1.19.30/mihomo-linux-amd64-v1.19.30.gz \
+              -o "${RUNNER_TEMP}/mihomo.gz"
+            gunzip -c "${RUNNER_TEMP}/mihomo.gz" > "$binary"
           fi
-
-          mihomo -v
-
-      - name: Install mihomo v1.19.31 baseline binary
-        env:
-          MIHOMO_COMPAT_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.31/mihomo
-          MIHOMO_COMPAT_VERSION: v1.19.31
-        run: |
-          set -euo pipefail
-          if [[ "${{ steps.cache-mihomo-compat.outputs.cache-hit }}" != "true" ]]; then
-            compat_dir="${MIHOMO_COMPAT_BIN%/*}"
-            archive="${RUNNER_TEMP}/mihomo-${MIHOMO_COMPAT_VERSION}.gz"
-            asset="mihomo-linux-amd64-${MIHOMO_COMPAT_VERSION}.gz"
-            mkdir -p "$compat_dir"
-            curl --fail --show-error --silent --location \
-              "https://github.com/MetaCubeX/mihomo/releases/download/${MIHOMO_COMPAT_VERSION}/${asset}" \
-              -o "$archive"
-            gunzip -c "$archive" > "$MIHOMO_COMPAT_BIN"
-          fi
-
-          chmod +x "$MIHOMO_COMPAT_BIN"
-          version_output=$("$MIHOMO_COMPAT_BIN" -v)
+          chmod +x "$binary"
+          version_output=$("$binary" -v)
           printf '%s\n' "$version_output"
-          if [[ "$version_output" != *"Mihomo Meta ${MIHOMO_COMPAT_VERSION} "* &&
-                "$version_output" != *"Mihomo Meta ${MIHOMO_COMPAT_VERSION#v} "* ]]; then
-            echo "Unexpected baseline mihomo version" >&2
-            exit 1
-          fi
+          [[ "$version_output" == *"Mihomo Meta v1.19.30 "* || "$version_output" == *"Mihomo Meta 1.19.30 "* ]]
+          echo "${binary%/*}" >> "$GITHUB_PATH"
 
-      - name: Build all rules
+      - name: Build and validate rule artifacts once
         run: |
           set -euo pipefail
           for script in scripts/build/*.sh; do
-            [[ -f "$script" ]] || continue
-            echo "Running $script ..."
             bash "$script"
           done
-
-      - name: Validate generated rules and configuration
-        run: |
-          set -euo pipefail
           ruby scripts/validate-rules.rb
 
-      - name: Prepare and verify real rule snapshot
-        run: |
-          set -euo pipefail
-          python3 scripts/test-real-rule-routing.py \
-            --prepare-rules --rules-dir "${RUNNER_TEMP}/rule-snapshot" \
-            --config configfull_new.yaml
-          python3 scripts/test-real-rule-routing.py \
-            --rules-dir "${RUNNER_TEMP}/rule-snapshot" \
-            --config configfull_new_4.yaml
-
-      - name: Verify fallback, lifecycle, UDP routing and DNS policy
-        timeout-minutes: 30
-        run: |
-          set -euo pipefail
-          for config in configfull_new.yaml configfull_new_4.yaml; do
-            python3 scripts/test-config-design.py --config "$config"
-            MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-node-filters.py
-            MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-rematch-udp.py
-            timeout --signal=TERM --kill-after=15s 10m \
-              python3 scripts/test-runtime-lifecycle.py --config "$config"
-          done
-          python3 scripts/test-dns-policy.py
-
-      - name: Verify runtime with pinned mihomo v1.19.31
-        if: steps.mihomo-version.outputs.version != 'v1.19.31'
-        timeout-minutes: 30
-        env:
-          MIHOMO_BIN: ${{ runner.tool_cache }}/mihomo/v1.19.31/mihomo
-        run: |
-          set -euo pipefail
-          ruby scripts/validate-rules.rb
-          for config in configfull_new.yaml configfull_new_4.yaml; do
-            python3 scripts/test-config-design.py --config "$config"
-            MIHOMO_DESIGN_CONFIG="$config" python3 scripts/test-node-filters.py
-            python3 scripts/test-rematch-udp.py --config "$config"
-            python3 scripts/test-real-rule-routing.py \
-              --rules-dir "${RUNNER_TEMP}/rule-snapshot" --config "$config"
-            timeout --signal=TERM --kill-after=15s 10m \
-              python3 scripts/test-runtime-lifecycle.py --config "$config"
-          done
-          python3 scripts/test-dns-policy.py
-
-      - name: Commit and push rule changes
+      - name: Publish rule changes
         run: |
           set -euo pipefail
           git add rules/
