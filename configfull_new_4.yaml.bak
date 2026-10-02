@@ -1,5 +1,5 @@
-# 四机场模板：填写真实的机场名称2家宽订阅后使用。
-# 使用支持 rematch 的 Mihomo；固定验证版本为 v1.19.31。
+# 四机场重设计：保留机场名称2家宽定位，敏感业务限定出口，推送与下载独立。
+# 兼容基线 Mihomo v1.19.30；同时验证 v1.19.31，不依赖其独有特性。
 # 机场名称1、机场名称2、机场名称3仅同地区测速；先同机场换地区，再跨机场；纯下载地区顺序独立。
 # 使用说明与维护入口见 README.md。
 
@@ -215,7 +215,7 @@ sniffer:
 tun:
   enable: true
   stack: system
-  device: tun0  # macOS 改用 utun 开头；auto-redirect 仅 Linux 生效。
+  # 设备名由内核或客户端接管；auto-redirect 仅 Linux 生效。
   mtu: 9000  # TUN MTU；按目标设备验证，不能直接等同物理网卡 MTU。
   dns-hijack:
     - "any:53"
@@ -305,46 +305,28 @@ dns:
     # IP 字面量 DoH 仅用于引导，避免外部 53 端口回环。
     # 当前 WRT 直连 1.1.1.1:443 超时，不将其作为引导备用。
     - https://223.5.5.5/dns-query
-  proxy-server-nameserver:
+  proxy-server-nameserver: &dns_direct_servers
     - "https://dns.alidns.com/dns-query#DIRECT"
     - "https://doh.pub/dns-query#DIRECT"
-  direct-nameserver:
-    - "https://dns.alidns.com/dns-query#DIRECT"
-    - "https://doh.pub/dns-query#DIRECT"
+  direct-nameserver: *dns_direct_servers
   # 本地域由上游 MosDNS/本地 DNS 截获，漏入此处返回 NXDOMAIN。
   # 不回退 system/DHCP；plex.direct 使用公开 DNS。
   nameserver-policy:
-    "+.argotunnel.com":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
-    "+.plex.direct":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
+    "+.argotunnel.com": *dns_direct_servers
+    "+.plex.direct": *dns_direct_servers
     "rule-set:private_domain": "rcode://name_error"
     # 与提前匹配的跨区流量规则保持一致，不由国内父域决定解析器。
-    "hk.tv.global.mi.com":
+    "hk.tv.global.mi.com": &dns_remote_servers
       - https://cloudflare-dns.com/dns-query
       - https://dns.google/dns-query
-    "rule-set:google_domain,biliintl_domain,TVB_domain,proxy_domain":
-      - https://cloudflare-dns.com/dns-query
-      - https://dns.google/dns-query
-    "rule-set:cn_domain":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
+    "rule-set:google_domain,biliintl_domain,TVB_domain,proxy_domain": *dns_remote_servers
+    "rule-set:cn_domain": *dns_direct_servers
     # 固定直连的 Real-IP 业务也需在首次查询时指定国内解析器。
-    "rule-set:game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
-    "rule-set:wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
-    "rule-set:NetEaseMusic_domain,media_cn_domain,iptv_domain":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
+    "rule-set:game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain": *dns_direct_servers
+    "rule-set:wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain": *dns_direct_servers
+    "rule-set:NetEaseMusic_domain,media_cn_domain,iptv_domain": *dns_direct_servers
   direct-nameserver-follow-policy: true
-  nameserver:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.google/dns-query
+  nameserver: *dns_remote_servers
 
 # 政策只定义默认顺序和候选范围，业务 select 各自保存选择。
 Business_Select: &Business_Select
@@ -352,21 +334,6 @@ Business_Select: &Business_Select
   use: *use_ap_all
   # 手选复用 provider 通用探测；专用自动池另行注册 CF/GitHub 探针。
   empty-fallback: REJECT
-
-Highest_policy: &Highest_policy
-  <<: *Business_Select
-  proxies:
-    - AI-机场名称1-日本
-    - 机场名称1优先-自动
-    - 机场名称2优先-自动
-    - 机场名称3优先-自动
-    - 自建/家宽节点
-    - 香港·机场名称1优先
-    - 日本·机场名称1优先
-    - 新加坡·机场名称1优先
-    - 台湾·机场名称1优先
-    - 美国·机场名称1优先
-    - DIRECT
 
 Normal_policy: &Normal_policy
   <<: *Business_Select
@@ -448,19 +415,31 @@ proxy-groups:
     <<: *Direct_Select
     icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
   - name: AI
-    <<: *Highest_policy
+    <<: *Business_Select
+    # 敏感业务仅提供自己的受限自动池；其他机场/地区由本业务直接手选实际节点。
+    # 不引用共享的自建/家宽手选组，避免其他业务的操作改变此处出口。
+    proxies: [AI-机场名称1-日本, DIRECT]
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
   - name: 金融
-    <<: *High_policy
+    <<: *Business_Select
+    proxies: [金融-机场名称2-香港, DIRECT]
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/wise.png
   - name: Talkatone
-    <<: *High_policy
+    <<: *Business_Select
+    proxies: [Talkatone-机场名称2-香港, DIRECT]
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
   - name: Google
     <<: *Cost_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
+  - name: FCM
+    <<: *Normal_policy
+    # Android 推送连接独立于 Google 的大流量业务；iOS APNs 仍遵循 Apple 规则。
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   - name: Microsoft
     <<: *Normal_policy
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
+  - name: OneDrive
+    <<: *Cost_policy
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
   - name: Telegram
     <<: *Normal_policy
@@ -600,11 +579,24 @@ proxy-groups:
     icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"
 
   # 通用节点池与机场回退
-  # 独立 url-test 保存 AI 自己的选点与容差状态；provider 同 URL 探测仍共享。
+  # 敏感业务各自保存选点与容差状态；同机场同 URL 的健康数据仍由 provider 共享。
+  # 空池拒绝；节点全部探测失败仍可能尝试池内首节点，但不会跨机场/地区。
   - name: AI-机场名称1-日本
     <<: *Cloudflare_Urltest_Base
     use: [Airport_01]
     filter: *region_jp
+    exclude-filter: *exclude_lowrate
+
+  - name: 金融-机场名称2-香港
+    <<: *Cloudflare_Urltest_Base
+    use: [Airport_02]
+    filter: *region_hk
+    exclude-filter: *exclude_lowrate
+
+  - name: Talkatone-机场名称2-香港
+    <<: *Cloudflare_Urltest_Base
+    use: [Airport_02]
+    filter: *region_hk
     exclude-filter: *exclude_lowrate
 
   - name: 机场名称1-香港
@@ -1718,14 +1710,14 @@ sub-rules:
     - RULE-SET,bahamut_domain,台湾限定
     - RULE-SET,ai!cn_domain,AI
     - RULE-SET,youtube_domain,境外影音
-    - RULE-SET,fcm_domain,Google
+    - RULE-SET,fcm_domain,FCM
     - RULE-SET,googlevpn_domain,Google
     # 内容站先于承载它们的 Google/GitHub 等平台。
     - RULE-SET,twitch_domain,境外影音
     - RULE-SET,porn_domain,境外影音
     - RULE-SET,github_domain,开发下载
     - RULE-SET,gitbook_domain,开发下载
-    - RULE-SET,onedrive_domain,Microsoft
+    - RULE-SET,onedrive_domain,OneDrive
     - RULE-SET,line_domain,境外通信
     - RULE-SET,talkatone_domain,Talkatone
     - RULE-SET,discord_domain,境外通信
@@ -1769,6 +1761,8 @@ sub-rules:
     - RULE-SET,telegram_ip,Telegram
     - RULE-SET,talkatone_ip,Talkatone
     - RULE-SET,netflix_ip,NETFLIX
+    # 仅补足缺失域名的 Google 推送连接；不能把所有 5228 或 Google 443 流量归入 FCM。
+    - AND,((NETWORK,tcp),(DST-PORT,5228-5230),(OR,((RULE-SET,google_ip,no-resolve),(RULE-SET,google_asn_cn,no-resolve)))),FCM
     - RULE-SET,google_asn_cn,Google
     - RULE-SET,google_ip,Google
     - RULE-SET,facebook_ip,境外社媒

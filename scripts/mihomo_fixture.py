@@ -357,7 +357,7 @@ def prepare_rules(source, rules_dir, runtime):
     return prepared
 
 def snapshot(sources, directory):
-    """一次下载四配置所需并集；已有快照只校验，不悄悄补齐或替换。"""
+    """一次下载待测配置所需并集；已有快照只校验，不悄悄补齐或替换。"""
     providers = {}
     for source in sources:
         for name, provider in source['rule-providers'].items():

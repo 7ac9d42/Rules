@@ -1,0 +1,21 @@
+# 四机场模型；机场名称2为家宽，机场名称4为末级备用。
+# 优先顺序不含机场名称4；生成器统一在末尾追加备用。
+---
+active-airports: [机场名称1, 机场名称2, 机场名称3, 机场名称4]
+priority-order:
+  机场名称1优先: [机场名称1, 机场名称2, 机场名称3]
+  机场名称2优先: [机场名称2, 机场名称1, 机场名称3]
+  机场名称3优先: [机场名称3, 机场名称1, 机场名称2]
+sensitive-targets:
+  AI: {airport: 机场名称1, region: 日本}
+  金融: {airport: 机场名称2, region: 香港}
+  Talkatone: {airport: 机场名称2, region: 香港}
+business-defaults:
+  金融: 专用-机场名称2-香港-Google
+  Talkatone: 专用-机场名称2-香港-Google
+  Netflix: 机场名称2优先
+  Disney+: 机场名称2优先
+  HBO: 机场名称2优先
+  Prime Video: 机场名称2优先
+  Spotify: 机场名称2优先
+  Reddit: 机场名称2优先

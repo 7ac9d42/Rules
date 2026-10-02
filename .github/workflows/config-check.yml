@@ -6,6 +6,8 @@ on:
     paths: &config_paths
       - 'configfull*.yaml'
       - 'configfull*.yaml.bak'
+      - 'config-source/**'
+      - 'scripts/build-config.rb'
       - 'scripts/test-config.py'
       - 'scripts/mihomo_fixture.py'
       - 'scripts/validate-rules.rb'
@@ -62,13 +64,13 @@ jobs:
             [[ "$version_output" == *"Mihomo Meta ${version} "* || "$version_output" == *"Mihomo Meta ${version#v} "* ]]
           done
 
-      - name: Baseline runtime checks and shared rule snapshot
+      - name: Baseline checks for both models and shared rule snapshot
         run: |
           python3 scripts/test-config.py --suite full \
             --mihomo "${RUNNER_TOOL_CACHE}/mihomo/v1.19.30/mihomo" \
             --rules-dir "${RUNNER_TEMP}/config-rules"
 
-      - name: Compatibility checks using the same snapshot
+      - name: Compatibility checks for both models using the same snapshot
         run: |
           python3 scripts/test-config.py --suite smoke \
             --mihomo "${RUNNER_TOOL_CACHE}/mihomo/v1.19.31/mihomo" \

@@ -1,84 +1,110 @@
-# 三机场配置：层级决定业务默认顺序，业务入口独立手选。
-# 使用支持 rematch 的 Mihomo；固定验证版本为 v1.19.31。
+# 三机场五探针：统一目标分类、固定地区分向、下载扁平回退。
+# 兼容基线 Mihomo v1.19.30；同时验证 v1.19.31，不依赖其独有特性。
 # 机场名称1、机场名称3仅同地区测速；先同机场换地区，再跨机场；纯下载地区顺序独立。
-# 使用说明与维护入口见 README.md。
+# 命名：机场名称x优先=自动入口；地区-机场名称x优先=固定地区入口。
+# 物理组追加 Google/CF/GitHub/GitHubRaw/GitHub归档；机场名称x-地区-探针=同区测速。
+# 使用说明与旧名称迁移见 README.md。
 
 # 探测与回退
 # use 组复用 provider 探测；额外 URL 的周期与超时仍由 provider 决定。
-Urltest_Base: &Urltest_Base
+url_test_base: &url_test_base
   type: url-test
-  timeout: 3500
+  timeout: 5000
   tolerance: 50
   max-failed-times: 3
   empty-fallback: REJECT
   expected-status: 204
   hidden: true
 
-# GitHub /_ping 返回 200；CF、Google 探针返回 204。
-GitHub_Urltest_Base: &GitHub_Urltest_Base
-  <<: *Urltest_Base
-  url: &github_test_url "https://codeload.github.com/_ping"
+# GitHub 归档 /_ping 返回 200；CF、Google 探针返回 204。
+github_archive_url_test_base: &github_archive_url_test_base
+  <<: *url_test_base
+  url: &github_archive_test_url "https://codeload.github.com/_ping"
   expected-status: 200
 
-Cloudflare_Urltest_Base: &Cloudflare_Urltest_Base
-  <<: *Urltest_Base
+cloudflare_url_test_base: &cloudflare_url_test_base
+  <<: *url_test_base
   url: &cloudflare_test_url "https://cp.cloudflare.com/generate_204"
   expected-status: 204
 
 # 空池拒绝；全部探测失败仍可能尝试首节点；连接失败可触发复测。
-Fallback_Base: &Fallback_Base
+fallback_base: &fallback_base
   type: fallback
   url: &google_test_url "https://www.gstatic.com/generate_204"
   expected-status: 204
-  timeout: 3500
+  timeout: 5000
   interval: 30
   max-failed-times: 3
   lazy: true
   empty-fallback: REJECT
 
-GitHub_Fallback_Base: &GitHub_Fallback_Base
-  <<: *Fallback_Base
-  url: *github_test_url
+github_archive_fallback_base: &github_archive_fallback_base
+  <<: *fallback_base
+  url: *github_archive_test_url
   expected-status: 200
   hidden: true
 
-Cloudflare_Fallback_Base: &Cloudflare_Fallback_Base
-  <<: *Fallback_Base
+cloudflare_fallback_base: &cloudflare_fallback_base
+  <<: *fallback_base
   url: *cloudflare_test_url
   expected-status: 204
+  hidden: true
+
+
+# 网页与 Raw 独立判断；不将 codeload 健康等同于整个 GitHub 可用。
+github_web_url_test_base: &github_web_url_test_base
+  <<: *url_test_base
+  url: &github_web_test_url "https://github.com/robots.txt"
+  expected-status: 200
+
+github_web_fallback_base: &github_web_fallback_base
+  <<: *fallback_base
+  url: *github_web_test_url
+  expected-status: 200
+  hidden: true
+
+github_raw_url_test_base: &github_raw_url_test_base
+  <<: *url_test_base
+  url: &github_raw_test_url "https://raw.githubusercontent.com/MetaCubeX/mihomo/v1.19.30/README.md"
+  expected-status: 200
+
+github_raw_fallback_base: &github_raw_fallback_base
+  <<: *fallback_base
+  url: *github_raw_test_url
+  expected-status: 200
   hidden: true
 
 # 机场名称4按地区排序兜底，未知地区排最后。
 reserve_region_order: &reserve_region_order "(?i)(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong)`(?i)(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)`(?i)(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore)`(?i)(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)`(?i)(台湾|台灣|臺灣|🇹🇼|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)`(?i)(🇦🇱|🇦🇩|🇦🇹|🇧🇾|🇧🇪|🇧🇦|🇧🇬|🇭🇷|🇨🇾|🇨🇿|🇩🇰|🇪🇪|🇫🇮|🇫🇷|🇩🇪|🇬🇷|🇭🇺|🇮🇸|🇮🇪|🇮🇹|🇽🇰|🇱🇻|🇱🇮|🇱🇹|🇱🇺|🇲🇹|🇲🇩|🇲🇨|🇲🇪|🇳🇱|🇲🇰|🇳🇴|🇵🇱|🇵🇹|🇷🇴|🇷🇺|🇸🇲|🇷🇸|🇸🇰|🇸🇮|🇪🇸|🇸🇪|🇨🇭|🇹🇷|🇺🇦|🇬🇧|🇻🇦|欧洲|歐洲|欧盟|歐盟|英国|英國|德国|德國|法国|法國|荷兰|荷蘭|瑞士|瑞典|挪威|芬兰|芬蘭|丹麦|丹麥|意大利|義大利|西班牙|葡萄牙|波兰|波蘭|奥地利|奧地利|爱尔兰|愛爾蘭|比利时|比利時|\\b(?:United ?Kingdom|Britain|England|London|Germany|Frankfurt|Berlin|Munich|France|Paris|Netherlands|Amsterdam|Switzerland|Zurich|Sweden|Stockholm|Norway|Oslo|Finland|Helsinki|Denmark|Copenhagen|Italy|Milan|Rome|Spain|Madrid|Portugal|Lisbon|Poland|Warsaw|Austria|Vienna|Ireland|Dublin|Belgium|Brussels|Romania|Bucharest|Czech(?:ia| Republic)?|Prague|Hungary|Budapest|Greece|Athens|Iceland|Luxembourg|Russia|Moscow|Turkey|Istanbul|Ukraine|Kyiv|Kiev|UK|GB|DE|FR|NL|CH|SE|NO|FI|DK|IT|ES|PT|PL|AT|IE|BE|RO|CZ|HU|GR|IS|LU|RU|TR|UA)\\b)`.*"
 
 # 订阅与规则基础参数
-PProviders: &PProviders
+proxy_provider_base: &proxy_provider_base
   type: http
   interval: 86400
   health-check:
     enable: true
     url: *google_test_url
     expected-status: 204
-    timeout: 3500
+    timeout: 5000
     interval: 60
     lazy: false
   exclude-filter: '(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\s\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\s*[:：]\s*(?:[0-9]|∞|Unlimited)|(?:^|[\s\[【(（_|｜丨-])Email\s*[:：]\s*\S+@|(?:^|[\s\[【(（_|｜丨-])Panel\s*[:：]|(?:^|[\s\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\s\]】)）|｜丨:：_-]))'
 
-Ruleset_Domain_Base: &domain
+rule_provider_domain_base: &rule_provider_domain_base
   type: http
   interval: 86400
   behavior: domain
   format: mrs
   proxy: 规则更新
 
-Ruleset_IP_Base: &ip
+rule_provider_ip_base: &rule_provider_ip_base
   type: http
   interval: 86400
   behavior: ipcidr
   format: mrs
   proxy: 规则更新
 
-Ruleset_Classical_Base: &classical
+rule_provider_classical_base: &rule_provider_classical_base
   type: http
   interval: 86400
   behavior: classical
@@ -101,43 +127,64 @@ region_download: &region_download "(?i)(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong 
 region_tw: &region_tw "(?i)(台湾|台灣|臺灣|🇹🇼|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)"
 
 # 家宽入口仅认明确标签；CF、运营商名称不能证明出口是家宽。
-home_only: &home_only "(?i)(自建|家宽|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))"
+filter_home: &filter_home "(?i)(自建|家宽|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))"
 
 # Emby：港日新 0<倍率≤0.5 或 MITM；倍率须带 x/倍及数字边界。
-lowrate_mitm: &lowrate_mitm "(?i)(?:(?:香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong|日本|🇯🇵|\\bJP[0-9]*\\b|Japan|新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore).*(?:(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub)|(?:(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub).*(?:香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong|日本|🇯🇵|\\bJP[0-9]*\\b|Japan|新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))"
+filter_lowrate_or_mitm: &filter_lowrate_or_mitm "(?i)(?:(?:香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong|日本|🇯🇵|\\bJP[0-9]*\\b|Japan|新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore).*(?:(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub)|(?:(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub).*(?:香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong|日本|🇯🇵|\\bJP[0-9]*\\b|Japan|新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))"
 
 # 普通自动池排除 ≤0.3x、≥5x 及 BETA。
-exclude_lowrate: &exclude_lowrate "(?i)(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))"
+exclude_standard_auto: &exclude_standard_auto "(?i)(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))"
 
 # 机场名称3美国仅豁免低倍率，不豁免 BETA、高倍率等质量限制。
-exclude_us_3: &exclude_us_3 "(?i)(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.]))"
+exclude_airport_03_us: &exclude_airport_03_us "(?i)(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.]))"
 
 # 下载另排除 MITM 等特殊用途；倍率不代表速度。
-exclude_download_1: &exclude_download_1 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|Hong ?Kong 0[2-5](?:\\D|$))"
+exclude_download_airport_01: &exclude_download_airport_01 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|Hong ?Kong 0[2-5](?:\\D|$))"
 
 # 机场名称3下载仅美国豁免低倍率；日新排除纯 CTCU，保留 CTCUCM。
-exclude_download_3: &exclude_download_3 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z]))"
+exclude_download_airport_03: &exclude_download_airport_03 "(?i)(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z]))"
 
-use_ap_all: &use_ap_all [Airport_01, Airport_03, Airport_04]
+# 额外探针只接收正向 filter；完整谓词保持原候选范围，同时约束探测范围。
+# 同一 provider + URL 按所有引用组的 filter 并集探测；手选台湾/低倍率组仍保留 CF 探针。
+# YAML 不拼接正则字符串；调整地区/倍率边界时同步 filter_auto_* / filter_download_* 完整谓词，并运行准入与探针测试。
+filter_auto_hk_stable: &filter_auto_hk_stable "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:^(?!.*Hong ?Kong 0[2-5](?:\\D|$)).*(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong)))[\\s\\S]*$"
+filter_auto_jp: &filter_auto_jp "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)))[\\s\\S]*$"
+filter_auto_sg: &filter_auto_sg "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
+filter_auto_us: &filter_auto_us "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)))[\\s\\S]*$"
+filter_auto_hk: &filter_auto_hk "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong)))[\\s\\S]*$"
+filter_auto_jp_no_ctcu: &filter_auto_jp_no_ctcu "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:^(?!.*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z])).*(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)))[\\s\\S]*$"
+filter_auto_sg_no_ctcu: &filter_auto_sg_no_ctcu "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:^(?!.*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z])).*(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
+filter_auto_airport_03_us: &filter_auto_airport_03_us "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)))[\\s\\S]*$"
+filter_download_airport_03_jp: &filter_download_airport_03_jp "(?i)^(?![\\s\\S]*(?:(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z]))))(?=[\\s\\S]*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)))[\\s\\S]*$"
+filter_download_airport_03_sg: &filter_download_airport_03_sg "(?i)^(?![\\s\\S]*(?:(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z]))))(?=[\\s\\S]*(?:(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
+filter_download_airport_03_us: &filter_download_airport_03_us "(?i)^(?![\\s\\S]*(?:(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z]))))(?=[\\s\\S]*(?:(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)))[\\s\\S]*$"
+filter_download_airport_03_hk: &filter_download_airport_03_hk "(?i)^(?![\\s\\S]*(?:(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|^(?!.*(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)).*(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|^(?=.*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)|(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore))).*(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z]))))(?=[\\s\\S]*(?:(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong)))[\\s\\S]*$"
+filter_download_airport_01_jp: &filter_download_airport_01_jp "(?i)^(?![\\s\\S]*(?:(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|Hong ?Kong 0[2-5](?:\\D|$))))(?=[\\s\\S]*(?:(日本|🇯🇵|\\bJP[0-9]*\\b|Japan)))[\\s\\S]*$"
+filter_download_airport_01_sg: &filter_download_airport_01_sg "(?i)^(?![\\s\\S]*(?:(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|Hong ?Kong 0[2-5](?:\\D|$))))(?=[\\s\\S]*(?:(新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
+filter_download_airport_01_us: &filter_download_airport_01_us "(?i)^(?![\\s\\S]*(?:(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|Hong ?Kong 0[2-5](?:\\D|$))))(?=[\\s\\S]*(?:(美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)))[\\s\\S]*$"
+filter_download_airport_01_hk: &filter_download_airport_01_hk "(?i)^(?![\\s\\S]*(?:(?:BETA|wcloud|MITM|pornhub|\\btraffic\\b|(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)(?:倍|x)(?![0-9A-Za-z.])|(?<![0-9.])(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?(?:倍|x)(?![0-9A-Za-z.])|Hong ?Kong 0[2-5](?:\\D|$))))(?=[\\s\\S]*(?:(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong)))[\\s\\S]*$"
+filter_download_airport_04_other: &filter_download_airport_04_other "(?i)^(?![\\s\\S]*(?:(香港|港|🇭🇰|\\bHK[0-9]*\\b|Hong ?Kong|日本|🇯🇵|\\bJP[0-9]*\\b|Japan|新加坡|狮城|🇸🇬|\\bSG[0-9]*\\b|Singapore|美国|🇺🇸|🇺🇲|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
+
+all_airport_providers: &all_airport_providers [Airport_01, Airport_03, Airport_04]
 
 # 订阅：固定 provider 键名；只改 url 及非空、唯一的显示前缀。
 proxy-providers:
   Airport_01:
-    <<: *PProviders
+    <<: *proxy_provider_base
     proxy: DIRECT
     url: "订阅链接1"
     override:
       additional-prefix: '[机场名称1]'
       skip-cert-verify: false
   Airport_03:
-    <<: *PProviders
+    <<: *proxy_provider_base
     proxy: DIRECT
     url: "订阅链接3"
     override:
       additional-prefix: '[机场名称3]'
       skip-cert-verify: false
   Airport_04:
-    <<: *PProviders
+    <<: *proxy_provider_base
     proxy: DIRECT
     url: "订阅链接4"
     override:
@@ -205,7 +252,7 @@ sniffer:
 tun:
   enable: true
   stack: system
-  device: tun0  # macOS 改用 utun 开头；auto-redirect 仅 Linux 生效。
+  device: tun0  # 裸核启动使用；安卓与路由客户端可覆写。macOS 改用 utun 开头。
   mtu: 9000  # TUN MTU；按目标设备验证，不能直接等同物理网卡 MTU。
   dns-hijack:
     - "any:53"
@@ -295,1231 +342,2189 @@ dns:
     # IP 字面量 DoH 仅用于引导，避免外部 53 端口回环。
     # 当前 WRT 直连 1.1.1.1:443 超时，不将其作为引导备用。
     - https://223.5.5.5/dns-query
-  proxy-server-nameserver:
+  proxy-server-nameserver: &dns_direct_servers
     - "https://dns.alidns.com/dns-query#DIRECT"
     - "https://doh.pub/dns-query#DIRECT"
-  direct-nameserver:
-    - "https://dns.alidns.com/dns-query#DIRECT"
-    - "https://doh.pub/dns-query#DIRECT"
+  direct-nameserver: *dns_direct_servers
   # 本地域由上游 MosDNS/本地 DNS 截获，漏入此处返回 NXDOMAIN。
   # 不回退 system/DHCP；plex.direct 使用公开 DNS。
   nameserver-policy:
-    "+.argotunnel.com":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
-    "+.plex.direct":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
+    "+.argotunnel.com": *dns_direct_servers
+    "+.plex.direct": *dns_direct_servers
     "rule-set:private_domain": "rcode://name_error"
     # 与提前匹配的跨区流量规则保持一致，不由国内父域决定解析器。
-    "hk.tv.global.mi.com":
+    "hk.tv.global.mi.com": &dns_remote_servers
       - https://cloudflare-dns.com/dns-query
       - https://dns.google/dns-query
-    "rule-set:google_domain,biliintl_domain,TVB_domain,proxy_domain":
-      - https://cloudflare-dns.com/dns-query
-      - https://dns.google/dns-query
-    "rule-set:cn_domain":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
+    "rule-set:google_domain,biliintl_domain,TVB_domain,proxy_domain": *dns_remote_servers
+    "rule-set:cn_domain": *dns_direct_servers
     # 固定直连的 Real-IP 业务也需在首次查询时指定国内解析器。
-    "rule-set:game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
-    "rule-set:wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
-    "rule-set:NetEaseMusic_domain,media_cn_domain,iptv_domain":
-      - "https://dns.alidns.com/dns-query#DIRECT"
-      - "https://doh.pub/dns-query#DIRECT"
+    "rule-set:game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain": *dns_direct_servers
+    "rule-set:wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain": *dns_direct_servers
+    "rule-set:NetEaseMusic_domain,media_cn_domain,iptv_domain": *dns_direct_servers
   direct-nameserver-follow-policy: true
-  nameserver:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.google/dns-query
+  nameserver: *dns_remote_servers
 
-# 政策只定义默认顺序和候选范围，业务 select 各自保存选择。
-Business_Select: &Business_Select
+# 机场优先表示固定回退顺序；业务默认值不限制手选范围。
+# 各业务独立保存选择；选用家宽/低倍率辅助组时共享该辅助组内部选择。
+business_select_base: &business_select_base
   type: select
-  use: *use_ap_all
-  # 手选复用 provider 通用探测；专用自动池另行注册 CF/GitHub 探针。
+  use: *all_airport_providers
+  # 不在业务层注册额外探针；复用物理池和 provider 的既有健康检查。
   empty-fallback: REJECT
 
-Highest_policy: &Highest_policy
-  <<: *Business_Select
+airport_01_policy: &airport_01_policy
+  <<: *business_select_base
   proxies:
-    - AI-机场名称1-日本
-    - 机场名称1优先-自动
-    - 机场名称3优先-自动
+    - 机场名称1优先
+    - 机场名称3优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 下载-机场名称1优先
+    - 下载-机场名称3优先
     - 自建/家宽节点
-    - 香港·机场名称1优先
-    - 日本·机场名称1优先
-    - 新加坡·机场名称1优先
-    - 台湾·机场名称1优先
-    - 美国·机场名称1优先
+    - 低倍率/MITM节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
     - DIRECT
 
-Normal_policy: &Normal_policy
-  <<: *Business_Select
+airport_03_policy: &airport_03_policy
+  <<: *business_select_base
   proxies:
-    - 机场名称1优先-自动
-    - 机场名称3优先-自动
+    - 机场名称3优先
+    - 机场名称1优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 下载-机场名称1优先
+    - 下载-机场名称3优先
     - 自建/家宽节点
-    - 香港·机场名称1优先
-    - 日本·机场名称1优先
-    - 新加坡·机场名称1优先
-    - 台湾·机场名称1优先
-    - 美国·机场名称1优先
+    - 低倍率/MITM节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
     - DIRECT
 
-High_policy: &High_policy
-  <<: *Normal_policy
-
-Cost_policy: &Cost_policy
-  <<: *Business_Select
-  proxies:
-    - 机场名称3优先-自动
-    - 机场名称1优先-自动
-    - 自建/家宽节点
-    - 香港·机场名称3优先
-    - 日本·机场名称3优先
-    - 新加坡·机场名称3优先
-    - 台湾·机场名称3优先
-    - 美国·机场名称3优先
-    - DIRECT
-
-Direct_Select: &Direct_Select
-  <<: *Business_Select
+direct_policy: &direct_policy
+  <<: *business_select_base
   proxies:
     - DIRECT
-    - 机场名称3优先-自动
-    - 机场名称1优先-自动
+    - 机场名称1优先
+    - 机场名称3优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 下载-机场名称1优先
+    - 下载-机场名称3优先
     - 自建/家宽节点
-    - 香港·机场名称3优先
-    - 日本·机场名称3优先
-    - 新加坡·机场名称3优先
-    - 台湾·机场名称3优先
-    - 美国·机场名称3优先
+    - 低倍率/MITM节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
 
-# 自动链路按 CF/GitHub/通用探针分流；GLOBAL 使用可直接拨号的池。
+# 规则模式普通自动入口共用目标分类；GLOBAL 仅引用可直接拨号的池。
+filter_auto_airport_01_tw: &filter_auto_airport_01_tw "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|🇹🇼|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
+
+filter_auto_airport_03_tw: &filter_auto_airport_03_tw "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|🇹🇼|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
+
+# target-rematch-name 只记录入口政策；所有普通入口共用下面同一张目标分类表。
 proxies:
-  - {name: 业务分流入口, type: rematch, target-sub-rule: 业务分流}
-  - {name: 机场名称1优先-自动, type: rematch, target-sub-rule: 机场名称1自动}
-  - {name: 机场名称3优先-自动, type: rematch, target-sub-rule: 机场名称3自动}
-  - {name: 香港·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-香港}
-  - {name: 香港·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-香港}
-  - {name: 日本·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-日本}
-  - {name: 日本·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-日本}
-  - {name: 新加坡·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-新加坡}
-  - {name: 新加坡·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-新加坡}
-  - {name: 台湾·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-台湾}
-  - {name: 台湾·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-台湾}
-  - {name: 美国·机场名称1优先, type: rematch, target-sub-rule: 机场名称1-美国}
-  - {name: 美国·机场名称3优先, type: rematch, target-sub-rule: 机场名称3-美国}
+- name: 分流-业务入口
+  type: rematch
+  target-sub-rule: 分流-业务规则
+- name: 机场名称1优先
+  type: rematch
+  target-rematch-name: 机场名称1优先
+  target-sub-rule: 分流-探针分类
+- name: 机场名称3优先
+  type: rematch
+  target-rematch-name: 机场名称3优先
+  target-sub-rule: 分流-探针分类
+- name: 香港-机场名称1优先
+  type: rematch
+  target-rematch-name: 香港-机场名称1优先
+  target-sub-rule: 分流-探针分类
+- name: 香港-机场名称3优先
+  type: rematch
+  target-rematch-name: 香港-机场名称3优先
+  target-sub-rule: 分流-探针分类
+- name: 日本-机场名称1优先
+  type: rematch
+  target-rematch-name: 日本-机场名称1优先
+  target-sub-rule: 分流-探针分类
+- name: 日本-机场名称3优先
+  type: rematch
+  target-rematch-name: 日本-机场名称3优先
+  target-sub-rule: 分流-探针分类
+- name: 新加坡-机场名称1优先
+  type: rematch
+  target-rematch-name: 新加坡-机场名称1优先
+  target-sub-rule: 分流-探针分类
+- name: 新加坡-机场名称3优先
+  type: rematch
+  target-rematch-name: 新加坡-机场名称3优先
+  target-sub-rule: 分流-探针分类
+- name: 台湾-机场名称1优先
+  type: rematch
+  target-rematch-name: 台湾-机场名称1优先
+  target-sub-rule: 分流-探针分类
+- name: 台湾-机场名称3优先
+  type: rematch
+  target-rematch-name: 台湾-机场名称3优先
+  target-sub-rule: 分流-探针分类
+- name: 美国-机场名称1优先
+  type: rematch
+  target-rematch-name: 美国-机场名称1优先
+  target-sub-rule: 分流-探针分类
+- name: 美国-机场名称3优先
+  type: rematch
+  target-rematch-name: 美国-机场名称3优先
+  target-sub-rule: 分流-探针分类
+- name: 下载-机场名称1优先
+  type: rematch
+  target-rematch-name: 下载-机场名称1优先
+  target-sub-rule: 分流-探针分类
+- name: 下载-机场名称3优先
+  type: rematch
+  target-rematch-name: 下载-机场名称3优先
+  target-sub-rule: 分流-探针分类
 
 proxy-groups:
-  - name: Cloudflare Tunnel
-    <<: *Direct_Select
-    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
-  - name: AI
-    <<: *Highest_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
-  - name: 金融
-    <<: *High_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/wise.png
-  - name: Talkatone
-    <<: *High_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
-  - name: Google
-    <<: *Cost_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
-  - name: Microsoft
-    <<: *Normal_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
-  - name: Telegram
-    <<: *Normal_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
-  - name: 境外通信
-    <<: *Normal_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
-  - name: TikTok
-    <<: *Normal_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
-  - name: NETFLIX
-    <<: *High_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/netflix.png
-  - name: DisneyPlus
-    <<: *High_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/disney.png
-  - name: HBO
-    <<: *High_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/hbo.png
-  - name: Primevideo
-    <<: *High_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
-  - name: 哔哩东南亚
-    <<: *Normal_policy
-    # 默认固定地区；可手选其他出口，探针不保证内容解锁。
-    proxies: [新加坡·机场名称1优先, 机场名称1优先-自动, 机场名称3优先-自动, 自建/家宽节点, 香港·机场名称1优先, 日本·机场名称1优先, 台湾·机场名称1优先, 美国·机场名称1优先, DIRECT]
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
-  - name: Spotify
-    <<: *High_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
-  - name: TVB
-    <<: *Normal_policy
-    # 规则含香港本地与海外版服务，按实际平台手选地区。
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
-  - name: 境外影音
-    <<: *Cost_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
-  - name: Reddit
-    <<: *High_policy
-    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
-  - name: 境外社媒
-    <<: *Normal_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
-  - name: 境外电商
-    <<: *Normal_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
-  - name: Kryptex
-    <<: *Cost_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/automation.png
-  - name: Speedtest
-    <<: *Cost_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/speedtest.png
-  - name: 开发下载
-    <<: *Cost_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
-  - name: 纯下载
-    <<: *Cost_policy
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Download.png
-  - name: 游戏平台
-    <<: *Cost_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
-  - name: 通用代理
-    <<: *Normal_policy
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
-
-  - name: 台湾限定
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
-    type: select
-    use: *use_ap_all
-    filter: *region_tw
-    url: *cloudflare_test_url
-    expected-status: 204
-    empty-fallback: REJECT
-    proxies:
-      - 台湾·机场名称1优先
-
-  - name: Emby
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/emby.png
-    <<: *Cost_policy
-    proxies:
-      - 低倍率/MITM节点
-      - 机场名称3优先-自动
-      - 机场名称1优先-自动
-      - 自建/家宽节点
-      - 香港·机场名称3优先
-      - 日本·机场名称3优先
-      - 新加坡·机场名称3优先
-      - 台湾·机场名称3优先
-      - 美国·机场名称3优先
-      - DIRECT
-  - name: Apple
-    <<: *Direct_Select
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.png
-  - name: 哔哩哔哩
-    <<: *Direct_Select
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
-
-  - name: 隐私拦截
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/block.png
-    type: select
-    proxies:
-      - REJECT
-      - REJECT-DROP
-      - DIRECT
-      - 通用代理
-
-  - name: GLOBAL
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global.png
-    type: select
-    use: *use_ap_all
-    empty-fallback: REJECT
-    proxies:
-      - 机场名称3优先
-      - 机场名称1优先
-      - 自建/家宽节点
-      - 香港-成本优先
-      - 日本-成本优先
-      - 新加坡-成本优先
-      - 台湾-成本优先
-      - 美国-成本优先
-      - DIRECT
-
-  - name: 自建/家宽节点
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/private_node.png
-    type: select
-    use: *use_ap_all
-    filter: *home_only
-    empty-fallback: REJECT
-
-  - name: 低倍率/MITM节点
-    type: select
-    url: *cloudflare_test_url
-    expected-status: 204
-    use: *use_ap_all
-    filter: *lowrate_mitm
-    empty-fallback: REJECT
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"
-
-  # 通用节点池与机场回退
-  # 独立 url-test 保存 AI 自己的选点与容差状态；provider 同 URL 探测仍共享。
-  - name: AI-机场名称1-日本
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_01]
-    filter: *region_jp
-    exclude-filter: *exclude_lowrate
-
-  - name: 机场名称1-香港
-    <<: *Urltest_Base
-    use: [Airport_01]
-    filter: *region_hk_stable_auto
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"
-
-  - name: 机场名称1-日本
-    <<: *Urltest_Base
-    use: [Airport_01]
-    filter: *region_jp
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"
-
-  - name: 机场名称1-新加坡
-    <<: *Urltest_Base
-    use: [Airport_01]
-    filter: *region_sg
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"
-
-  - name: 机场名称1-美国
-    <<: *Urltest_Base
-    use: [Airport_01]
-    filter: *region_us
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"
-
-  - name: 机场名称1-台湾
-    <<: *Urltest_Base
-    use: [Airport_01]
-    filter: *region_tw
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"
-
-  - name: 机场名称3-香港
-    <<: *Urltest_Base
-    use: [Airport_03]
-    filter: *region_hk
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"
-
-  - name: 机场名称3-日本
-    <<: *Urltest_Base
-    use: [Airport_03]
-    filter: *region_jp_no_ctcu
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"
-
-  - name: 机场名称3-新加坡
-    <<: *Urltest_Base
-    use: [Airport_03]
-    filter: *region_sg_no_ctcu
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"
-
-  - name: 机场名称3-美国
-    <<: *Urltest_Base
-    use: [Airport_03]
-    filter: *region_us
-    exclude-filter: *exclude_us_3
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"
-
-  - name: 机场名称3-台湾
-    <<: *Urltest_Base
-    use: [Airport_03]
-    filter: *region_tw
-    exclude-filter: *exclude_lowrate
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"
-
-  - name: 机场名称4地区优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *reserve_region_order
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"
-
-  - name: 机场名称1地区优先
-    <<: *Fallback_Base
-    hidden: true
-    proxies:
-      - 机场名称1-日本
-      - 机场名称1-香港
-      - 机场名称1-新加坡
-      - 机场名称1-美国
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"
-
-  - name: 机场名称3地区优先
-    <<: *Fallback_Base
-    hidden: true
-    proxies:
-      - 机场名称3-日本
-      - 机场名称3-新加坡
-      - 机场名称3-香港
-      - 机场名称3-美国
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"
-
-  - name: 机场名称1优先
-    hidden: true
-    <<: *Fallback_Base
-    proxies:
-      - 机场名称1地区优先
-      - 机场名称3地区优先
-      - 机场名称4地区优先
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png"
-
-  - name: 香港-机场名称1优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_hk
-    proxies:
-      - 机场名称1-香港
-      - 机场名称3-香港
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png"
-
-  - name: 新加坡-机场名称1优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_sg
-    proxies:
-      - 机场名称1-新加坡
-      - 机场名称3-新加坡
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png"
-
-  - name: 美国-机场名称1优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_us
-    proxies:
-      - 机场名称1-美国
-      - 机场名称3-美国
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png"
-
-  - name: 日本-机场名称1优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_jp
-    proxies:
-      - 机场名称1-日本
-      - 机场名称3-日本
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png"
-
-  - name: 台湾-机场名称1优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_tw
-    proxies:
-      - 机场名称1-台湾
-      - 机场名称3-台湾
-    icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png"
-
-  - name: 机场名称3优先
-    hidden: true
-    <<: *Fallback_Base
-    proxies:
-      - 机场名称3地区优先
-      - 机场名称1地区优先
-      - 机场名称4地区优先
-
-  - name: 规则更新
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - GitHub-机场名称3
-      - GitHub-机场名称1
-      - GitHub-机场名称4
-      - DIRECT
-
-  # GitHub 节点池与机场回退
-  - name: GitHub-机场名称1-香港
-    <<: *GitHub_Urltest_Base
-    use: [Airport_01]
-    filter: *region_hk_stable_auto
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-机场名称1-日本
-    <<: *GitHub_Urltest_Base
-    use: [Airport_01]
-    filter: *region_jp
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-机场名称1-新加坡
-    <<: *GitHub_Urltest_Base
-    use: [Airport_01]
-    filter: *region_sg
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-机场名称1-美国
-    <<: *GitHub_Urltest_Base
-    use: [Airport_01]
-    filter: *region_us
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-机场名称1
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - GitHub-机场名称1-日本
-      - GitHub-机场名称1-香港
-      - GitHub-机场名称1-新加坡
-      - GitHub-机场名称1-美国
-
-  - name: GitHub-机场名称3-香港
-    <<: *GitHub_Urltest_Base
-    use: [Airport_03]
-    filter: *region_hk
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-机场名称3-日本
-    <<: *GitHub_Urltest_Base
-    use: [Airport_03]
-    filter: *region_jp_no_ctcu
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-机场名称3-新加坡
-    <<: *GitHub_Urltest_Base
-    use: [Airport_03]
-    filter: *region_sg_no_ctcu
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-机场名称3-美国
-    <<: *GitHub_Urltest_Base
-    use: [Airport_03]
-    filter: *region_us
-    exclude-filter: *exclude_us_3
-
-  - name: GitHub-机场名称3
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - GitHub-机场名称3-日本
-      - GitHub-机场名称3-新加坡
-      - GitHub-机场名称3-香港
-      - GitHub-机场名称3-美国
-
-  - name: GitHub-机场名称4
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *reserve_region_order
-
-  - name: GitHub-自动
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - GitHub-机场名称3
-      - GitHub-机场名称1
-      - GitHub-机场名称4
-
-  - name: GitHub-机场名称1优先
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - GitHub-机场名称1
-      - GitHub-机场名称3
-      - GitHub-机场名称4
-
-  # Cloudflare 节点池与机场回退
-  - name: Cloudflare-机场名称1-香港
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_01]
-    filter: *region_hk_stable_auto
-    exclude-filter: *exclude_lowrate
-
-  - name: Cloudflare-机场名称1-日本
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_01]
-    filter: *region_jp
-    exclude-filter: *exclude_lowrate
-
-  - name: Cloudflare-机场名称1-新加坡
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_01]
-    filter: *region_sg
-    exclude-filter: *exclude_lowrate
-
-  - name: Cloudflare-机场名称1-美国
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_01]
-    filter: *region_us
-    exclude-filter: *exclude_lowrate
-
-  - name: Cloudflare-机场名称1
-    <<: *Cloudflare_Fallback_Base
-    proxies:
-      - Cloudflare-机场名称1-日本
-      - Cloudflare-机场名称1-香港
-      - Cloudflare-机场名称1-新加坡
-      - Cloudflare-机场名称1-美国
-
-  - name: Cloudflare-机场名称3-香港
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_03]
-    filter: *region_hk
-    exclude-filter: *exclude_lowrate
-
-  - name: Cloudflare-机场名称3-日本
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_03]
-    filter: *region_jp_no_ctcu
-    exclude-filter: *exclude_lowrate
-
-  - name: Cloudflare-机场名称3-新加坡
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_03]
-    filter: *region_sg_no_ctcu
-    exclude-filter: *exclude_lowrate
-
-  - name: Cloudflare-机场名称3-美国
-    <<: *Cloudflare_Urltest_Base
-    use: [Airport_03]
-    filter: *region_us
-    exclude-filter: *exclude_us_3
-
-  - name: Cloudflare-机场名称3
-    <<: *Cloudflare_Fallback_Base
-    proxies:
-      - Cloudflare-机场名称3-日本
-      - Cloudflare-机场名称3-新加坡
-      - Cloudflare-机场名称3-香港
-      - Cloudflare-机场名称3-美国
-
-  - name: Cloudflare-机场名称4
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *reserve_region_order
-
-  - name: Cloudflare-自动
-    <<: *Cloudflare_Fallback_Base
-    proxies:
-      - Cloudflare-机场名称3
-      - Cloudflare-机场名称1
-      - Cloudflare-机场名称4
-
-  - name: Cloudflare-机场名称1优先
-    <<: *Cloudflare_Fallback_Base
-    proxies:
-      - Cloudflare-机场名称1
-      - Cloudflare-机场名称3
-      - Cloudflare-机场名称4
-
-  - name: Cloudflare-台湾
-    <<: *Cloudflare_Fallback_Base
-    use: *use_ap_all
-    filter: *region_tw
-    exclude-filter: *exclude_lowrate
-
-  # 纯下载：同机场按日本 → 新加坡 → 美国 → 香港回退，同地区内比较 GitHub 探针。
-  # 地区优先级来自带宽使用体验；探针只判断可达性/延迟，不测吞吐。
-  - name: 纯下载-机场名称3
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - 纯下载-机场名称3-日本
-      - 纯下载-机场名称3-新加坡
-      - 纯下载-机场名称3-美国
-      - 纯下载-机场名称3-香港
-
-  - name: 纯下载-机场名称3-日本
-    <<: *GitHub_Urltest_Base
-    use: [Airport_03]
-    filter: *region_jp
-    exclude-filter: *exclude_download_3
-
-  - name: 纯下载-机场名称3-新加坡
-    <<: *GitHub_Urltest_Base
-    use: [Airport_03]
-    filter: *region_sg
-    exclude-filter: *exclude_download_3
-
-  - name: 纯下载-机场名称3-美国
-    <<: *GitHub_Urltest_Base
-    use: [Airport_03]
-    filter: *region_us
-    exclude-filter: *exclude_download_3
-
-  - name: 纯下载-机场名称3-香港
-    <<: *GitHub_Urltest_Base
-    use: [Airport_03]
-    filter: *region_hk
-    exclude-filter: *exclude_download_3
-
-  - name: 纯下载-机场名称1
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - 纯下载-机场名称1-日本
-      - 纯下载-机场名称1-新加坡
-      - 纯下载-机场名称1-美国
-      - 纯下载-机场名称1-香港
-
-  - name: 纯下载-机场名称1-日本
-    <<: *GitHub_Urltest_Base
-    use: [Airport_01]
-    filter: *region_jp
-    exclude-filter: *exclude_download_1
-
-  - name: 纯下载-机场名称1-新加坡
-    <<: *GitHub_Urltest_Base
-    use: [Airport_01]
-    filter: *region_sg
-    exclude-filter: *exclude_download_1
-
-  - name: 纯下载-机场名称1-美国
-    <<: *GitHub_Urltest_Base
-    use: [Airport_01]
-    filter: *region_us
-    exclude-filter: *exclude_download_1
-
-  - name: 纯下载-机场名称1-香港
-    <<: *GitHub_Urltest_Base
-    use: [Airport_01]
-    filter: *region_hk
-    exclude-filter: *exclude_download_1
-
-  - name: 纯下载-机场名称4
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - 纯下载-机场名称4-日本
-      - 纯下载-机场名称4-新加坡
-      - 纯下载-机场名称4-美国
-      - 纯下载-机场名称4-香港
-      - 纯下载-机场名称4-其他
-
-  - name: 纯下载-机场名称4-日本
-    <<: *GitHub_Urltest_Base
-    use: [Airport_04]
-    filter: *region_jp
-
-  - name: 纯下载-机场名称4-新加坡
-    <<: *GitHub_Urltest_Base
-    use: [Airport_04]
-    filter: *region_sg
-
-  - name: 纯下载-机场名称4-美国
-    <<: *GitHub_Urltest_Base
-    use: [Airport_04]
-    filter: *region_us
-
-  - name: 纯下载-机场名称4-香港
-    <<: *GitHub_Urltest_Base
-    use: [Airport_04]
-    filter: *region_hk
-
-  - name: 纯下载-机场名称4-其他
-    <<: *GitHub_Urltest_Base
-    use: [Airport_04]
-    exclude-filter: *region_download
-
-  - name: 纯下载-自动
-    hidden: true
-    <<: *Fallback_Base
-    proxies:
-      - 纯下载-机场名称3
-      - 纯下载-机场名称1
-      - 纯下载-机场名称4
-    url: *github_test_url
-    expected-status: 200
-
-  # 指定地区：机场名称1优先
-  - name: GitHub-香港-地区优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *region_hk
-    proxies:
-      - GitHub-机场名称1-香港
-      - GitHub-机场名称3-香港
-
-  - name: GitHub-日本-地区优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *region_jp
-    proxies:
-      - GitHub-机场名称1-日本
-      - GitHub-机场名称3-日本
-
-  - name: GitHub-新加坡-地区优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *region_sg
-    proxies:
-      - GitHub-机场名称1-新加坡
-      - GitHub-机场名称3-新加坡
-
-  - name: GitHub-台湾
-    <<: *GitHub_Fallback_Base
-    use: *use_ap_all
-    filter: *region_tw
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-美国-地区优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *region_us
-    proxies:
-      - GitHub-机场名称1-美国
-      - GitHub-机场名称3-美国
-
-  - name: Cloudflare-香港-地区优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *region_hk
-    proxies:
-      - Cloudflare-机场名称1-香港
-      - Cloudflare-机场名称3-香港
-
-  - name: Cloudflare-日本-地区优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *region_jp
-    proxies:
-      - Cloudflare-机场名称1-日本
-      - Cloudflare-机场名称3-日本
-
-  - name: Cloudflare-新加坡-地区优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *region_sg
-    proxies:
-      - Cloudflare-机场名称1-新加坡
-      - Cloudflare-机场名称3-新加坡
-
-  - name: Cloudflare-美国-地区优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *region_us
-    proxies:
-      - Cloudflare-机场名称1-美国
-      - Cloudflare-机场名称3-美国
-
-  - name: 纯下载-机场名称1优先
-    <<: *GitHub_Fallback_Base
-    proxies:
-      - 纯下载-机场名称1
-      - 纯下载-机场名称3
-      - 纯下载-机场名称4
-
-  # 指定地区：成本优先
-  - name: 香港-成本优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_hk
-    proxies:
-      - 机场名称3-香港
-      - 机场名称1-香港
-
-  - name: Cloudflare-香港-成本优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *region_hk
-    proxies:
-      - Cloudflare-机场名称3-香港
-      - Cloudflare-机场名称1-香港
-
-  - name: GitHub-香港-成本优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *region_hk
-    proxies:
-      - GitHub-机场名称3-香港
-      - GitHub-机场名称1-香港
-
-  - name: 日本-成本优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_jp
-    proxies:
-      - 机场名称3-日本
-      - 机场名称1-日本
-
-  - name: Cloudflare-日本-成本优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *region_jp
-    proxies:
-      - Cloudflare-机场名称3-日本
-      - Cloudflare-机场名称1-日本
-
-  - name: GitHub-日本-成本优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *region_jp
-    proxies:
-      - GitHub-机场名称3-日本
-      - GitHub-机场名称1-日本
-
-  - name: 新加坡-成本优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_sg
-    proxies:
-      - 机场名称3-新加坡
-      - 机场名称1-新加坡
-
-  - name: Cloudflare-新加坡-成本优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *region_sg
-    proxies:
-      - Cloudflare-机场名称3-新加坡
-      - Cloudflare-机场名称1-新加坡
-
-  - name: GitHub-新加坡-成本优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *region_sg
-    proxies:
-      - GitHub-机场名称3-新加坡
-      - GitHub-机场名称1-新加坡
-
-  - name: 台湾-成本优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_tw
-    proxies:
-      - 机场名称3-台湾
-      - 机场名称1-台湾
-
-  - name: Cloudflare-台湾-成本优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_03, Airport_01, Airport_04]
-    filter: *region_tw
-    exclude-filter: *exclude_lowrate
-
-  - name: GitHub-台湾-成本优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_03, Airport_01, Airport_04]
-    filter: *region_tw
-    exclude-filter: *exclude_lowrate
-
-  - name: 美国-成本优先
-    <<: *Fallback_Base
-    hidden: true
-    use: [Airport_04]
-    filter: *region_us
-    proxies:
-      - 机场名称3-美国
-      - 机场名称1-美国
-
-  - name: Cloudflare-美国-成本优先
-    <<: *Cloudflare_Fallback_Base
-    use: [Airport_04]
-    filter: *region_us
-    proxies:
-      - Cloudflare-机场名称3-美国
-      - Cloudflare-机场名称1-美国
-
-  - name: GitHub-美国-成本优先
-    <<: *GitHub_Fallback_Base
-    use: [Airport_04]
-    filter: *region_us
-    proxies:
-      - GitHub-机场名称3-美国
-      - GitHub-机场名称1-美国
-
-# TCP 经 rematch 直接匹配业务规则，保留具体规则信息。
-# UDP 用 SUB-RULE 先确定业务；选中的出口不支持 UDP 时由外层统一拒绝。
-# 不把同一 UDP 请求继续交给后面的其他业务或直连规则。
+- name: Cloudflare Tunnel
+  <<: *direct_policy
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
+
+- name: AI
+  <<: *business_select_base
+  # Google 为通用基准；CF 为手选备选，不根据不同域名拆分敏感业务出口。
+  proxies: &sensitive_choices
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
+    - 机场名称1优先
+    - 机场名称3优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 下载-机场名称1优先
+    - 下载-机场名称3优先
+    - 自建/家宽节点
+    - 低倍率/MITM节点
+    - DIRECT
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
+
+- name: 金融
+  <<: *business_select_base
+  proxies: *sensitive_choices
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/wise.png
+
+- name: Talkatone
+  <<: *business_select_base
+  proxies: *sensitive_choices
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
+
+- name: Google
+  <<: *airport_03_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
+
+- name: Google FCM
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
+
+- name: Microsoft
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
+
+- name: OneDrive
+  <<: *airport_03_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
+
+- name: Telegram
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
+
+- name: 境外通信
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
+
+- name: TikTok
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
+
+- name: Netflix
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/netflix.png
+
+- name: Disney+
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/disney.png
+
+- name: HBO
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/hbo.png
+
+- name: Prime Video
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
+
+- name: 哔哩东南亚
+  <<: *business_select_base
+  proxies:
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 机场名称1优先
+    - 机场名称3优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 下载-机场名称1优先
+    - 下载-机场名称3优先
+    - 自建/家宽节点
+    - 低倍率/MITM节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
+    - DIRECT
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
+
+- name: Spotify
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
+
+- name: TVB
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
+
+- name: 境外影音
+  <<: *airport_03_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
+
+- name: Reddit
+  <<: *airport_01_policy
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
+
+- name: 境外社媒
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
+
+- name: 境外电商
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
+
+- name: Kryptex
+  <<: *airport_03_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/automation.png
+
+- name: Speedtest
+  <<: *airport_03_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/speedtest.png
+
+- name: 开发下载
+  <<: *airport_03_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
+
+- name: 纯下载
+  <<: *business_select_base
+  proxies:
+    - 下载-机场名称3优先
+    - 下载-机场名称1优先
+    - 机场名称1优先
+    - 机场名称3优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 自建/家宽节点
+    - 低倍率/MITM节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
+    - DIRECT
+  icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Download.png
+
+- name: 游戏平台
+  <<: *airport_03_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
+
+- name: 通用代理
+  <<: *airport_01_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
+
+- name: 台湾限定
+  <<: *business_select_base
+  proxies:
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 机场名称1优先
+    - 机场名称3优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 下载-机场名称1优先
+    - 下载-机场名称3优先
+    - 自建/家宽节点
+    - 低倍率/MITM节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
+    - DIRECT
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
+
+- name: Emby
+  <<: *business_select_base
+  proxies:
+    - 低倍率/MITM节点
+    - 机场名称1优先
+    - 机场名称3优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 下载-机场名称1优先
+    - 下载-机场名称3优先
+    - 自建/家宽节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
+    - DIRECT
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/emby.png
+
+- name: Apple
+  <<: *direct_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.png
+
+- name: 哔哩哔哩
+  <<: *direct_policy
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
+
+- name: 隐私拦截
+  <<: *business_select_base
+  proxies:
+    - REJECT
+    - REJECT-DROP
+    - 机场名称1优先
+    - 机场名称3优先
+    - 香港-机场名称1优先
+    - 香港-机场名称3优先
+    - 日本-机场名称1优先
+    - 日本-机场名称3优先
+    - 新加坡-机场名称1优先
+    - 新加坡-机场名称3优先
+    - 台湾-机场名称1优先
+    - 台湾-机场名称3优先
+    - 美国-机场名称1优先
+    - 美国-机场名称3优先
+    - 下载-机场名称1优先
+    - 下载-机场名称3优先
+    - 自建/家宽节点
+    - 低倍率/MITM节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
+    - DIRECT
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/block.png
+
+- name: GLOBAL
+  <<: *business_select_base
+  # 全局模式只引用可直接拨号的组，引用链不含 rematch。
+  proxies:
+    - 机场名称3优先-Google
+    - 机场名称1优先-Google
+    - 香港-机场名称1优先-Google
+    - 香港-机场名称3优先-Google
+    - 日本-机场名称1优先-Google
+    - 日本-机场名称3优先-Google
+    - 新加坡-机场名称1优先-Google
+    - 新加坡-机场名称3优先-Google
+    - 台湾-机场名称1优先-Google
+    - 台湾-机场名称3优先-Google
+    - 美国-机场名称1优先-Google
+    - 美国-机场名称3优先-Google
+    - 下载-机场名称1优先-Google
+    - 下载-机场名称3优先-Google
+    - 自建/家宽节点
+    - 低倍率/MITM节点
+    - 机场名称1-日本-Google
+    - 机场名称1-日本-CF
+    - DIRECT
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global.png
+
+- name: 自建/家宽节点
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/private_node.png
+  type: select
+  use: *all_airport_providers
+  filter: *filter_home
+  empty-fallback: REJECT
+
+- name: 低倍率/MITM节点
+  type: select
+  url: *cloudflare_test_url
+  expected-status: 204
+  use: *all_airport_providers
+  filter: *filter_lowrate_or_mitm
+  empty-fallback: REJECT
+  icon: "https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png"
+
+- name: 机场名称1-香港-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *region_hk_stable_auto
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
+  hidden: true
+
+- name: 机场名称1-日本-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *region_jp
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
+  hidden: true
+
+- name: 机场名称1-新加坡-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *region_sg
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
+  hidden: true
+
+- name: 机场名称1-台湾-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *region_tw
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称1-美国-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *region_us
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
+  hidden: true
+
+- name: 机场名称3-香港-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *region_hk
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
+  hidden: true
+
+- name: 机场名称3-日本-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *region_jp_no_ctcu
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
+  hidden: true
+
+- name: 机场名称3-新加坡-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *region_sg_no_ctcu
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
+  hidden: true
+
+- name: 机场名称3-台湾-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *region_tw
+  exclude-filter: *exclude_standard_auto
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称3-美国-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *region_us
+  exclude-filter: *exclude_airport_03_us
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
+  hidden: true
+
+- name: 机场名称4-备用-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *reserve_region_order
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+
+- name: 机场名称1优先-Google
+  <<: *fallback_base
+  hidden: true
+  proxies:
+  - 机场名称1-日本-Google
+  - 机场名称1-香港-Google
+  - 机场名称1-新加坡-Google
+  - 机场名称1-美国-Google
+  - 机场名称3-日本-Google
+  - 机场名称3-新加坡-Google
+  - 机场名称3-香港-Google
+  - 机场名称3-美国-Google
+  - 机场名称4-备用-Google
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+
+- name: 香港-机场名称1优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称1-香港-Google
+  - 机场名称3-香港-Google
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
+
+- name: 日本-机场名称1优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称1-日本-Google
+  - 机场名称3-日本-Google
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
+
+- name: 新加坡-机场名称1优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称1-新加坡-Google
+  - 机场名称3-新加坡-Google
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
+
+- name: 台湾-机场名称1优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称1-台湾-Google
+  - 机场名称3-台湾-Google
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+
+- name: 美国-机场名称1优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称1-美国-Google
+  - 机场名称3-美国-Google
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
+
+- name: 机场名称3优先-Google
+  <<: *fallback_base
+  hidden: true
+  proxies:
+  - 机场名称3-日本-Google
+  - 机场名称3-新加坡-Google
+  - 机场名称3-香港-Google
+  - 机场名称3-美国-Google
+  - 机场名称1-日本-Google
+  - 机场名称1-香港-Google
+  - 机场名称1-新加坡-Google
+  - 机场名称1-美国-Google
+  - 机场名称4-备用-Google
+
+- name: 香港-机场名称3优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称3-香港-Google
+  - 机场名称1-香港-Google
+
+- name: 日本-机场名称3优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称3-日本-Google
+  - 机场名称1-日本-Google
+
+- name: 新加坡-机场名称3优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称3-新加坡-Google
+  - 机场名称1-新加坡-Google
+
+- name: 台湾-机场名称3优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称3-台湾-Google
+  - 机场名称1-台湾-Google
+
+- name: 美国-机场名称3优先-Google
+  <<: *fallback_base
+  hidden: true
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称3-美国-Google
+  - 机场名称1-美国-Google
+
+- name: 机场名称1-香港-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_hk_stable
+  hidden: true
+
+- name: 机场名称1-日本-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_jp
+  hidden: true
+
+- name: 机场名称1-新加坡-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_sg
+  hidden: true
+
+- name: 机场名称1-台湾-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_airport_01_tw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称1-美国-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_us
+  hidden: true
+
+- name: 机场名称3-香港-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_hk
+  hidden: true
+
+- name: 机场名称3-日本-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_jp_no_ctcu
+  hidden: true
+
+- name: 机场名称3-新加坡-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_sg_no_ctcu
+  hidden: true
+
+- name: 机场名称3-台湾-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_airport_01_tw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称3-美国-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_airport_03_us
+  hidden: true
+
+- name: 机场名称4-备用-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *reserve_region_order
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+  hidden: true
+
+- name: 机场名称1优先-CF
+  <<: *cloudflare_fallback_base
+  proxies:
+  - 机场名称1-日本-CF
+  - 机场名称1-香港-CF
+  - 机场名称1-新加坡-CF
+  - 机场名称1-美国-CF
+  - 机场名称3-日本-CF
+  - 机场名称3-新加坡-CF
+  - 机场名称3-香港-CF
+  - 机场名称3-美国-CF
+  - 机场名称4-备用-CF
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+  hidden: true
+
+- name: 香港-机场名称1优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称1-香港-CF
+  - 机场名称3-香港-CF
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
+  hidden: true
+
+- name: 日本-机场名称1优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称1-日本-CF
+  - 机场名称3-日本-CF
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
+  hidden: true
+
+- name: 新加坡-机场名称1优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称1-新加坡-CF
+  - 机场名称3-新加坡-CF
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
+  hidden: true
+
+- name: 台湾-机场名称1优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称1-台湾-CF
+  - 机场名称3-台湾-CF
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 美国-机场名称1优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称1-美国-CF
+  - 机场名称3-美国-CF
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
+  hidden: true
+
+- name: 机场名称3优先-CF
+  <<: *cloudflare_fallback_base
+  proxies:
+  - 机场名称3-日本-CF
+  - 机场名称3-新加坡-CF
+  - 机场名称3-香港-CF
+  - 机场名称3-美国-CF
+  - 机场名称1-日本-CF
+  - 机场名称1-香港-CF
+  - 机场名称1-新加坡-CF
+  - 机场名称1-美国-CF
+  - 机场名称4-备用-CF
+  hidden: true
+
+- name: 香港-机场名称3优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称3-香港-CF
+  - 机场名称1-香港-CF
+  hidden: true
+
+- name: 日本-机场名称3优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称3-日本-CF
+  - 机场名称1-日本-CF
+  hidden: true
+
+- name: 新加坡-机场名称3优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称3-新加坡-CF
+  - 机场名称1-新加坡-CF
+  hidden: true
+
+- name: 台湾-机场名称3优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称3-台湾-CF
+  - 机场名称1-台湾-CF
+  hidden: true
+
+- name: 美国-机场名称3优先-CF
+  <<: *cloudflare_fallback_base
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称3-美国-CF
+  - 机场名称1-美国-CF
+  hidden: true
+
+- name: 机场名称1-香港-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_hk_stable
+  hidden: true
+
+- name: 机场名称1-日本-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_jp
+  hidden: true
+
+- name: 机场名称1-新加坡-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_sg
+  hidden: true
+
+- name: 机场名称1-台湾-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_airport_01_tw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称1-美国-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_us
+  hidden: true
+
+- name: 机场名称3-香港-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_hk
+  hidden: true
+
+- name: 机场名称3-日本-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_jp_no_ctcu
+  hidden: true
+
+- name: 机场名称3-新加坡-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_sg_no_ctcu
+  hidden: true
+
+- name: 机场名称3-台湾-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_airport_01_tw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称3-美国-GitHub
+  <<: *github_web_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_airport_03_us
+  hidden: true
+
+- name: 机场名称4-备用-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *reserve_region_order
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+  hidden: true
+
+- name: 机场名称1优先-GitHub
+  <<: *github_web_fallback_base
+  proxies:
+  - 机场名称1-日本-GitHub
+  - 机场名称1-香港-GitHub
+  - 机场名称1-新加坡-GitHub
+  - 机场名称1-美国-GitHub
+  - 机场名称3-日本-GitHub
+  - 机场名称3-新加坡-GitHub
+  - 机场名称3-香港-GitHub
+  - 机场名称3-美国-GitHub
+  - 机场名称4-备用-GitHub
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+  hidden: true
+
+- name: 香港-机场名称1优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称1-香港-GitHub
+  - 机场名称3-香港-GitHub
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
+  hidden: true
+
+- name: 日本-机场名称1优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称1-日本-GitHub
+  - 机场名称3-日本-GitHub
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
+  hidden: true
+
+- name: 新加坡-机场名称1优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称1-新加坡-GitHub
+  - 机场名称3-新加坡-GitHub
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
+  hidden: true
+
+- name: 台湾-机场名称1优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称1-台湾-GitHub
+  - 机场名称3-台湾-GitHub
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 美国-机场名称1优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称1-美国-GitHub
+  - 机场名称3-美国-GitHub
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
+  hidden: true
+
+- name: 机场名称3优先-GitHub
+  <<: *github_web_fallback_base
+  proxies:
+  - 机场名称3-日本-GitHub
+  - 机场名称3-新加坡-GitHub
+  - 机场名称3-香港-GitHub
+  - 机场名称3-美国-GitHub
+  - 机场名称1-日本-GitHub
+  - 机场名称1-香港-GitHub
+  - 机场名称1-新加坡-GitHub
+  - 机场名称1-美国-GitHub
+  - 机场名称4-备用-GitHub
+  hidden: true
+
+- name: 香港-机场名称3优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称3-香港-GitHub
+  - 机场名称1-香港-GitHub
+  hidden: true
+
+- name: 日本-机场名称3优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称3-日本-GitHub
+  - 机场名称1-日本-GitHub
+  hidden: true
+
+- name: 新加坡-机场名称3优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称3-新加坡-GitHub
+  - 机场名称1-新加坡-GitHub
+  hidden: true
+
+- name: 台湾-机场名称3优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称3-台湾-GitHub
+  - 机场名称1-台湾-GitHub
+  hidden: true
+
+- name: 美国-机场名称3优先-GitHub
+  <<: *github_web_fallback_base
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称3-美国-GitHub
+  - 机场名称1-美国-GitHub
+  hidden: true
+
+- name: 机场名称1-香港-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_hk_stable
+  hidden: true
+
+- name: 机场名称1-日本-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_jp
+  hidden: true
+
+- name: 机场名称1-新加坡-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_sg
+  hidden: true
+
+- name: 机场名称1-台湾-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_airport_01_tw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称1-美国-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_us
+  hidden: true
+
+- name: 机场名称3-香港-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_hk
+  hidden: true
+
+- name: 机场名称3-日本-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_jp_no_ctcu
+  hidden: true
+
+- name: 机场名称3-新加坡-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_sg_no_ctcu
+  hidden: true
+
+- name: 机场名称3-台湾-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_airport_01_tw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称3-美国-GitHubRaw
+  <<: *github_raw_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_airport_03_us
+  hidden: true
+
+- name: 机场名称4-备用-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *reserve_region_order
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+  hidden: true
+
+- name: 机场名称1优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  proxies:
+  - 机场名称1-日本-GitHubRaw
+  - 机场名称1-香港-GitHubRaw
+  - 机场名称1-新加坡-GitHubRaw
+  - 机场名称1-美国-GitHubRaw
+  - 机场名称3-日本-GitHubRaw
+  - 机场名称3-新加坡-GitHubRaw
+  - 机场名称3-香港-GitHubRaw
+  - 机场名称3-美国-GitHubRaw
+  - 机场名称4-备用-GitHubRaw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+  hidden: true
+
+- name: 香港-机场名称1优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称1-香港-GitHubRaw
+  - 机场名称3-香港-GitHubRaw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
+  hidden: true
+
+- name: 日本-机场名称1优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称1-日本-GitHubRaw
+  - 机场名称3-日本-GitHubRaw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
+  hidden: true
+
+- name: 新加坡-机场名称1优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称1-新加坡-GitHubRaw
+  - 机场名称3-新加坡-GitHubRaw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
+  hidden: true
+
+- name: 台湾-机场名称1优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称1-台湾-GitHubRaw
+  - 机场名称3-台湾-GitHubRaw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 美国-机场名称1优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称1-美国-GitHubRaw
+  - 机场名称3-美国-GitHubRaw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
+  hidden: true
+
+- name: 机场名称3优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  proxies:
+  - 机场名称3-日本-GitHubRaw
+  - 机场名称3-新加坡-GitHubRaw
+  - 机场名称3-香港-GitHubRaw
+  - 机场名称3-美国-GitHubRaw
+  - 机场名称1-日本-GitHubRaw
+  - 机场名称1-香港-GitHubRaw
+  - 机场名称1-新加坡-GitHubRaw
+  - 机场名称1-美国-GitHubRaw
+  - 机场名称4-备用-GitHubRaw
+  hidden: true
+
+- name: 香港-机场名称3优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称3-香港-GitHubRaw
+  - 机场名称1-香港-GitHubRaw
+  hidden: true
+
+- name: 日本-机场名称3优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称3-日本-GitHubRaw
+  - 机场名称1-日本-GitHubRaw
+  hidden: true
+
+- name: 新加坡-机场名称3优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称3-新加坡-GitHubRaw
+  - 机场名称1-新加坡-GitHubRaw
+  hidden: true
+
+- name: 台湾-机场名称3优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称3-台湾-GitHubRaw
+  - 机场名称1-台湾-GitHubRaw
+  hidden: true
+
+- name: 美国-机场名称3优先-GitHubRaw
+  <<: *github_raw_fallback_base
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称3-美国-GitHubRaw
+  - 机场名称1-美国-GitHubRaw
+  hidden: true
+
+- name: 机场名称1-香港-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_hk_stable
+  hidden: true
+
+- name: 机场名称1-日本-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_jp
+  hidden: true
+
+- name: 机场名称1-新加坡-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_sg
+  hidden: true
+
+- name: 机场名称1-台湾-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_airport_01_tw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称1-美国-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_auto_us
+  hidden: true
+
+- name: 机场名称3-香港-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_hk
+  hidden: true
+
+- name: 机场名称3-日本-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_jp_no_ctcu
+  hidden: true
+
+- name: 机场名称3-新加坡-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_sg_no_ctcu
+  hidden: true
+
+- name: 机场名称3-台湾-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_airport_01_tw
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 机场名称3-美国-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_auto_airport_03_us
+  hidden: true
+
+- name: 机场名称4-备用-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *reserve_region_order
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+  hidden: true
+
+- name: 机场名称1优先-GitHub归档
+  <<: *github_archive_fallback_base
+  proxies:
+  - 机场名称1-日本-GitHub归档
+  - 机场名称1-香港-GitHub归档
+  - 机场名称1-新加坡-GitHub归档
+  - 机场名称1-美国-GitHub归档
+  - 机场名称3-日本-GitHub归档
+  - 机场名称3-新加坡-GitHub归档
+  - 机场名称3-香港-GitHub归档
+  - 机场名称3-美国-GitHub归档
+  - 机场名称4-备用-GitHub归档
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/fallback.png
+  hidden: true
+
+- name: 香港-机场名称1优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称1-香港-GitHub归档
+  - 机场名称3-香港-GitHub归档
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
+  hidden: true
+
+- name: 日本-机场名称1优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称1-日本-GitHub归档
+  - 机场名称3-日本-GitHub归档
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
+  hidden: true
+
+- name: 新加坡-机场名称1优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称1-新加坡-GitHub归档
+  - 机场名称3-新加坡-GitHub归档
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
+  hidden: true
+
+- name: 台湾-机场名称1优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称1-台湾-GitHub归档
+  - 机场名称3-台湾-GitHub归档
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+  hidden: true
+
+- name: 美国-机场名称1优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称1-美国-GitHub归档
+  - 机场名称3-美国-GitHub归档
+  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
+  hidden: true
+
+- name: 机场名称3优先-GitHub归档
+  <<: *github_archive_fallback_base
+  proxies:
+  - 机场名称3-日本-GitHub归档
+  - 机场名称3-新加坡-GitHub归档
+  - 机场名称3-香港-GitHub归档
+  - 机场名称3-美国-GitHub归档
+  - 机场名称1-日本-GitHub归档
+  - 机场名称1-香港-GitHub归档
+  - 机场名称1-新加坡-GitHub归档
+  - 机场名称1-美国-GitHub归档
+  - 机场名称4-备用-GitHub归档
+  hidden: true
+
+- name: 香港-机场名称3优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  proxies:
+  - 机场名称3-香港-GitHub归档
+  - 机场名称1-香港-GitHub归档
+  hidden: true
+
+- name: 日本-机场名称3优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  proxies:
+  - 机场名称3-日本-GitHub归档
+  - 机场名称1-日本-GitHub归档
+  hidden: true
+
+- name: 新加坡-机场名称3优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  proxies:
+  - 机场名称3-新加坡-GitHub归档
+  - 机场名称1-新加坡-GitHub归档
+  hidden: true
+
+- name: 台湾-机场名称3优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_tw
+  proxies:
+  - 机场名称3-台湾-GitHub归档
+  - 机场名称1-台湾-GitHub归档
+  hidden: true
+
+- name: 美国-机场名称3优先-GitHub归档
+  <<: *github_archive_fallback_base
+  use:
+  - Airport_04
+  filter: *region_us
+  proxies:
+  - 机场名称3-美国-GitHub归档
+  - 机场名称1-美国-GitHub归档
+  hidden: true
+
+- name: 下载-机场名称3-日本-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_jp
+  hidden: true
+
+- name: 下载-机场名称3-新加坡-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_sg
+  hidden: true
+
+- name: 下载-机场名称3-美国-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_us
+  hidden: true
+
+- name: 下载-机场名称3-香港-Google
+  <<: *url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_hk
+  hidden: true
+
+- name: 下载-机场名称1-日本-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_jp
+  hidden: true
+
+- name: 下载-机场名称1-新加坡-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_sg
+  hidden: true
+
+- name: 下载-机场名称1-美国-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_us
+  hidden: true
+
+- name: 下载-机场名称1-香港-Google
+  <<: *url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_hk
+  hidden: true
+
+- name: 下载-机场名称4-日本-Google
+  <<: *url_test_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  hidden: true
+
+- name: 下载-机场名称4-新加坡-Google
+  <<: *url_test_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  hidden: true
+
+- name: 下载-机场名称4-美国-Google
+  <<: *url_test_base
+  use:
+  - Airport_04
+  filter: *region_us
+  hidden: true
+
+- name: 下载-机场名称4-香港-Google
+  <<: *url_test_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  hidden: true
+
+- name: 下载-机场名称4-其他-Google
+  <<: *url_test_base
+  use:
+  - Airport_04
+  filter: *filter_download_airport_04_other
+  hidden: true
+
+- name: 下载-机场名称1优先-Google
+  <<: *fallback_base
+  hidden: true
+  proxies:
+  - 下载-机场名称1-日本-Google
+  - 下载-机场名称1-新加坡-Google
+  - 下载-机场名称1-美国-Google
+  - 下载-机场名称1-香港-Google
+  - 下载-机场名称3-日本-Google
+  - 下载-机场名称3-新加坡-Google
+  - 下载-机场名称3-美国-Google
+  - 下载-机场名称3-香港-Google
+  - 下载-机场名称4-日本-Google
+  - 下载-机场名称4-新加坡-Google
+  - 下载-机场名称4-美国-Google
+  - 下载-机场名称4-香港-Google
+  - 下载-机场名称4-其他-Google
+
+- name: 下载-机场名称3优先-Google
+  <<: *fallback_base
+  hidden: true
+  proxies:
+  - 下载-机场名称3-日本-Google
+  - 下载-机场名称3-新加坡-Google
+  - 下载-机场名称3-美国-Google
+  - 下载-机场名称3-香港-Google
+  - 下载-机场名称1-日本-Google
+  - 下载-机场名称1-新加坡-Google
+  - 下载-机场名称1-美国-Google
+  - 下载-机场名称1-香港-Google
+  - 下载-机场名称4-日本-Google
+  - 下载-机场名称4-新加坡-Google
+  - 下载-机场名称4-美国-Google
+  - 下载-机场名称4-香港-Google
+  - 下载-机场名称4-其他-Google
+
+- name: 下载-机场名称3-日本-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_jp
+  hidden: true
+
+- name: 下载-机场名称3-新加坡-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_sg
+  hidden: true
+
+- name: 下载-机场名称3-美国-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_us
+  hidden: true
+
+- name: 下载-机场名称3-香港-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_hk
+  hidden: true
+
+- name: 下载-机场名称1-日本-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_jp
+  hidden: true
+
+- name: 下载-机场名称1-新加坡-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_sg
+  hidden: true
+
+- name: 下载-机场名称1-美国-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_us
+  hidden: true
+
+- name: 下载-机场名称1-香港-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_hk
+  hidden: true
+
+- name: 下载-机场名称4-日本-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  hidden: true
+
+- name: 下载-机场名称4-新加坡-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  hidden: true
+
+- name: 下载-机场名称4-美国-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_04
+  filter: *region_us
+  hidden: true
+
+- name: 下载-机场名称4-香港-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  hidden: true
+
+- name: 下载-机场名称4-其他-CF
+  <<: *cloudflare_url_test_base
+  use:
+  - Airport_04
+  filter: *filter_download_airport_04_other
+  hidden: true
+
+- name: 下载-机场名称1优先-CF
+  <<: *cloudflare_fallback_base
+  proxies:
+  - 下载-机场名称1-日本-CF
+  - 下载-机场名称1-新加坡-CF
+  - 下载-机场名称1-美国-CF
+  - 下载-机场名称1-香港-CF
+  - 下载-机场名称3-日本-CF
+  - 下载-机场名称3-新加坡-CF
+  - 下载-机场名称3-美国-CF
+  - 下载-机场名称3-香港-CF
+  - 下载-机场名称4-日本-CF
+  - 下载-机场名称4-新加坡-CF
+  - 下载-机场名称4-美国-CF
+  - 下载-机场名称4-香港-CF
+  - 下载-机场名称4-其他-CF
+  hidden: true
+
+- name: 下载-机场名称3优先-CF
+  <<: *cloudflare_fallback_base
+  proxies:
+  - 下载-机场名称3-日本-CF
+  - 下载-机场名称3-新加坡-CF
+  - 下载-机场名称3-美国-CF
+  - 下载-机场名称3-香港-CF
+  - 下载-机场名称1-日本-CF
+  - 下载-机场名称1-新加坡-CF
+  - 下载-机场名称1-美国-CF
+  - 下载-机场名称1-香港-CF
+  - 下载-机场名称4-日本-CF
+  - 下载-机场名称4-新加坡-CF
+  - 下载-机场名称4-美国-CF
+  - 下载-机场名称4-香港-CF
+  - 下载-机场名称4-其他-CF
+  hidden: true
+
+- name: 下载-机场名称3-日本-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_jp
+  hidden: true
+
+- name: 下载-机场名称3-新加坡-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_sg
+  hidden: true
+
+- name: 下载-机场名称3-美国-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_us
+  hidden: true
+
+- name: 下载-机场名称3-香港-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_03
+  filter: *filter_download_airport_03_hk
+  hidden: true
+
+- name: 下载-机场名称1-日本-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_jp
+  hidden: true
+
+- name: 下载-机场名称1-新加坡-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_sg
+  hidden: true
+
+- name: 下载-机场名称1-美国-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_us
+  hidden: true
+
+- name: 下载-机场名称1-香港-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_01
+  filter: *filter_download_airport_01_hk
+  hidden: true
+
+- name: 下载-机场名称4-日本-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_04
+  filter: *region_jp
+  hidden: true
+
+- name: 下载-机场名称4-新加坡-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_04
+  filter: *region_sg
+  hidden: true
+
+- name: 下载-机场名称4-美国-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_04
+  filter: *region_us
+  hidden: true
+
+- name: 下载-机场名称4-香港-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_04
+  filter: *region_hk
+  hidden: true
+
+- name: 下载-机场名称4-其他-GitHub归档
+  <<: *github_archive_url_test_base
+  use:
+  - Airport_04
+  filter: *filter_download_airport_04_other
+  hidden: true
+
+- name: 下载-机场名称1优先-GitHub归档
+  <<: *github_archive_fallback_base
+  proxies:
+  - 下载-机场名称1-日本-GitHub归档
+  - 下载-机场名称1-新加坡-GitHub归档
+  - 下载-机场名称1-美国-GitHub归档
+  - 下载-机场名称1-香港-GitHub归档
+  - 下载-机场名称3-日本-GitHub归档
+  - 下载-机场名称3-新加坡-GitHub归档
+  - 下载-机场名称3-美国-GitHub归档
+  - 下载-机场名称3-香港-GitHub归档
+  - 下载-机场名称4-日本-GitHub归档
+  - 下载-机场名称4-新加坡-GitHub归档
+  - 下载-机场名称4-美国-GitHub归档
+  - 下载-机场名称4-香港-GitHub归档
+  - 下载-机场名称4-其他-GitHub归档
+  hidden: true
+
+- name: 下载-机场名称3优先-GitHub归档
+  <<: *github_archive_fallback_base
+  proxies:
+  - 下载-机场名称3-日本-GitHub归档
+  - 下载-机场名称3-新加坡-GitHub归档
+  - 下载-机场名称3-美国-GitHub归档
+  - 下载-机场名称3-香港-GitHub归档
+  - 下载-机场名称1-日本-GitHub归档
+  - 下载-机场名称1-新加坡-GitHub归档
+  - 下载-机场名称1-美国-GitHub归档
+  - 下载-机场名称1-香港-GitHub归档
+  - 下载-机场名称4-日本-GitHub归档
+  - 下载-机场名称4-新加坡-GitHub归档
+  - 下载-机场名称4-美国-GitHub归档
+  - 下载-机场名称4-香港-GitHub归档
+  - 下载-机场名称4-其他-GitHub归档
+  hidden: true
+
+- name: 规则更新
+  <<: *github_raw_fallback_base
+  proxies:
+  - 机场名称3-日本-GitHubRaw
+  - 机场名称3-新加坡-GitHubRaw
+  - 机场名称3-香港-GitHubRaw
+  - 机场名称3-美国-GitHubRaw
+  - 机场名称1-日本-GitHubRaw
+  - 机场名称1-香港-GitHubRaw
+  - 机场名称1-新加坡-GitHubRaw
+  - 机场名称1-美国-GitHubRaw
+  - 机场名称4-备用-GitHubRaw
+  - DIRECT
+  hidden: true
+
 rules:
-  - NETWORK,tcp,业务分流入口
-  - SUB-RULE,(NETWORK,udp),业务分流
+  - NETWORK,tcp,分流-业务入口
+  - SUB-RULE,(NETWORK,udp),分流-业务规则
   - NETWORK,udp,REJECT
 
 sub-rules:
-  业务分流:
-    # 自定义优先规则
-    # GitHub 仅附件与源码归档走纯下载；AUR 的网页、RPC、Git 统一走纯下载。
-    - RULE-SET,pure_download_domain,纯下载
-    # OpenCode Zen/Go 共用主域，统一走 AI。
-    - DOMAIN-SUFFIX,opencode.ai,AI
-    # Copilot API 精确补充，勿扩大到整个 GitHub。
-    - DOMAIN,origin-tracker.githubusercontent.com,AI
-    # Copilot 专属附件先于通用 Azure Blob 下载后缀。
-    - DOMAIN,copilotprodattachments.blob.core.windows.net,AI
-    # 香港电视例外须先于小米父域直连。
-    - DOMAIN,hk.tv.global.mi.com,通用代理
-    - DOMAIN,ykk.emby.moe,Emby
-    - IP-CIDR,189.24.106.132/32,DIRECT,no-resolve
-    - DOMAIN-SUFFIX,kuapt.top,DIRECT
-    - DOMAIN-SUFFIX,catxxp123.top,DIRECT
-    - DOMAIN-SUFFIX,c4lm0n.top,DIRECT
-    - DOMAIN-SUFFIX,maj-soul.com,DIRECT
-    - DOMAIN-SUFFIX,catmajsoul.com,DIRECT
-    - DOMAIN-SUFFIX,catmjstudio.com,DIRECT
-    - DOMAIN-SUFFIX,homdgcat.wiki,DIRECT
-    - DOMAIN-SUFFIX,bsbsb.top,DIRECT
-    - DOMAIN-SUFFIX,3ct.2ndtool.top,DIRECT
-    - DOMAIN-SUFFIX,yunmu.xiercloud.uk,DIRECT
-    - AND,((DST-PORT,7844),(OR,((DOMAIN,region1.v2.argotunnel.com),(DOMAIN,region2.v2.argotunnel.com),(DOMAIN,cftunnel.com),(DOMAIN,h2.cftunnel.com),(DOMAIN,quic.cftunnel.com)))),Cloudflare Tunnel
-    - AND,((DST-PORT,7844),(RULE-SET,cloudflare_tunnel_ip,no-resolve)),Cloudflare Tunnel
-    - DOMAIN-SUFFIX,argotunnel.com,DIRECT
-    - DOMAIN-SUFFIX,cftunnel.com,DIRECT
-    - DOMAIN-SUFFIX,trycloudflare.com,DIRECT
-    # 金融例外先于广告
-    - RULE-SET,Wise_domain,金融
-    - RULE-SET,paypal_domain,金融
-
-    # 高置信广告与 PCDN 先于国内父域
-    - RULE-SET,banAd_core_domain,隐私拦截
-    - RULE-SET,banAd_core_classical,隐私拦截
-
-    - RULE-SET,banAd_pcdn_domain,隐私拦截
-    - RULE-SET,banAd_pcdn_classical,隐私拦截
-
-    # 国内大集合中的具体业务
-    - RULE-SET,appleTV_domain,境外影音
-    - RULE-SET,apple_update_domain,Apple
-    - DOMAIN-SUFFIX,mytv.com.hk,TVB
-    - RULE-SET,TVB_domain,TVB
-
-    # 国内白名单：core/PCDN 之后、low 之前
-    - RULE-SET,wechat_domain,DIRECT
-    - RULE-SET,bank_cn_domain,DIRECT
-    - RULE-SET,alibaba_domain,DIRECT
-    - RULE-SET,115_domain,DIRECT
-    - RULE-SET,ifast_domain,DIRECT
-    - RULE-SET,ai_cn_domain,DIRECT
-    - RULE-SET,direct_domain,DIRECT
-    - RULE-SET,private_domain,DIRECT
-    - RULE-SET,iptv_domain,DIRECT
-    - RULE-SET,xiaomi_domain,DIRECT
-    - RULE-SET,apple_cn_domain,DIRECT
-    - RULE-SET,steam_cn_domain,DIRECT
-    - RULE-SET,game_cn_domain,DIRECT
-    - RULE-SET,steamcdn_domain,DIRECT
-    - RULE-SET,NetEaseMusic_domain,DIRECT
-    - RULE-SET,pt_domain,DIRECT
-    - RULE-SET,public-tracker_domain,DIRECT
-    - RULE-SET,media_cn_domain,DIRECT
-
-    # 其余拦截（白名单优先）
-    - RULE-SET,banAd_low_domain,隐私拦截
-
-    # 跨区业务先于国内总集合
-    - RULE-SET,apple_domain,Apple
-    - RULE-SET,biliintl_domain,哔哩东南亚
-    - RULE-SET,bilibili_domain,哔哩哔哩
-
-    # Pixiv 页面与静态资源共用社媒出口；通用探针不能证明 pximg 可用。
-    - DOMAIN-SUFFIX,pixiv.net,境外社媒
-    - DOMAIN-SUFFIX,pximg.net,境外社媒
-
-    # 开发产品
-    - DOMAIN-SUFFIX,huggingface.co,开发下载
-    - DOMAIN-SUFFIX,hf.co,开发下载
-    # Docker 仅含拉取、安装与更新，勿扩大到账号或其他产品。
-    - DOMAIN-SUFFIX,docker.io,开发下载
-    - DOMAIN,production.cloudfront.docker.com,开发下载
-    - DOMAIN,docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com,开发下载
-    - DOMAIN,download.docker.com,开发下载
-    - DOMAIN,desktop.docker.com,开发下载
-    - DOMAIN,get.docker.com,开发下载
-    - DOMAIN-SUFFIX,googlesource.com,开发下载
-    # 无法按 HTTPS 路径分流，此处覆盖整个共享 GCS 主机。
-    - DOMAIN,storage.googleapis.com,开发下载
-    - DOMAIN-SUFFIX,dl.google.com,开发下载
-    - RULE-SET,dev_download_domain,开发下载
-    - DOMAIN-SUFFIX,kryptex.com,Kryptex
-    - DOMAIN-SUFFIX,kryptex.org,Kryptex
-    - DOMAIN-SUFFIX,kryptex.network,Kryptex
-    - DOMAIN-SUFFIX,linux.do,通用代理
-
-    # Google 保留后续细分业务（AI、YouTube 等），不被人工代理集合覆盖。
-    - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),通用代理
-
-    # 国内地域兜底不得覆盖 Google 业务。
-    - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
-
-    # Telegram 域名
-    - RULE-SET,telegram_domain,Telegram
-
-    # 具体产品先于共享平台
-    - RULE-SET,bahamut_domain,台湾限定
-    - RULE-SET,ai!cn_domain,AI
-    - RULE-SET,youtube_domain,境外影音
-    - RULE-SET,fcm_domain,Google
-    - RULE-SET,googlevpn_domain,Google
-    # 内容站先于承载它们的 Google/GitHub 等平台。
-    - RULE-SET,twitch_domain,境外影音
-    - RULE-SET,porn_domain,境外影音
-    - RULE-SET,github_domain,开发下载
-    - RULE-SET,gitbook_domain,开发下载
-    - RULE-SET,onedrive_domain,Microsoft
-    - RULE-SET,line_domain,境外通信
-    - RULE-SET,talkatone_domain,Talkatone
-    - RULE-SET,discord_domain,境外通信
-    - RULE-SET,signal_domain,境外通信
-    - RULE-SET,tiktok_domain,TikTok
-    - RULE-SET,netflix_domain,NETFLIX
-    - RULE-SET,disney_domain,DisneyPlus
-    - RULE-SET,hbo_domain,HBO
-    - RULE-SET,primevideo_domain,Primevideo
-    - RULE-SET,emby_domain,Emby
-    - RULE-SET,emby_classical,Emby
-    - RULE-SET,spotify_domain,Spotify
-    - RULE-SET,steam_domain,游戏平台
-    - RULE-SET,Epic_domain,游戏平台
-    - RULE-SET,EA_domain,游戏平台
-    - RULE-SET,Blizzard_domain,游戏平台
-    - RULE-SET,UBI_domain,游戏平台
-    - RULE-SET,Sony_domain,游戏平台
-    - RULE-SET,Nintendo_domain,游戏平台
-    # 通信、社媒具体业务先于电商与厂商集合。
-    - RULE-SET,communication_domain,境外通信
-    - RULE-SET,reddit_domain,Reddit
-    - RULE-SET,social_media_non_cn_domain,境外社媒
-    - RULE-SET,amazon_commerce_domain,境外电商
-    - RULE-SET,ecommerce_domain,境外电商
-    - RULE-SET,speedtest_domain,Speedtest
-
-    # 厂商生态兜底
-    - RULE-SET,google_domain,Google
-    - RULE-SET,microsoft_domain,Microsoft
-    - RULE-SET,meta_domain,境外社媒
-
-    # 金融聚合
-    - RULE-SET,finance_domain,金融
-    - RULE-SET,cryptocurrency_domain,金融
-
-    # 域名分类优先；进入业务 IP 兜底后按需解析，后续规则复用结果。
-    - RULE-SET,steamcdn_ip,DIRECT
-    - RULE-SET,NetEaseMusic_ip,DIRECT
-    - RULE-SET,bilibili_ip,哔哩哔哩
-    - RULE-SET,telegram_ip,Telegram
-    - RULE-SET,talkatone_ip,Talkatone
-    - RULE-SET,netflix_ip,NETFLIX
-    - RULE-SET,google_asn_cn,Google
-    - RULE-SET,google_ip,Google
-    - RULE-SET,facebook_ip,境外社媒
-    - RULE-SET,twitter_ip,境外社媒
-
-    # 国内 IP 兜底
-    - RULE-SET,private_ip,DIRECT,no-resolve
-    # 此处允许解析，覆盖未收录的国内域名。
-    - RULE-SET,cn_ip,DIRECT
-
-    # 未匹配流量走代理
-    - MATCH,通用代理
-
-  # 自动链路按探针选择候选；UDP 能力不匹配时明确拒绝。
-
-  机场名称1自动:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-机场名称1优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - RULE-SET,pure_download_domain,纯下载-机场名称1优先
-    - AND,((NETWORK,udp),(RULE-SET,pure_download_domain)),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-机场名称1优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,机场名称1优先
-    - NETWORK,udp,REJECT
-
-  机场名称3自动:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-自动
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - RULE-SET,pure_download_domain,纯下载-自动
-    - AND,((NETWORK,udp),(RULE-SET,pure_download_domain)),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-自动
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,机场名称3优先
-    - NETWORK,udp,REJECT
-
-  机场名称1-香港:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-香港-地区优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-香港-地区优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,香港-机场名称1优先
-    - NETWORK,udp,REJECT
-
-  机场名称3-香港:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-香港-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-香港-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,香港-成本优先
-    - NETWORK,udp,REJECT
-
-  机场名称1-日本:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-日本-地区优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-日本-地区优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,日本-机场名称1优先
-    - NETWORK,udp,REJECT
-
-  机场名称3-日本:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-日本-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-日本-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,日本-成本优先
-    - NETWORK,udp,REJECT
-
-  机场名称1-新加坡:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-新加坡-地区优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-新加坡-地区优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,新加坡-机场名称1优先
-    - NETWORK,udp,REJECT
-
-  机场名称3-新加坡:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-新加坡-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-新加坡-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,新加坡-成本优先
-    - NETWORK,udp,REJECT
-
-  机场名称1-台湾:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-台湾
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-台湾
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,台湾-机场名称1优先
-    - NETWORK,udp,REJECT
-
-  机场名称3-台湾:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-台湾-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-台湾-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,台湾-成本优先
-    - NETWORK,udp,REJECT
-
-  机场名称1-美国:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-美国-地区优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-美国-地区优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,美国-机场名称1优先
-    - NETWORK,udp,REJECT
-
-  机场名称3-美国:
-    - OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)),Cloudflare-美国-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain)))),REJECT
-    - OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)),GitHub-美国-成本优先
-    - AND,((NETWORK,udp),(OR,((RULE-SET,github_domain),(RULE-SET,gitbook_domain)))),REJECT
-    - MATCH,美国-成本优先
-    - NETWORK,udp,REJECT
+  分流-业务规则:
+  - RULE-SET,pure_download_domain,纯下载
+  - DOMAIN-SUFFIX,opencode.ai,AI
+  - DOMAIN,origin-tracker.githubusercontent.com,AI
+  - DOMAIN,copilotprodattachments.blob.core.windows.net,AI
+  - DOMAIN,hk.tv.global.mi.com,通用代理
+  - DOMAIN,ykk.emby.moe,Emby
+  - IP-CIDR,189.24.106.132/32,DIRECT,no-resolve
+  - DOMAIN-SUFFIX,kuapt.top,DIRECT
+  - DOMAIN-SUFFIX,catxxp123.top,DIRECT
+  - DOMAIN-SUFFIX,c4lm0n.top,DIRECT
+  - DOMAIN-SUFFIX,maj-soul.com,DIRECT
+  - DOMAIN-SUFFIX,catmajsoul.com,DIRECT
+  - DOMAIN-SUFFIX,catmjstudio.com,DIRECT
+  - DOMAIN-SUFFIX,homdgcat.wiki,DIRECT
+  - DOMAIN-SUFFIX,bsbsb.top,DIRECT
+  - DOMAIN-SUFFIX,3ct.2ndtool.top,DIRECT
+  - DOMAIN-SUFFIX,yunmu.xiercloud.uk,DIRECT
+  - AND,((DST-PORT,7844),(OR,((DOMAIN,region1.v2.argotunnel.com),(DOMAIN,region2.v2.argotunnel.com),(DOMAIN,cftunnel.com),(DOMAIN,h2.cftunnel.com),(DOMAIN,quic.cftunnel.com)))),Cloudflare Tunnel
+  - AND,((DST-PORT,7844),(RULE-SET,cloudflare_tunnel_ip,no-resolve)),Cloudflare Tunnel
+  - DOMAIN-SUFFIX,argotunnel.com,DIRECT
+  - DOMAIN-SUFFIX,cftunnel.com,DIRECT
+  - DOMAIN-SUFFIX,trycloudflare.com,DIRECT
+  - RULE-SET,Wise_domain,金融
+  - RULE-SET,paypal_domain,金融
+  - RULE-SET,banAd_core_domain,隐私拦截
+  - RULE-SET,banAd_core_classical,隐私拦截
+  - RULE-SET,banAd_pcdn_domain,隐私拦截
+  - RULE-SET,banAd_pcdn_classical,隐私拦截
+  - RULE-SET,appleTV_domain,境外影音
+  - RULE-SET,apple_update_domain,Apple
+  - DOMAIN-SUFFIX,mytv.com.hk,TVB
+  - RULE-SET,TVB_domain,TVB
+  - RULE-SET,wechat_domain,DIRECT
+  - RULE-SET,bank_cn_domain,DIRECT
+  - RULE-SET,alibaba_domain,DIRECT
+  - RULE-SET,115_domain,DIRECT
+  - RULE-SET,ifast_domain,DIRECT
+  - RULE-SET,ai_cn_domain,DIRECT
+  - RULE-SET,direct_domain,DIRECT
+  - RULE-SET,private_domain,DIRECT
+  - RULE-SET,iptv_domain,DIRECT
+  - RULE-SET,xiaomi_domain,DIRECT
+  - RULE-SET,apple_cn_domain,DIRECT
+  - RULE-SET,steam_cn_domain,DIRECT
+  - RULE-SET,game_cn_domain,DIRECT
+  - RULE-SET,steamcdn_domain,DIRECT
+  - RULE-SET,NetEaseMusic_domain,DIRECT
+  - RULE-SET,pt_domain,DIRECT
+  - RULE-SET,public-tracker_domain,DIRECT
+  - RULE-SET,media_cn_domain,DIRECT
+  - RULE-SET,banAd_low_domain,隐私拦截
+  - RULE-SET,apple_domain,Apple
+  - RULE-SET,biliintl_domain,哔哩东南亚
+  - RULE-SET,bilibili_domain,哔哩哔哩
+  - DOMAIN-SUFFIX,pixiv.net,境外社媒
+  - DOMAIN-SUFFIX,pximg.net,境外社媒
+  - DOMAIN-SUFFIX,huggingface.co,开发下载
+  - DOMAIN-SUFFIX,hf.co,开发下载
+  - DOMAIN-SUFFIX,docker.io,开发下载
+  - DOMAIN,production.cloudfront.docker.com,开发下载
+  - DOMAIN,docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com,开发下载
+  - DOMAIN,download.docker.com,开发下载
+  - DOMAIN,desktop.docker.com,开发下载
+  - DOMAIN,get.docker.com,开发下载
+  - DOMAIN-SUFFIX,googlesource.com,开发下载
+  - DOMAIN,storage.googleapis.com,开发下载
+  - DOMAIN-SUFFIX,dl.google.com,开发下载
+  - RULE-SET,dev_download_domain,开发下载
+  - DOMAIN-SUFFIX,kryptex.com,Kryptex
+  - DOMAIN-SUFFIX,kryptex.org,Kryptex
+  - DOMAIN-SUFFIX,kryptex.network,Kryptex
+  - DOMAIN-SUFFIX,linux.do,通用代理
+  - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),通用代理
+  - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
+  - RULE-SET,telegram_domain,Telegram
+  - RULE-SET,bahamut_domain,台湾限定
+  - RULE-SET,ai!cn_domain,AI
+  - RULE-SET,youtube_domain,境外影音
+  - RULE-SET,fcm_domain,Google FCM
+  - RULE-SET,googlevpn_domain,Google
+  - RULE-SET,twitch_domain,境外影音
+  - RULE-SET,porn_domain,境外影音
+  - RULE-SET,github_domain,开发下载
+  - RULE-SET,gitbook_domain,开发下载
+  - RULE-SET,onedrive_domain,OneDrive
+  - RULE-SET,line_domain,境外通信
+  - RULE-SET,talkatone_domain,Talkatone
+  - RULE-SET,discord_domain,境外通信
+  - RULE-SET,signal_domain,境外通信
+  - RULE-SET,tiktok_domain,TikTok
+  - RULE-SET,netflix_domain,Netflix
+  - RULE-SET,disney_domain,Disney+
+  - RULE-SET,hbo_domain,HBO
+  - RULE-SET,primevideo_domain,Prime Video
+  - RULE-SET,emby_domain,Emby
+  - RULE-SET,emby_classical,Emby
+  - RULE-SET,spotify_domain,Spotify
+  - RULE-SET,steam_domain,游戏平台
+  - RULE-SET,Epic_domain,游戏平台
+  - RULE-SET,EA_domain,游戏平台
+  - RULE-SET,Blizzard_domain,游戏平台
+  - RULE-SET,UBI_domain,游戏平台
+  - RULE-SET,Sony_domain,游戏平台
+  - RULE-SET,Nintendo_domain,游戏平台
+  - RULE-SET,communication_domain,境外通信
+  - RULE-SET,reddit_domain,Reddit
+  - RULE-SET,social_media_non_cn_domain,境外社媒
+  - RULE-SET,amazon_commerce_domain,境外电商
+  - RULE-SET,ecommerce_domain,境外电商
+  - RULE-SET,speedtest_domain,Speedtest
+  - RULE-SET,google_domain,Google
+  - RULE-SET,microsoft_domain,Microsoft
+  - RULE-SET,meta_domain,境外社媒
+  - RULE-SET,finance_domain,金融
+  - RULE-SET,cryptocurrency_domain,金融
+  - RULE-SET,steamcdn_ip,DIRECT
+  - RULE-SET,NetEaseMusic_ip,DIRECT
+  - RULE-SET,bilibili_ip,哔哩哔哩
+  - RULE-SET,telegram_ip,Telegram
+  - RULE-SET,talkatone_ip,Talkatone
+  - RULE-SET,netflix_ip,Netflix
+  - AND,((NETWORK,tcp),(DST-PORT,5228-5230),(OR,((RULE-SET,google_ip,no-resolve),(RULE-SET,google_asn_cn,no-resolve)))),Google FCM
+  - RULE-SET,google_asn_cn,Google
+  - RULE-SET,google_ip,Google
+  - RULE-SET,facebook_ip,境外社媒
+  - RULE-SET,twitter_ip,境外社媒
+  - RULE-SET,private_ip,DIRECT,no-resolve
+  - RULE-SET,cn_ip,DIRECT
+  - MATCH,通用代理
+  # 精确 GitHub 服务优先于 CDN 判断；CF IP 匹配需解析真实地址。
+  # 每个分支紧跟 UDP 护栏，防止选中 TCP-only 节点后滑落到其他探针或直连。
+  # API/Release 仅分别借网页/归档探针近似判断，不承诺业务级可用。
+  分流-探针分类:
+  - SUB-RULE,(DOMAIN,raw.githubusercontent.com),分流-GitHubRaw-出口
+  - AND,((NETWORK,udp),(DOMAIN,raw.githubusercontent.com)),REJECT
+  - SUB-RULE,(OR,((DOMAIN,codeload.github.com),(DOMAIN,release-assets.githubusercontent.com))),分流-GitHub归档-出口
+  - AND,((NETWORK,udp),(OR,((DOMAIN,codeload.github.com),(DOMAIN,release-assets.githubusercontent.com)))),REJECT
+  - SUB-RULE,(OR,((DOMAIN,github.com),(DOMAIN,api.github.com))),分流-GitHub-出口
+  - AND,((NETWORK,udp),(OR,((DOMAIN,github.com),(DOMAIN,api.github.com)))),REJECT
+  - SUB-RULE,(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain),(RULE-SET,cloudflare_cdn_ipv4),(RULE-SET,cloudflare_cdn_ipv6))),分流-CF-出口
+  - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain),(RULE-SET,cloudflare_cdn_ipv4),(RULE-SET,cloudflare_cdn_ipv6)))),REJECT
+  - SUB-RULE,(RULE-SET,github_domain),分流-GitHub-出口
+  - AND,((NETWORK,udp),(RULE-SET,github_domain)),REJECT
+  - SUB-RULE,(OR,((NETWORK,tcp),(NETWORK,udp))),分流-Google-出口
+  - AND,((NETWORK,udp),(OR,((NETWORK,tcp),(NETWORK,udp)))),REJECT
+  - MATCH,REJECT
+  分流-Google-出口:
+  - REMATCH-NAME,机场名称1优先,机场名称1优先-Google
+  - REMATCH-NAME,机场名称3优先,机场名称3优先-Google
+  - REMATCH-NAME,香港-机场名称1优先,香港-机场名称1优先-Google
+  - REMATCH-NAME,香港-机场名称3优先,香港-机场名称3优先-Google
+  - REMATCH-NAME,日本-机场名称1优先,日本-机场名称1优先-Google
+  - REMATCH-NAME,日本-机场名称3优先,日本-机场名称3优先-Google
+  - REMATCH-NAME,新加坡-机场名称1优先,新加坡-机场名称1优先-Google
+  - REMATCH-NAME,新加坡-机场名称3优先,新加坡-机场名称3优先-Google
+  - REMATCH-NAME,台湾-机场名称1优先,台湾-机场名称1优先-Google
+  - REMATCH-NAME,台湾-机场名称3优先,台湾-机场名称3优先-Google
+  - REMATCH-NAME,美国-机场名称1优先,美国-机场名称1优先-Google
+  - REMATCH-NAME,美国-机场名称3优先,美国-机场名称3优先-Google
+  - REMATCH-NAME,下载-机场名称1优先,下载-机场名称1优先-Google
+  - REMATCH-NAME,下载-机场名称3优先,下载-机场名称3优先-Google
+  - MATCH,REJECT
+  分流-CF-出口:
+  - REMATCH-NAME,机场名称1优先,机场名称1优先-CF
+  - REMATCH-NAME,机场名称3优先,机场名称3优先-CF
+  - REMATCH-NAME,香港-机场名称1优先,香港-机场名称1优先-CF
+  - REMATCH-NAME,香港-机场名称3优先,香港-机场名称3优先-CF
+  - REMATCH-NAME,日本-机场名称1优先,日本-机场名称1优先-CF
+  - REMATCH-NAME,日本-机场名称3优先,日本-机场名称3优先-CF
+  - REMATCH-NAME,新加坡-机场名称1优先,新加坡-机场名称1优先-CF
+  - REMATCH-NAME,新加坡-机场名称3优先,新加坡-机场名称3优先-CF
+  - REMATCH-NAME,台湾-机场名称1优先,台湾-机场名称1优先-CF
+  - REMATCH-NAME,台湾-机场名称3优先,台湾-机场名称3优先-CF
+  - REMATCH-NAME,美国-机场名称1优先,美国-机场名称1优先-CF
+  - REMATCH-NAME,美国-机场名称3优先,美国-机场名称3优先-CF
+  - REMATCH-NAME,下载-机场名称1优先,下载-机场名称1优先-CF
+  - REMATCH-NAME,下载-机场名称3优先,下载-机场名称3优先-CF
+  - MATCH,REJECT
+  分流-GitHub-出口:
+  - REMATCH-NAME,机场名称1优先,机场名称1优先-GitHub
+  - REMATCH-NAME,机场名称3优先,机场名称3优先-GitHub
+  - REMATCH-NAME,香港-机场名称1优先,香港-机场名称1优先-GitHub
+  - REMATCH-NAME,香港-机场名称3优先,香港-机场名称3优先-GitHub
+  - REMATCH-NAME,日本-机场名称1优先,日本-机场名称1优先-GitHub
+  - REMATCH-NAME,日本-机场名称3优先,日本-机场名称3优先-GitHub
+  - REMATCH-NAME,新加坡-机场名称1优先,新加坡-机场名称1优先-GitHub
+  - REMATCH-NAME,新加坡-机场名称3优先,新加坡-机场名称3优先-GitHub
+  - REMATCH-NAME,台湾-机场名称1优先,台湾-机场名称1优先-GitHub
+  - REMATCH-NAME,台湾-机场名称3优先,台湾-机场名称3优先-GitHub
+  - REMATCH-NAME,美国-机场名称1优先,美国-机场名称1优先-GitHub
+  - REMATCH-NAME,美国-机场名称3优先,美国-机场名称3优先-GitHub
+  - REMATCH-NAME,下载-机场名称1优先,REJECT
+  - REMATCH-NAME,下载-机场名称3优先,REJECT
+  - MATCH,REJECT
+  分流-GitHubRaw-出口:
+  - REMATCH-NAME,机场名称1优先,机场名称1优先-GitHubRaw
+  - REMATCH-NAME,机场名称3优先,机场名称3优先-GitHubRaw
+  - REMATCH-NAME,香港-机场名称1优先,香港-机场名称1优先-GitHubRaw
+  - REMATCH-NAME,香港-机场名称3优先,香港-机场名称3优先-GitHubRaw
+  - REMATCH-NAME,日本-机场名称1优先,日本-机场名称1优先-GitHubRaw
+  - REMATCH-NAME,日本-机场名称3优先,日本-机场名称3优先-GitHubRaw
+  - REMATCH-NAME,新加坡-机场名称1优先,新加坡-机场名称1优先-GitHubRaw
+  - REMATCH-NAME,新加坡-机场名称3优先,新加坡-机场名称3优先-GitHubRaw
+  - REMATCH-NAME,台湾-机场名称1优先,台湾-机场名称1优先-GitHubRaw
+  - REMATCH-NAME,台湾-机场名称3优先,台湾-机场名称3优先-GitHubRaw
+  - REMATCH-NAME,美国-机场名称1优先,美国-机场名称1优先-GitHubRaw
+  - REMATCH-NAME,美国-机场名称3优先,美国-机场名称3优先-GitHubRaw
+  - REMATCH-NAME,下载-机场名称1优先,REJECT
+  - REMATCH-NAME,下载-机场名称3优先,REJECT
+  - MATCH,REJECT
+  分流-GitHub归档-出口:
+  - REMATCH-NAME,机场名称1优先,机场名称1优先-GitHub归档
+  - REMATCH-NAME,机场名称3优先,机场名称3优先-GitHub归档
+  - REMATCH-NAME,香港-机场名称1优先,香港-机场名称1优先-GitHub归档
+  - REMATCH-NAME,香港-机场名称3优先,香港-机场名称3优先-GitHub归档
+  - REMATCH-NAME,日本-机场名称1优先,日本-机场名称1优先-GitHub归档
+  - REMATCH-NAME,日本-机场名称3优先,日本-机场名称3优先-GitHub归档
+  - REMATCH-NAME,新加坡-机场名称1优先,新加坡-机场名称1优先-GitHub归档
+  - REMATCH-NAME,新加坡-机场名称3优先,新加坡-机场名称3优先-GitHub归档
+  - REMATCH-NAME,台湾-机场名称1优先,台湾-机场名称1优先-GitHub归档
+  - REMATCH-NAME,台湾-机场名称3优先,台湾-机场名称3优先-GitHub归档
+  - REMATCH-NAME,美国-机场名称1优先,美国-机场名称1优先-GitHub归档
+  - REMATCH-NAME,美国-机场名称3优先,美国-机场名称3优先-GitHub归档
+  - REMATCH-NAME,下载-机场名称1优先,下载-机场名称1优先-GitHub归档
+  - REMATCH-NAME,下载-机场名称3优先,下载-机场名称3优先-GitHub归档
+  - MATCH,REJECT
 
 rule-providers:
   # 全球 Tunnel 端点，2026-09-11 官方清单；仅供 7844 规则使用。
@@ -1588,273 +2593,291 @@ rule-providers:
 
   # Telegram IP 使用本地完整合并集。
   telegram_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs"
   telegram_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Telegram/Telegram.mrs"
 
   banAd_core_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core.mrs"
   banAd_pcdn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn.mrs"
   banAd_low_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_low.mrs"
   banAd_core_classical:
-    <<: *classical
+    <<: *rule_provider_classical_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_core_classical.list"
   banAd_pcdn_classical:
-    <<: *classical
+    <<: *rule_provider_classical_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/banAd_pcdn_classical.list"
   private_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs"
   stun_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/category-stun.mrs"
   bank_cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-bank-cn.mrs"
   xiaomi_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/xiaomi.mrs"
   biliintl_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/bilibili%40!cn.mrs"
   bilibili_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/bilibili.mrs"
   bahamut_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/bahamut.mrs"
   spotify_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/spotify.mrs"
   steam_cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/steam%40cn.mrs"
   steamcdn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/Steam-domain.mrs"
   steam_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/steam.mrs"
   ai!cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-ai-!cn.mrs"
   youtube_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/youtube.mrs"
   google_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/google.mrs"
   github_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/github.mrs"
   cloudflare_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cloudflare.mrs"
   netflix_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.mrs"
   paypal_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/paypal.mrs"
   onedrive_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/onedrive.mrs"
   microsoft_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/microsoft.mrs"
   apple_update_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/apple-update.mrs"
   apple_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/apple.mrs"
   speedtest_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/ookla-speedtest.mrs"
   tiktok_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/tiktok.mrs"
   cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs"
   media_cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-media-cn.mrs"
   social_media_non_cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-social-media-!cn.mrs"
   reddit_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/reddit.mrs"
   finance_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-finance.mrs"
   cryptocurrency_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-cryptocurrency.mrs"
   communication_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-communication.mrs"
   gitbook_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/gitbook.mrs"
   dev_download_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/dev-download.mrs"
   disney_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/disney.mrs"
   hbo_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/hbo.mrs"
   primevideo_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/primevideo.mrs"
   NetEaseMusic_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/NetEaseMusic-domain.mrs"
   amazon_commerce_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/amazon-commerce.mrs"
   ecommerce_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-ecommerce.mrs"
   appleTV_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/appletv.mrs"
   Epic_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/epicgames.mrs"
   EA_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/ea.mrs"
   Blizzard_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/blizzard.mrs"
   UBI_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/ubi.mrs"
   Sony_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/sony.mrs"
   Nintendo_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/nintendo.mrs"
   meta_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/meta.mrs"
   Wise_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/wise.mrs"
   ifast_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/ifast.mrs"
   line_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/line.mrs"
   talkatone_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/Talkatone-domain.mrs"
   signal_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/signal.mrs"
   wechat_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/WeChat.mrs"
   proxy_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/proxy.mrs"
   direct_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/direct.mrs"
   apple_cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/apple%40cn.mrs"
   alibaba_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/alibaba.mrs"
   ai_cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-ai-cn.mrs"
   discord_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/discord.mrs"
   fcm_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/googlefcm.mrs"
   emby_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/emby.mrs"
   emby_classical:
-    <<: *classical
+    <<: *rule_provider_classical_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/emby_classical.list"
   pt_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-pt.mrs"
   public-tracker_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-public-tracker.mrs"
   115_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/115.mrs"
   twitch_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/twitch.mrs"
   porn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-porn.mrs"
   iptv_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/iptv.mrs"
   googlevpn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/googleVPN.mrs"
   TVB_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/tvb.mrs"
   game_cn_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-games%40cn.mrs"
   fakeip_filter_domain:
-    <<: *domain
+    <<: *rule_provider_domain_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/fakeip-filter.mrs"
   bilibili_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo-lite/geoip/bilibili.mrs"
   cn_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/cn.mrs"
   google_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/google.mrs"
   netflix_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/netflix.mrs"
   facebook_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geoip/facebook.mrs"
   twitter_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geoip/twitter.mrs"
   private_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geoip/private.mrs"
   talkatone_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/IP/Talkatone-ip.mrs"
   steamcdn_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/IP/steamCDN-ip.mrs"
   NetEaseMusic_ip:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/IP/NetEaseMusic-ip.mrs"
   google_asn_cn:
-    <<: *ip
+    <<: *rule_provider_ip_base
     url: "https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/IP/AS24424.mrs"
+
+  # Cloudflare 官方网段；仅供代理入口内目标分类，不覆盖业务直连规则。
+  cloudflare_cdn_ipv4:
+    type: http
+    behavior: ipcidr
+    format: text
+    interval: 86400
+    url: https://www.cloudflare.com/ips-v4
+    proxy: 机场名称1优先-CF
+
+  # Cloudflare 官方网段；仅供代理入口内目标分类，不覆盖业务直连规则。
+  cloudflare_cdn_ipv6:
+    type: http
+    behavior: ipcidr
+    format: text
+    interval: 86400
+    url: https://www.cloudflare.com/ips-v6
+    proxy: 机场名称1优先-CF

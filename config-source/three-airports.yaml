@@ -1,0 +1,12 @@
+# 三机场模型；机场名称x为文本替换目标，不可缩写。
+# 共同设置见 common.yaml；ruby scripts/build-config.rb 生成两份正式配置。
+---
+active-airports: [机场名称1, 机场名称3, 机场名称4]
+priority-order:
+  机场名称1优先: [机场名称1, 机场名称3]
+  机场名称3优先: [机场名称3, 机场名称1]
+sensitive-targets:
+  AI: {airport: 机场名称1, region: 日本}
+  金融: {airport: 机场名称1, region: 日本}
+  Talkatone: {airport: 机场名称1, region: 日本}
+business-defaults: {}
