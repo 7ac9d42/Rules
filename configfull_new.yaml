@@ -132,18 +132,18 @@ dns:
     - https://doh.pub/dns-query#DIRECT
     rule-set:private_domain: rcode://name_error
     hk.tv.global.mi.com:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query#DNS出口
+    - https://dns.google/dns-query#DNS出口
     rule-set:google_domain,biliintl_domain,TVB_domain,proxy_domain:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query#DNS出口
+    - https://dns.google/dns-query#DNS出口
     ? rule-set:cn_domain,game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain,wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain,NetEaseMusic_domain,media_cn_domain,iptv_domain
     : - https://dns.alidns.com/dns-query#DIRECT
       - https://doh.pub/dns-query#DIRECT
   direct-nameserver-follow-policy: true
   nameserver:
-  - https://cloudflare-dns.com/dns-query
-  - https://dns.google/dns-query
+  - https://cloudflare-dns.com/dns-query#DNS出口
+  - https://dns.google/dns-query#DNS出口
 proxy-providers:
   Airport_01:
     type: http
@@ -246,6 +246,13 @@ proxies:
   target-rematch-name: 美国-机场名称3优先
   target-sub-rule: 分流-探针分类
 proxy-groups:
+- name: DNS出口
+  type: select
+  proxies: [机场名称1优先-Google, 机场名称3优先-Google, 香港-机场名称1优先-Google, 香港-机场名称3优先-Google, 日本-机场名称1优先-Google, 日本-机场名称3优先-Google, 新加坡-机场名称1优先-Google, 新加坡-机场名称3优先-Google, 台湾-机场名称1优先-Google, 台湾-机场名称3优先-Google, 美国-机场名称1优先-Google, 美国-机场名称3优先-Google, 自建/家宽节点, 全部节点]
+  use: [Airport_01, Airport_03, Airport_04]
+  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
+  empty-fallback: REJECT
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
 - name: Cloudflare Tunnel
   type: select
   proxies: [DIRECT, 机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点]

@@ -84,37 +84,60 @@ class HTTP(socketserver.StreamRequestHandler):
                 self.wfile.flush()
                 line = self.rfile.readline().decode().strip()
                 self.headers()
-            method, target, _ = line.split(' ', 2)
-            status, body = 200, node.label.encode()
-            if method == 'HEAD':
-                path = urllib.parse.urlsplit(target).path
-                with self.server.lock:
-                    node.counts[path] = node.counts.get(path, 0) + 1
-                    status = node.statuses.get(path, self.server.expected[path])
-                    delay = node.delays.get(path, .01 if 'fast' in node.label else .12)
-                time.sleep(delay)
-                body = b''
-            self.wfile.write(f'HTTP/1.1 {status} Fixture\r\nContent-Length: {len(body)}\r\nConnection: close\r\n\r\n'.encode() + body)
-            self.wfile.flush()
+            while line:
+                method, target, _ = line.split(' ', 2)
+                parsed = urllib.parse.urlsplit(target)
+                status, body, keepalive = 200, node.label.encode(), False
+                if method == 'HEAD':
+                    path = parsed.path
+                    with self.server.lock:
+                        node.counts[path] = node.counts.get(path, 0) + 1
+                        status = node.statuses.get(path, self.server.expected[path])
+                        delay = node.delays.get(path, .01 if 'fast' in node.label else .12)
+                    time.sleep(delay)
+                    body = b''
+                elif method == 'GET' and parsed.path in getattr(self.server, 'dns_upstreams', {}):
+                    encoded = urllib.parse.parse_qs(parsed.query)['dns'][0]
+                    packet = base64.urlsafe_b64decode(encoded + '=' * (-len(encoded) % 4))
+                    with self.server.lock:
+                        upstream = self.server.dns_upstreams[parsed.path]
+                        status = upstream['status']
+                        queries = set()
+                        body = dns_answer(packet, upstream['answer'], {}, queries)
+                        upstream['queries'].update(queries)
+                        upstream['nodes'].extend((node.label, q) for q in queries)
+                        keepalive = status == 200 and getattr(self.server, 'dns_keepalive', False)
+                        if status != 200:
+                            body = b''
+                connection = 'keep-alive' if keepalive else 'close'
+                self.wfile.write(f'HTTP/1.1 {status} Fixture\r\nContent-Length: {len(body)}\r\nConnection: {connection}\r\n\r\n'.encode() + body)
+                self.wfile.flush()
+                if not keepalive:
+                    return
+                line = self.rfile.readline().decode().strip()
+                self.headers()
         except (OSError, ValueError, KeyError, UnicodeError):
             return
+
+
+def dns_answer(data, default, overrides, queries):
+    offset, labels = 12, []
+    while data[offset]:
+        size = data[offset]
+        labels.append(data[offset + 1:offset + size + 1].decode())
+        offset += size + 1
+    host = '.'.join(labels)
+    qtype = struct.unpack_from('!H', data, offset + 1)[0]
+    queries.add((host, qtype))
+    ips = overrides.get(host, [default]) if qtype == 1 else []
+    answers = b''.join(b'\xc0\x0c' + struct.pack('!HHIH', 1, 1, 60, 4) + socket.inet_aton(ip) for ip in ips)
+    return data[:2] + struct.pack('!HHHHH', 0x8180, 1, len(ips), 0, 0) + data[12:offset + 5] + answers
 
 
 class DNSHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data, sock = self.request
-        offset, labels = 12, []
-        while data[offset]:
-            size = data[offset]
-            labels.append(data[offset + 1:offset + size + 1].decode())
-            offset += size + 1
-        host = '.'.join(labels)
-        qtype = struct.unpack_from('!H', data, offset + 1)[0]
-        self.server.queries.add((host, qtype))
-        ips = self.server.answers.get(host, [self.server.answer]) if qtype == 1 else []
-        answers = b''.join(b'\xc0\x0c' + struct.pack('!HHIH', 1, 1, 60, 4) + socket.inet_aton(ip) for ip in ips)
-        sock.sendto(data[:2] + struct.pack('!HHHHH', 0x8180, 1, len(ips), 0, 0)
-                    + data[12:offset + 5] + answers, self.client_address)
+        sock.sendto(dns_answer(data, self.server.answer, self.server.answers, self.server.queries), self.client_address)
 
 def skip_name(data, offset):
     while data[offset]:

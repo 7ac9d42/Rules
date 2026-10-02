@@ -70,7 +70,8 @@ def static(source, name):
     priorities = {1: (1, 2, 3), 2: (2, 1, 3), 3: (3, 1, 2)} if four else {1: (1, 3), 3: (3, 1)}
     providers = [f'Airport_0{a}' for a in (*airports, 4)]
     assert list(source['proxy-providers']) == providers
-    assert len(groups) == (159 if four else 119)
+    assert len(groups) == (160 if four else 120)
+    visit('DNS出口', global_mode=True)
     assert len(outbounds) == (19 if four else 13)
     tg_groups = {n for n in groups if n.endswith('-TG')}
     assert len(tg_groups) == (16 if four else 11)
@@ -116,13 +117,14 @@ def static(source, name):
         private |= {'专用-机场名称2-香港-Google', '专用-机场名称2-香港-CF'}
     helpers = {'自建/家宽节点', '低倍率/MITM节点', '全部节点'}
     sensitive = {'AI', '金融', 'Talkatone'}
-    businesses = {n for n, g in groups.items() if g['type'] == 'select'} - helpers - {'GLOBAL'}
+    businesses = {n for n, g in groups.items() if g['type'] == 'select'} - helpers - {'GLOBAL', 'DNS出口'}
     assert '下载' in businesses and not {'纯下载', '开发下载'} & businesses
     assert not any(n.startswith('下载-') for n in known)
     assert not any('GitHubRaw' in n or 'GitHub归档' in n for n in known)
     for n, g in groups.items():
         choices = set(g.get('proxies', []))
         assert not choices & businesses, (n, '业务组不应被其他组引用')
+        assert 'DNS出口' not in choices, (n, 'DNS 出口仅供 DNS 使用')
         assert not choices & private or n in sensitive, (n, '专用池越界')
         assert '低倍率/MITM节点' not in choices or n == 'Emby', n
         if n not in businesses:
@@ -137,6 +139,16 @@ def static(source, name):
         assert 'filter' in g and 'exclude-filter' not in g, n
     physical = {n + '-Google' if n in outbounds else n for n in required}
     assert set(groups['GLOBAL']['proxies']) == physical
+    dns_group = groups['DNS出口']
+    assert set(dns_group['proxies']) == physical - {'DIRECT'}
+    assert dns_group['proxies'][0] == '机场名称1优先-Google'
+    assert dns_group['use'] == providers and dns_group['filter'] == groups['GLOBAL']['filter']
+    assert dns_group['empty-fallback'] == 'REJECT'
+    assert source['dns']['nameserver'] == [
+        'https://cloudflare-dns.com/dns-query#DNS出口', 'https://dns.google/dns-query#DNS出口']
+    for value in source['dns']['nameserver-policy'].values():
+        if isinstance(value, list):
+            assert value in (source['dns']['nameserver'], source['dns']['direct-nameserver']), value
     for n in sensitive:
         scope = '专用-机场名称2-香港' if four and n != 'AI' else '专用-机场名称1-日本'
         assert groups[n]['proxies'][:2] == [scope + '-Google', scope + '-CF']
@@ -949,6 +961,139 @@ def dns_policy(source, mihomo):
             assert (host, 16) in foreign.queries and (host, 16) not in domestic.queries, host
         print('PASS: DNS 国内外解析、Fake-IP 及 Tunnel 例外', flush=True)
 
+def dns_outlet(source, mihomo):
+    # 回环 HTTP 承载真实 DoH wireformat；不依赖公网 TLS、机场或公共 DNS。
+    with tempfile.TemporaryDirectory(prefix='mihomo-dns-outlet-') as directory, F.Runtime(
+            directory, mihomo, {PATHS[f]: STATUS[f] for f in FAMILIES}) as rt:
+        config = rt.base(source)
+        config['proxy-providers'], labels = {}, []
+        for provider in source['proxy-providers']:
+            airport = int(provider[-2:])
+            region = '香港' if airport == 2 else '日本'
+            label = f'[机场名称{airport}]{region} fast 1x'
+            labels.append(label)
+            path = Path(directory) / (provider + '.json')
+            path.write_text(json.dumps({'proxies': [rt.proxy(label)]}))
+            config['proxy-providers'][provider] = dict(type='file', path=str(path), **{'health-check': dict(
+                enable=False, url=LOCAL['Google'], interval=86400, **{'expected-status': 204})})
+        config['proxy-groups'] = copy.deepcopy(source['proxy-groups'])
+        for g in config['proxy-groups']:
+            if 'url' in g:
+                g['url'] = LOCAL[next(f for f in FAMILIES if URLS[f] == g['url'])]
+            if g['type'] != 'select':
+                g['interval'] = 0
+            # 每池只有一个节点；测速/10 秒缓存由 health 覆盖，保留真实 fallback。
+            if g['type'] == 'url-test':
+                g['type'] = 'select'
+        rt.http.dns_upstreams = {path: dict(status=200, answer=answer, nodes=[], queries=set())
+                                for path, answer in (('/dns-cf', '203.0.113.20'), ('/dns-google', '203.0.113.21'))}
+        bootstrap = rt.server(F.DNSHandler, socketserver.UDPServer)
+        bootstrap.answer, bootstrap.answers, bootstrap.queries = '127.0.0.1', {}, set()
+        local = f'udp://127.0.0.1:{bootstrap.server_address[1]}#DIRECT'
+        dns = copy.deepcopy(source['dns'])
+        foreign = ['http://cf.fixture.test/dns-cf#DNS出口', 'http://google.fixture.test/dns-google#DNS出口']
+        for key, value in dns['nameserver-policy'].items():
+            if value == dns['nameserver']:
+                dns['nameserver-policy'][key] = foreign
+            elif value == dns['direct-nameserver']:
+                dns['nameserver-policy'][key] = [local]
+        port = F.free_port()
+        dns.update({'listen': f'127.0.0.1:{port}', 'enhanced-mode': 'redir-host',
+                    'default-nameserver': [local], 'proxy-server-nameserver': [local],
+                    'direct-nameserver': [local], 'nameserver': foreign})
+        config['dns'] = dns
+        rt.start(config)
+        # 若丢失显式出口，两个上游将分别随业务走 DIRECT 或 rematch。
+        rt.select('Google', 'DIRECT')
+        rt.select('通用代理', 'DIRECT')
+        config['sub-rules']['分流-业务规则'] = [
+            'DOMAIN,google.fixture.test,Google', 'DOMAIN,cf.fixture.test,通用代理', 'MATCH,REJECT']
+        rt.reload(config)
+        def restart():
+            rt.stop()
+            rt.start(config)
+            F.until(lambda: set(labels) <= set(rt.group('DNS出口')['all']))
+            healthy_pools()
+        def healthy_pools():
+            # 显式探测建立健康状态，避免启动异步检查与故障注入竞争。
+            for airport in (1, 2, 3) if 'Airport_02' in source['proxy-providers'] else (1, 3):
+                region = '香港' if airport == 2 else '日本'
+                pool = pool_name(airport, region, 'Google')
+                label = f'[机场名称{airport}]{region} fast 1x'
+                F.until(lambda: rt.group(pool)['now'] == label)
+                alive = rt.http.nodes[label].statuses.get(PATHS['Google'], 204) == 204
+                assert rt.probe(pool, LOCAL['Google'], 204) == alive, (pool, rt.group(pool))
+        healthy_pools()
+        assert rt.group('机场名称1优先-Google')['now'] == pool_name(1, '日本', 'Google')
+        def resolve(host, node, healthy=None, successful_only=False):
+            with rt.http.lock:
+                for path, upstream in rt.http.dns_upstreams.items():
+                    upstream['nodes'].clear()
+                    upstream['queries'].clear()
+                    upstream['status'] = 200 if healthy is None or path == healthy else 503
+            code, ips = F.query(port, host)
+            expected = {u['answer'] for p, u in rt.http.dns_upstreams.items() if healthy is None or p == healthy}
+            assert code == 0 and len(ips) == 1 and ips[0] in expected, (host, code, ips)
+            with rt.http.lock:
+                used = [n for p, u in rt.http.dns_upstreams.items() for n, q in u['nodes']
+                        if q == (host, 1) and (not successful_only or p == healthy)]
+                assert used and set(used) == {node}, (host, used, node)
+                if healthy:
+                    assert (host, 1) in rt.http.dns_upstreams[healthy]['queries'], host
+        resolve('both.fixture.test', labels[0])
+        resolve('cf-only.fixture.test', labels[0], '/dns-cf')
+        resolve('google-only.fixture.test', labels[0], '/dns-google')
+        # 精确域名 nameserver-policy 也必须使用相同出口。
+        resolve('hk.tv.global.mi.com', labels[0], '/dns-cf')
+        rt.select('Google', '美国-机场名称3优先')
+        rt.select('通用代理', '香港-机场名称1优先')
+        resolve('business-changed.fixture.test', labels[0], '/dns-google')
+        rt.select('全部节点', labels[0])
+        for choice, label in [('日本-机场名称3优先-Google', '[机场名称3]日本 fast 1x'),
+                              ('全部节点', labels[0]), (labels[-1], labels[-1])]:
+            rt.select('DNS出口', choice)
+            # 排除持久连接及上一轮并发查询留下的空闲连接，只验证新连接。
+            restart()
+            assert rt.group('DNS出口')['now'] == choice
+            resolve('manual-' + str(labels.index(label)) + '-' + str(len(choice)) + '.fixture.test', label)
+        if 'Airport_02' in source['proxy-providers']:
+            rt.select('DNS出口', '香港-机场名称2优先-Google')
+            restart()
+            resolve('four.fixture.test', '[机场名称2]香港 fast 1x')
+        rt.select('DNS出口', '机场名称1优先-Google')
+        restart()
+        rt.http.nodes[labels[0]].statuses[PATHS['Google']] = 503
+        F.until(lambda: not rt.probe(pool_name(1, '日本', 'Google'), LOCAL['Google'], 204))
+        next_node = '[机场名称2]香港 fast 1x' if 'Airport_02' in source['proxy-providers'] else '[机场名称3]日本 fast 1x'
+        F.until(lambda: rt.group('机场名称1优先-Google')['now'] == (
+            pool_name(2, '香港', 'Google') if 'Airport_02' in source['proxy-providers'] else pool_name(3, '日本', 'Google')))
+        resolve('fallback.fixture.test', next_node)
+        # 相同查询切换后继续命中旧缓存；重启排除存量 DNS 状态并保留手选。
+        rt.select('DNS出口', '日本-机场名称3优先-Google')
+        restart()
+        resolve('cached.fixture.test', '[机场名称3]日本 fast 1x', '/dns-cf')
+        rt.select('DNS出口', '全部节点')
+        with rt.http.lock:
+            for u in rt.http.dns_upstreams.values():
+                u['nodes'].clear()
+        assert F.query(port, 'cached.fixture.test') == (0, ['203.0.113.20'])
+        assert not any(u['nodes'] for u in rt.http.dns_upstreams.values())
+        restart()
+        assert rt.group('DNS出口')['now'] == '全部节点'
+        resolve('cached.fixture.test', labels[0], '/dns-google')
+        # 新域名排除解析缓存，见证持久 DoH 连接仍沿用切换前的节点。
+        rt.http.dns_keepalive = True
+        rt.select('DNS出口', '日本-机场名称3优先-Google')
+        restart()
+        resolve('pooled-before.fixture.test', '[机场名称3]日本 fast 1x', '/dns-cf')
+        rt.select('DNS出口', '全部节点')
+        # 正常上游复用旧连接；失败上游可重建连接并走新节点。
+        resolve('pooled-after.fixture.test', '[机场名称3]日本 fast 1x', '/dns-cf', successful_only=True)
+        restart()
+        resolve('pooled-after.fixture.test', labels[0], '/dns-cf')
+    print('PASS: DNS 显式出口、双上游冗余、业务隔离、手选/机场回退、缓存/长连接及重启', flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--suite', choices=('static', 'smoke', 'full'), default='full')
@@ -983,6 +1128,8 @@ def main():
             health(sources[PRIMARY_CONFIG], args.mihomo)
             four_airport_health(sources[FOUR_CONFIG], args.mihomo)
             dns_policy(sources[PRIMARY_CONFIG], args.mihomo)
+            for name in ACTIVE_CONFIGS:
+                dns_outlet(sources[name], args.mihomo)
     print(f'PASS: {args.suite}', flush=True)
 
 

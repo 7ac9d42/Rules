@@ -6,8 +6,8 @@
 
 | 文件 | 用途 |
 |---|---|
-| [configfull_new.yaml](configfull_new.yaml) | 三机场完整配置：机场名称1、3、4，119 个组 |
-| [configfull_new_4.yaml](configfull_new_4.yaml) | 四机场完整配置：增加机场名称2家宽，159 个组 |
+| [configfull_new.yaml](configfull_new.yaml) | 三机场完整配置：机场名称1、3、4，120 个组 |
+| [configfull_new_4.yaml](configfull_new_4.yaml) | 四机场完整配置：增加机场名称2家宽，160 个组 |
 | [configfull_new.yaml.bak](configfull_new.yaml.bak) | 本次迁移前的三机场正式配置 |
 | [configfull_new_4.yaml.bak](configfull_new_4.yaml.bak) | 本次迁移前的四机场正式配置 |
 
@@ -79,11 +79,15 @@ OneDrive、Telegram 保留独立业务选择；Pixiv 归入境外社媒。国内
 
 名称不变的 `规则更新` 若固定过已移除的子组，应在面板解除固定选择，或使用控制器 `DELETE /proxies/{URL编码组名}` 恢复自动。订阅移除节点也不是即时撤销：v1.19.30 的 url-test 有 10 秒选点缓存，空池可能短暂保留旧节点，再收敛到 REJECT。上层 fallback 根据子组对应 URL 的健康记录切换；订阅更新和子组 `now` 的变化不会直接清除该记录，还需复测确认。
 
-切换出口通常只影响新连接。临时统一出口可切换全局模式并在 GLOBAL 手选，结束后切回规则模式。面板直接测 rematch 延迟可能失败，应通过实际代理入口访问目标，并结合连接日志确认出口。
+切换出口通常只影响新连接。临时统一业务出口可切换全局模式并在 GLOBAL 手选，结束后切回规则模式；境外 DoH 仍使用独立的 DNS出口。面板直接测 rematch 延迟可能失败，应通过实际代理入口访问目标，并结合连接日志确认出口。
 
 OpenClash 使用原始模板并关闭 Smart 自动转换，设置 `auto_smart_switch=0`；保持 url-test／fallback 类型和规则模式。仅关闭 ASN、LightGBM 不能替代关闭 Smart，已经转换的运行配置应从原始模板重新加载。
 
-两配置均显式使用 `tun.device: tun0` 支持裸核启动；安卓和路由客户端可自行覆写设备名，macOS 裸核使用 `utun` 开头名称。保留 system 栈、MTU 9000 及既有 DNS 策略；客户端可能覆写 TUN、DNS 端口和路由，应核对实际运行配置。手机独立加载需支持这些 Mihomo 字段；仅设置 Wi-Fi HTTP 代理不能承载 Android FCM 推送，独立代理应使用 VPN/TUN 接管。iOS APNs 不归入 FCM。
+两配置均显式使用 `tun.device: tun0` 支持裸核启动；安卓和路由客户端可自行覆写设备名，macOS 裸核使用 `utun` 开头名称。保留 system 栈、MTU 9000；客户端可能覆写 TUN、DNS 端口和路由，应核对实际运行配置。手机独立加载需支持这些 Mihomo 字段；仅设置 Wi-Fi HTTP 代理不能承载 Android FCM 推送，独立代理应使用 VPN/TUN 接管。iOS APNs 不归入 FCM。
+
+境外默认解析及对应 `nameserver-policy` 中的 Cloudflare／Google DoH 均通过 `#DNS出口` 显式选路，继续并发查询。`DNS出口` 默认使用 `机场名称1优先-Google`，复用普通机场／地区 Google 实体组、家宽入口和普通节点手选；不经过 rematch，不引用敏感专用池、下载或 MITM 组，也不提供 DIRECT。国内、节点域名、引导解析及 Fake-IP 策略保持不变；`respect-rules: true` 保留，显式出口优先生效。DNS 只增加一个 select，不新增自动池或探针。
+
+修改 Google、通用代理或 GLOBAL 选择不会改变上述 DNS 出口。DNS 手选只保证新建连接采用所选策略，已有 DoH 长连接和解析缓存可能继续使用；排障时重启内核可排除旧状态，不额外运行监听或清缓存脚本。统一 DNS 出口不保证跟随每项业务的实际节点，也不能控制机场服务器的远端解析；BrowserLeaks 的国家数量不作为正确性标准。
 
 ## 构建与验证
 
@@ -109,7 +113,7 @@ ruby scripts/validate-rules.rb --config configfull_new.yaml --config configfull_
 |---|---|
 | `static` | 两产物生成一致性、四份配置基础加载、活动配置的引用／循环／菜单／专用池隔离；不下载规则 |
 | `smoke` | 两模型关键业务及默认出口、四类探针分类及 TG 作用域、UDP、Fake-IP、GLOBAL |
-| `full`（默认） | 再验证节点准入、探测范围／去重、故障隔离／恢复、同区测速、DNS、手选重载／重启、订阅移除及空池 |
+| `full`（默认） | 再验证节点准入、探测范围／去重、故障隔离／恢复、同区测速、DNS 策略及实际出口／上游冗余、手选重载／重启、订阅移除及空池 |
 
 ```sh
 python3 scripts/test-config.py --suite static
