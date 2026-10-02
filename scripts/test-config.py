@@ -357,9 +357,21 @@ def health(source, mihomo):
             if g['type'] != 'select':
                 g['interval'] = 86400
         config['rules'] = ['MATCH,通用代理']
-        rt.start(config)
-        fast = '[机场名称3]日本 fast 1x'
-        F.until(lambda: all(rt.group(pool_name(3, '日本', f))['now'] == fast for f in FAMILIES))
+        # URL/filter 注册发生在组类型分派之前；临时 select/interval=0
+        # 保留同一注册图，同时关闭物理及兼容 provider 的启动异步检查。
+        count_config = copy.deepcopy(config)
+        for provider in count_config['proxy-providers'].values():
+            provider['health-check']['enable'] = False
+        for group in count_config['proxy-groups']:
+            group.update(type='select', interval=0)
+        count_config['rules'] = ['MATCH,REJECT']
+        rt.start(count_config)
+        def loaded():
+            providers = rt.api('/providers/proxies')['providers']
+            return all(provider in providers and
+                       {n['name'] for n in providers[provider]['proxies']} == {n['name'] for n in values}
+                       for provider, values in nodes.items())
+        F.until(loaded)
         expected = {(p, f): {n['name'] for n in nodes[p]} if f == 'Google' else set()
                     for p in nodes for f in FAMILIES}
         # 准入已由独立案例验证；此处只验证额外探针遵守各组候选并集且不重复测。
@@ -374,15 +386,22 @@ def health(source, mihomo):
                         return any(re.search(p.removeprefix('(?i)'), name, re.I) for p in pattern.split('`'))
                     if match(g.get('filter', '.*')) and not (g.get('exclude-filter') and match(g['exclude-filter'])):
                         expected[provider, family].add(name)
-        before = {n: dict(s.counts) for n, s in rt.http.nodes.items()}
+        with rt.http.lock:
+            before = {n: dict(s.counts) for n, s in rt.http.nodes.items()}
+        assert not any(before.values()), before
         for provider in nodes:
             rt.api('/providers/proxies/' + provider + '/healthcheck')
+        with rt.http.lock:
+            after = {n: dict(s.counts) for n, s in rt.http.nodes.items()}
         for provider, values in nodes.items():
             for node in values:
                 name = node['name']
                 for f in FAMILIES:
-                    delta = rt.http.nodes[name].counts.get(PATHS[f], 0) - before[name].get(PATHS[f], 0)
+                    delta = after[name].get(PATHS[f], 0) - before[name].get(PATHS[f], 0)
                     assert delta == int(name in expected[provider, f]), (name, f, delta)
+        rt.reload(config)
+        fast = '[机场名称3]日本 fast 1x'
+        F.until(lambda: all(rt.group(pool_name(3, '日本', f))['now'] == fast for f in FAMILIES))
         def probe(name, family):
             return rt.probe(name, LOCAL[family], STATUS[family])
         pairs = [(pool_name(a, r, f), f) for f in FAMILIES for a in (3, 1)
