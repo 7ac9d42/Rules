@@ -28,6 +28,7 @@ DOMAIN-REGEX,(?i)^d[^.]*\.xinshipu\.com$
 DOMAIN-REGEX,(?i)^dm[^.]*\.yxlady\.com$
 DOMAIN-REGEX,(?i)^dn[^.]*\.ixinwei\.com$
 DOMAIN-REGEX,(?i)^fanpingbi[^.]*\.gaokao\.com$
+DOMAIN-REGEX,(?i)^faro-collector-[^.]*\.grafana-ops\.net$
 DOMAIN-REGEX,(?i)^faro-collector-prod-[^.]*\.grafana\.net$
 DOMAIN-REGEX,(?i)^fls-[^.]*\.amazon\.com$
 DOMAIN-REGEX,(?i)^fpb[^.]*\.51edu\.com$
