@@ -132,18 +132,18 @@ dns:
     - https://doh.pub/dns-query#DIRECT
     rule-set:private_domain: rcode://name_error
     hk.tv.global.mi.com:
-    - https://cloudflare-dns.com/dns-query#DNS出口
-    - https://dns.google/dns-query#DNS出口
+    - https://cloudflare-dns.com/dns-query#DNS代理
+    - https://dns.google/dns-query#DNS代理
     rule-set:google_domain,biliintl_domain,TVB_domain,proxy_domain:
-    - https://cloudflare-dns.com/dns-query#DNS出口
-    - https://dns.google/dns-query#DNS出口
+    - https://cloudflare-dns.com/dns-query#DNS代理
+    - https://dns.google/dns-query#DNS代理
     ? rule-set:cn_domain,game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain,wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain,NetEaseMusic_domain,media_cn_domain,iptv_domain
     : - https://dns.alidns.com/dns-query#DIRECT
       - https://doh.pub/dns-query#DIRECT
   direct-nameserver-follow-policy: true
   nameserver:
-  - https://cloudflare-dns.com/dns-query#DNS出口
-  - https://dns.google/dns-query#DNS出口
+  - https://cloudflare-dns.com/dns-query#DNS代理
+  - https://dns.google/dns-query#DNS代理
 proxy-providers:
   Airport_01:
     type: http
@@ -153,7 +153,7 @@ proxy-providers:
       url: https://www.gstatic.com/generate_204
       expected-status: 204
       timeout: 5000
-      interval: 60
+      interval: 75
       lazy: false
     exclude-filter: "(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\\s\\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\\s*[:：]\\s*(?:[0-9]|∞|Unlimited)|(?:^|[\\s\\[【(（_|｜丨-])Email\\s*[:：]\\s*\\S+@|(?:^|[\\s\\[【(（_|｜丨-])Panel\\s*[:：]|(?:^|[\\s\\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\\s\\]】)）|｜丨:：_-]))"
     proxy: DIRECT
@@ -169,7 +169,7 @@ proxy-providers:
       url: https://www.gstatic.com/generate_204
       expected-status: 204
       timeout: 5000
-      interval: 60
+      interval: 75
       lazy: false
     exclude-filter: "(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\\s\\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\\s*[:：]\\s*(?:[0-9]|∞|Unlimited)|(?:^|[\\s\\[【(（_|｜丨-])Email\\s*[:：]\\s*\\S+@|(?:^|[\\s\\[【(（_|｜丨-])Panel\\s*[:：]|(?:^|[\\s\\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\\s\\]】)）|｜丨:：_-]))"
     proxy: DIRECT
@@ -185,7 +185,7 @@ proxy-providers:
       url: https://www.gstatic.com/generate_204
       expected-status: 204
       timeout: 5000
-      interval: 60
+      interval: 75
       lazy: false
     exclude-filter: "(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\\s\\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\\s*[:：]\\s*(?:[0-9]|∞|Unlimited)|(?:^|[\\s\\[【(（_|｜丨-])Email\\s*[:：]\\s*\\S+@|(?:^|[\\s\\[【(（_|｜丨-])Panel\\s*[:：]|(?:^|[\\s\\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\\s\\]】)）|｜丨:：_-]))"
     proxy: DIRECT
@@ -246,9 +246,9 @@ proxies:
   target-rematch-name: 美国-机场名称3优先
   target-sub-rule: 分流-探针分类
 proxy-groups:
-- name: DNS出口
+- name: DNS代理
   type: select
-  proxies: [机场名称1优先-Google, 机场名称3优先-Google, 香港-机场名称1优先-Google, 香港-机场名称3优先-Google, 日本-机场名称1优先-Google, 日本-机场名称3优先-Google, 新加坡-机场名称1优先-Google, 新加坡-机场名称3优先-Google, 台湾-机场名称1优先-Google, 台湾-机场名称3优先-Google, 美国-机场名称1优先-Google, 美国-机场名称3优先-Google, 自建/家宽节点, 全部节点]
+  proxies: [机场名称3优先-CF, 机场名称1优先-CF, 香港-机场名称1优先-CF, 香港-机场名称3优先-CF, 日本-机场名称1优先-CF, 日本-机场名称3优先-CF, 新加坡-机场名称1优先-CF, 新加坡-机场名称3优先-CF, 台湾-机场名称1优先-CF, 台湾-机场名称3优先-CF, 美国-机场名称1优先-CF, 美国-机场名称3优先-CF, 自建/家宽节点, 全部节点]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -288,9 +288,9 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
-- name: Google FCM
+- name: FCM
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -309,9 +309,9 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
-- name: Telegram
+- name: Telegram代理
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -435,9 +435,9 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
-- name: 通用代理
+- name: 默认代理
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -1561,7 +1561,7 @@ sub-rules:
   - DOMAIN-SUFFIX,opencode.ai,AI
   - DOMAIN,origin-tracker.githubusercontent.com,AI
   - DOMAIN,copilotprodattachments.blob.core.windows.net,AI
-  - DOMAIN,hk.tv.global.mi.com,通用代理
+  - DOMAIN,hk.tv.global.mi.com,默认代理
   - DOMAIN,ykk.emby.moe,Emby
   - IP-CIDR,189.24.106.132/32,DIRECT,no-resolve
   - DOMAIN-SUFFIX,kuapt.top,DIRECT
@@ -1628,14 +1628,14 @@ sub-rules:
   - DOMAIN-SUFFIX,kryptex.com,Kryptex
   - DOMAIN-SUFFIX,kryptex.org,Kryptex
   - DOMAIN-SUFFIX,kryptex.network,Kryptex
-  - DOMAIN-SUFFIX,linux.do,通用代理
-  - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),通用代理
+  - DOMAIN-SUFFIX,linux.do,默认代理
+  - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理
   - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
-  - RULE-SET,telegram_domain,Telegram
+  - RULE-SET,telegram_domain,Telegram代理
   - RULE-SET,bahamut_domain,台湾限定
   - RULE-SET,ai!cn_domain,AI
   - RULE-SET,youtube_domain,境外影音
-  - RULE-SET,fcm_domain,Google FCM
+  - RULE-SET,fcm_domain,FCM
   - RULE-SET,googlevpn_domain,Google
   - RULE-SET,twitch_domain,境外影音
   - RULE-SET,porn_domain,境外影音
@@ -1675,17 +1675,17 @@ sub-rules:
   - RULE-SET,steamcdn_ip,DIRECT
   - RULE-SET,NetEaseMusic_ip,DIRECT
   - RULE-SET,bilibili_ip,哔哩哔哩
-  - RULE-SET,telegram_ip,Telegram
+  - RULE-SET,telegram_ip,Telegram代理
   - RULE-SET,talkatone_ip,Talkatone
   - RULE-SET,netflix_ip,Netflix
-  - AND,((NETWORK,tcp),(DST-PORT,5228-5230),(OR,((RULE-SET,google_ip,no-resolve),(RULE-SET,google_asn_cn,no-resolve)))),Google FCM
+  - AND,((NETWORK,tcp),(DST-PORT,5228-5230),(OR,((RULE-SET,google_ip,no-resolve),(RULE-SET,google_asn_cn,no-resolve)))),FCM
   - RULE-SET,google_asn_cn,Google
   - RULE-SET,google_ip,Google
   - RULE-SET,facebook_ip,境外社媒
   - RULE-SET,twitter_ip,境外社媒
   - RULE-SET,private_ip,DIRECT,no-resolve
   - RULE-SET,cn_ip,DIRECT
-  - MATCH,通用代理
+  - MATCH,默认代理
   分流-探针分类:
   - SUB-RULE,(AND,((OR,((REMATCH-NAME,机场名称1优先),(REMATCH-NAME,机场名称3优先))),(OR,((RULE-SET,telegram_domain),(RULE-SET,telegram_ip,no-resolve))))),分流-TG-出口
   - AND,((NETWORK,udp),(AND,((OR,((REMATCH-NAME,机场名称1优先),(REMATCH-NAME,机场名称3优先))),(OR,((RULE-SET,telegram_domain),(RULE-SET,telegram_ip,no-resolve)))))),REJECT

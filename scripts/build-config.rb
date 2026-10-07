@@ -83,8 +83,11 @@ def generate(s)
       choices = own_pair + (private_names - own_pair) + choices
     end
     # Explicit DNS dialers bypass rule matching, so their entire menu must be physical.
-    choices = choices.map { |n| policies.key?(n) ? "#{n}-Google" : n } if %w[GLOBAL DNS出口].include?(name)
-    choices = choices.reject { |n| n == 'DIRECT' } if name == 'DNS出口'
+    if %w[GLOBAL DNS代理].include?(name)
+      probe = name == 'DNS代理' ? 'CF' : 'Google'
+      choices = choices.map { |n| policies.key?(n) ? "#{n}-#{probe}" : n }
+    end
+    choices = choices.reject { |n| n == 'DIRECT' } if name == 'DNS代理'
     default = business.fetch('default')
     abort "#{name}: default #{default} is outside its menu" unless choices.include?(default)
     choices = [default] + choices.reject { |n| n == default }

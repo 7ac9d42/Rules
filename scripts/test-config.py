@@ -71,7 +71,7 @@ def static(source, name):
     providers = [f'Airport_0{a}' for a in (*airports, 4)]
     assert list(source['proxy-providers']) == providers
     assert len(groups) == (160 if four else 120)
-    visit('DNS出口', global_mode=True)
+    visit('DNS代理', global_mode=True)
     assert len(outbounds) == (19 if four else 13)
     tg_groups = {n for n in groups if n.endswith('-TG')}
     assert len(tg_groups) == (16 if four else 11)
@@ -117,14 +117,14 @@ def static(source, name):
         private |= {'专用-机场名称2-香港-Google', '专用-机场名称2-香港-CF'}
     helpers = {'自建/家宽节点', '低倍率/MITM节点', '全部节点'}
     sensitive = {'AI', '金融', 'Talkatone'}
-    businesses = {n for n, g in groups.items() if g['type'] == 'select'} - helpers - {'GLOBAL', 'DNS出口'}
+    businesses = {n for n, g in groups.items() if g['type'] == 'select'} - helpers - {'GLOBAL', 'DNS代理'}
     assert '下载' in businesses and not {'纯下载', '开发下载'} & businesses
     assert not any(n.startswith('下载-') for n in known)
     assert not any('GitHubRaw' in n or 'GitHub归档' in n for n in known)
     for n, g in groups.items():
         choices = set(g.get('proxies', []))
         assert not choices & businesses, (n, '业务组不应被其他组引用')
-        assert 'DNS出口' not in choices, (n, 'DNS 出口仅供 DNS 使用')
+        assert 'DNS代理' not in choices, (n, 'DNS 出口仅供 DNS 使用')
         assert not choices & private or n in sensitive, (n, '专用池越界')
         assert '低倍率/MITM节点' not in choices or n == 'Emby', n
         if n not in businesses:
@@ -139,13 +139,17 @@ def static(source, name):
         assert 'filter' in g and 'exclude-filter' not in g, n
     physical = {n + '-Google' if n in outbounds else n for n in required}
     assert set(groups['GLOBAL']['proxies']) == physical
-    dns_group = groups['DNS出口']
-    assert set(dns_group['proxies']) == physical - {'DIRECT'}
-    assert dns_group['proxies'][0] == '机场名称1优先-Google'
+    dns_group = groups['DNS代理']
+    dns_physical = {n + '-CF' if n in outbounds else n for n in required - {'DIRECT'}}
+    assert set(dns_group['proxies']) == dns_physical
+    assert dns_group['proxies'][0] == '机场名称3优先-CF'
+    assert not {'通用代理', 'DNS出口', 'Telegram', 'Google FCM'} & known
+    for n in ('默认代理', 'Telegram代理', 'FCM'):
+        assert groups[n]['proxies'][0] == '机场名称3优先', n
     assert dns_group['use'] == providers and dns_group['filter'] == groups['GLOBAL']['filter']
     assert dns_group['empty-fallback'] == 'REJECT'
     assert source['dns']['nameserver'] == [
-        'https://cloudflare-dns.com/dns-query#DNS出口', 'https://dns.google/dns-query#DNS出口']
+        'https://cloudflare-dns.com/dns-query#DNS代理', 'https://dns.google/dns-query#DNS代理']
     for value in source['dns']['nameserver-policy'].values():
         if isinstance(value, list):
             assert value in (source['dns']['nameserver'], source['dns']['direct-nameserver']), value
@@ -280,7 +284,7 @@ def node_filters(source, mihomo):
             p['health-check'] = {'enable': False}
             providers[provider] = p
         subjects = {'下载': 'ordinary', '自建/家宽节点': 'home', '台湾限定': 'ordinary',
-                    'Google FCM': 'ordinary', 'OneDrive': 'ordinary', 'GLOBAL': 'ordinary',
+                    'FCM': 'ordinary', 'OneDrive': 'ordinary', 'GLOBAL': 'ordinary',
                     'AI': 'ordinary', '金融': 'ordinary', 'Talkatone': 'ordinary',
                     '全部节点': 'manual', '低倍率/MITM节点': 'low'}
         for family in FAMILIES:
@@ -368,7 +372,7 @@ def health(source, mihomo):
                 g['url'] = LOCAL[next(f for f in FAMILIES if URLS[f] == g['url'])]
             if g['type'] != 'select':
                 g['interval'] = 86400
-        config['rules'] = ['MATCH,通用代理']
+        config['rules'] = ['MATCH,默认代理']
         # URL/filter 注册发生在组类型分派之前；临时 select/interval=0
         # 保留同一注册图，同时关闭物理及兼容 provider 的启动异步检查。
         count_config = copy.deepcopy(config)
@@ -530,34 +534,37 @@ def health(source, mihomo):
 # 独立业务见证：同一机制的重复域名省略，保留实际重叠和易误分流边界。
 BUSINESSES = {
     'www.408os.cn': 'DIRECT', 'weixin.qq.com': 'DIRECT', 'music.163.com': 'DIRECT',
-    'www.mi.com': 'DIRECT', 'hk.tv.global.mi.com': '通用代理',
-    'whatsapp.com': '境外通信', 'telegram.org': 'Telegram', '149.154.167.51': 'Telegram',
+    'www.mi.com': 'DIRECT', 'hk.tv.global.mi.com': '默认代理',
+    'whatsapp.com': '境外通信', 'telegram.org': 'Telegram代理', '149.154.167.51': 'Telegram代理',
     'www.pixiv.net': '境外社媒', 's.pximg.net': '境外社媒',
     'chatgpt.com': 'AI', 'origin-tracker.githubusercontent.com': 'AI',
     'copilotprodattachments.blob.core.windows.net': 'AI',
     'wise.com': '金融', 'talkatone.com': 'Talkatone',
     'github.com': '下载', 'raw.githubusercontent.com': '下载', 'gitbook.com': '下载',
     'codeload.github.com': '下载', 'release-assets.githubusercontent.com': '下载', 'aur.archlinux.org': '下载',
-    'cloudflare.com': '通用代理', 'example.pages.dev': '通用代理', 'cf-china.info': 'DIRECT',
+    'cloudflare.com': '默认代理', 'example.pages.dev': '默认代理', 'cf-china.info': 'DIRECT',
+    'linux.do': '默认代理', 'unmatched.fixture.example.com': '默认代理',
     'unpkg.com': '下载', 'registry-1.docker.io': '下载', 'huggingface.co': '下载',
     'google.com': 'Google', 'services.googleapis.cn': 'Google', 'fcm.googleapis.com': 'Google',
     'microsoft.com': 'Microsoft', 'bilibili.tv': '哔哩东南亚', 'gamer.com.tw': '台湾限定',
     'bilibili.com': '哔哩哔哩', 'ad.doubleclick.net': '隐私拦截',
-    'mtalk.google.com': 'Google FCM', 'onedrive.live.com': 'OneDrive', 'netflix.com': 'Netflix',
+    'mtalk.google.com': 'FCM', 'onedrive.live.com': 'OneDrive', 'netflix.com': 'Netflix',
 }
 DEFAULTS = {
     'google.com': '机场名称3优先-Google',
-    'telegram.org': '机场名称1优先-TG', '149.154.167.51': '机场名称1优先-TG',
+    'telegram.org': '机场名称3优先-TG', '149.154.167.51': '机场名称3优先-TG',
     'wise.com': '专用-机场名称1-日本-Google', 'talkatone.com': '专用-机场名称1-日本-Google',
     'github.com': '机场名称3优先-GitHub', 'raw.githubusercontent.com': '机场名称3优先-GitHub',
-    'codeload.github.com': '机场名称3优先-GitHub', 'cloudflare.com': '机场名称1优先-CF',
+    'codeload.github.com': '机场名称3优先-GitHub', 'cloudflare.com': '机场名称3优先-CF',
+    'linux.do': '机场名称3优先-CF', 'unmatched.fixture.example.com': '机场名称3优先-Google',
+    'mtalk.google.com': '机场名称3优先-Google',
     'bilibili.tv': '新加坡-机场名称1优先-Google', 'gamer.com.tw': '台湾-机场名称1优先-Google',
 }
 FOUR_DEFAULTS = {**DEFAULTS, 'wise.com': '专用-机场名称2-香港-Google',
                  'talkatone.com': '专用-机场名称2-香港-Google', 'netflix.com': '机场名称2优先-Google'}
 TUNNEL = [('region1.v2.argotunnel.com', 7844, 'Cloudflare Tunnel'),
           ('region1.v2.argotunnel.com', 443, 'DIRECT'), ('unknown.argotunnel.com', 7844, 'DIRECT'),
-          ('198.41.192.167', 7844, 'Cloudflare Tunnel'), ('198.41.192.1', 7844, '通用代理')]
+          ('198.41.192.167', 7844, 'Cloudflare Tunnel'), ('198.41.192.1', 7844, '默认代理')]
 
 
 def local_direct(rules):
@@ -608,10 +615,18 @@ def business(source, config_name, mihomo, rules_dir):
         for host, port, expected in TUNNEL:
             actual = rt.request(host, port)
             assert actual == expected, (config_name, host, port, expected, actual)
-        for host, port, expected in [('8.8.8.8', 5228, 'Google FCM'), ('203.208.40.1', 5230, 'Google FCM'),
-                ('8.8.8.8', 443, 'Google'), ('1.1.1.1', 5228, '通用代理'),
+        for host, port, expected in [('8.8.8.8', 5228, 'FCM'), ('203.208.40.1', 5230, 'FCM'),
+                ('8.8.8.8', 443, 'Google'), ('1.1.1.1', 5228, '默认代理'),
                 ('45.121.184.1', 5230, 'DIRECT')]:
             assert rt.request(host, port) == expected, (config_name, host, port, expected)
+        # 区分真正的 MATCH 兜底与更早命中的默认代理规则。
+        config['proxies'].append(rt.proxy('fixture-MATCH', 'MATCH'))
+        assert config['sub-rules']['分流-业务规则'][-1] == 'MATCH,默认代理'
+        config['sub-rules']['分流-业务规则'][-1] = 'MATCH,fixture-MATCH'
+        rt.reload(config)
+        assert rt.request('unmatched.fixture.example.com') == 'MATCH'
+        config['sub-rules']['分流-业务规则'][-1] = 'MATCH,默认代理'
+        rt.reload(config)
         # 只恢复被业务见证覆盖的 select，其他辅助选择保持可追踪标签。
         for name in set(cases.values()) - {'DIRECT', '隐私拦截', 'AI'}:
             choice = selections[name]
@@ -619,11 +634,13 @@ def business(source, config_name, mihomo, rules_dir):
         for host, choices in (FOUR_DEFAULTS if four else DEFAULTS).items():
             actual = rt.request(host)
             assert actual == choices, (config_name, host, choices, actual)
-        rt.select('Telegram', '自建/家宽节点')
+        for host, port in [('8.8.8.8', 5228), ('203.208.40.1', 5230)]:
+            assert rt.request(host, port) == '机场名称3优先-Google', (config_name, host, port)
+        rt.select('Telegram代理', '自建/家宽节点')
         assert rt.request('telegram.org') == '自建/家宽节点'
-        rt.select('Telegram', 'fixture-Telegram')
-        assert rt.request('149.154.167.51') == 'Telegram'
-        rt.select('Telegram', selections['Telegram'])
+        rt.select('Telegram代理', 'fixture-Telegram代理')
+        assert rt.request('149.154.167.51') == 'Telegram代理'
+        rt.select('Telegram代理', selections['Telegram代理'])
         for name in ('AI', '金融', 'Talkatone'):
             scope = '专用-机场名称2-香港-Google' if four and name != 'AI' else '专用-机场名称1-日本-Google'
             rt.select(name, scope)
@@ -667,15 +684,15 @@ def routing(source, mihomo, rules_dir, four=False):
         config['dns'] = dict(enable=True, listen=f'127.0.0.1:{dns_port}', **{
             'enhanced-mode': 'fake-ip', 'fake-ip-range': '198.18.0.1/16',
             'nameserver': [f'udp://127.0.0.1:{dns.server_address[1]}']})
-        config['rules'] = ['NETWORK,tcp,通用代理', 'NETWORK,udp,通用代理', 'MATCH,DIRECT']
+        config['rules'] = ['NETWORK,tcp,默认代理', 'NETWORK,udp,默认代理', 'MATCH,DIRECT']
         rt.start(config)
         cases = dict(zip(('www.google.com', 'dash.cloudflare.com', 'github.com', 'telegram.org'), FAMILIES))
-        entries = [('通用代理', '机场名称1优先', '机场名称1优先'),
-                   ('通用代理', '机场名称3优先', '机场名称3优先'),
-                   ('Telegram', '机场名称1优先', '机场名称1优先'),
-                   ('Telegram', '机场名称3优先', '机场名称3优先'),
-                   ('Telegram', '香港-机场名称1优先', '香港-机场名称1优先'),
-                   ('通用代理', '日本-机场名称1优先', '日本-机场名称1优先'),
+        entries = [('默认代理', '机场名称1优先', '机场名称1优先'),
+                   ('默认代理', '机场名称3优先', '机场名称3优先'),
+                   ('Telegram代理', '机场名称1优先', '机场名称1优先'),
+                   ('Telegram代理', '机场名称3优先', '机场名称3优先'),
+                   ('Telegram代理', '香港-机场名称1优先', '香港-机场名称1优先'),
+                   ('默认代理', '日本-机场名称1优先', '日本-机场名称1优先'),
                    ('Google', '台湾-机场名称3优先', '台湾-机场名称3优先'),
                    ('AI', '机场名称1优先', '机场名称1优先'),
                    ('金融', '日本-机场名称3优先', '日本-机场名称3优先'),
@@ -683,8 +700,8 @@ def routing(source, mihomo, rules_dir, four=False):
                    ('台湾限定', '日本-机场名称3优先', '日本-机场名称3优先'),
                    ('下载', '机场名称3优先', '机场名称3优先')]
         if four:
-            entries = [('Telegram', f'机场名称{a}优先', f'机场名称{a}优先') for a in (1, 2, 3)] + [
-                ('Telegram', '香港-机场名称2优先', '香港-机场名称2优先'),
+            entries = [('Telegram代理', f'机场名称{a}优先', f'机场名称{a}优先') for a in (1, 2, 3)] + [
+                ('Telegram代理', '香港-机场名称2优先', '香港-机场名称2优先'),
                 ('金融', '日本-机场名称2优先', '日本-机场名称2优先')]
         for business_name, entry, target in entries:
             config['rules'] = [f'NETWORK,tcp,{business_name}', f'NETWORK,udp,{business_name}', 'MATCH,DIRECT']
@@ -697,10 +714,10 @@ def routing(source, mihomo, rules_dir, four=False):
                 expected = f'{target}-{family}'
                 actual = rt.request(host)
                 assert actual == expected, (entry, host, expected, actual)
-        config['rules'] = ['NETWORK,tcp,通用代理', 'NETWORK,udp,通用代理', 'MATCH,DIRECT']
+        config['rules'] = ['NETWORK,tcp,默认代理', 'NETWORK,udp,默认代理', 'MATCH,DIRECT']
         rt.reload(config)
         if four:
-            rt.select('通用代理', '机场名称2优先')
+            rt.select('默认代理', '机场名称2优先')
             code, ips = F.query(dns_port, 'telegram.org')
             assert code == 0 and ips[0].startswith('198.18.'), ips
             assert rt.request(ips[0]) == '机场名称2优先-TG'
@@ -710,7 +727,7 @@ def routing(source, mihomo, rules_dir, four=False):
             assert rt.request('telegram.org') == '香港-机场名称2优先-Google'
             print('PASS: 四机场三种优先/TG、固定地区、Fake-IP 与 GLOBAL', flush=True)
             return
-        rt.select('通用代理', '机场名称3优先')
+        rt.select('默认代理', '机场名称3优先')
         for host, family in [('api.github.com', 'GitHub'), ('release-assets.githubusercontent.com', 'GitHub'), ('raw.githubusercontent.com', 'GitHub'), ('codeload.github.com', 'GitHub'),
                 ('foo.github.io', 'GitHub'), ('gitbook.com', 'Google'), ('foo.pages.dev', 'CF'),
                 ('unknown-cf.fixture.test', 'CF'), ('dns-failed.fixture.test', 'Google')]:
@@ -991,7 +1008,7 @@ def dns_outlet(source, mihomo):
         bootstrap.answer, bootstrap.answers, bootstrap.queries = '127.0.0.1', {}, set()
         local = f'udp://127.0.0.1:{bootstrap.server_address[1]}#DIRECT'
         dns = copy.deepcopy(source['dns'])
-        foreign = ['http://cf.fixture.test/dns-cf#DNS出口', 'http://google.fixture.test/dns-google#DNS出口']
+        foreign = ['http://cf.fixture.test/dns-cf#DNS代理', 'http://google.fixture.test/dns-google#DNS代理']
         for key, value in dns['nameserver-policy'].items():
             if value == dns['nameserver']:
                 dns['nameserver-policy'][key] = foreign
@@ -1005,26 +1022,28 @@ def dns_outlet(source, mihomo):
         rt.start(config)
         # 若丢失显式出口，两个上游将分别随业务走 DIRECT 或 rematch。
         rt.select('Google', 'DIRECT')
-        rt.select('通用代理', 'DIRECT')
+        rt.select('默认代理', 'DIRECT')
         config['sub-rules']['分流-业务规则'] = [
-            'DOMAIN,google.fixture.test,Google', 'DOMAIN,cf.fixture.test,通用代理', 'MATCH,REJECT']
+            'DOMAIN,google.fixture.test,Google', 'DOMAIN,cf.fixture.test,默认代理', 'MATCH,REJECT']
         rt.reload(config)
         def restart():
             rt.stop()
             rt.start(config)
-            F.until(lambda: set(labels) <= set(rt.group('DNS出口')['all']))
+            F.until(lambda: set(labels) <= set(rt.group('DNS代理')['all']))
             healthy_pools()
         def healthy_pools():
             # 显式探测建立健康状态，避免启动异步检查与故障注入竞争。
             for airport in (1, 2, 3) if 'Airport_02' in source['proxy-providers'] else (1, 3):
                 region = '香港' if airport == 2 else '日本'
-                pool = pool_name(airport, region, 'Google')
+                pool = pool_name(airport, region, 'CF')
                 label = f'[机场名称{airport}]{region} fast 1x'
                 F.until(lambda: rt.group(pool)['now'] == label)
-                alive = rt.http.nodes[label].statuses.get(PATHS['Google'], 204) == 204
-                assert rt.probe(pool, LOCAL['Google'], 204) == alive, (pool, rt.group(pool))
+                alive = rt.http.nodes[label].statuses.get(PATHS['CF'], 204) == 204
+                assert rt.probe(pool, LOCAL['CF'], 204) == alive, (pool, rt.group(pool))
         healthy_pools()
-        assert rt.group('机场名称1优先-Google')['now'] == pool_name(1, '日本', 'Google')
+        preferred = '[机场名称3]日本 fast 1x'
+        assert rt.group('DNS代理')['now'] == '机场名称3优先-CF'
+        assert rt.group('机场名称3优先-CF')['now'] == pool_name(3, '日本', 'CF')
         def resolve(host, node, healthy=None, successful_only=False):
             with rt.http.lock:
                 for path, upstream in rt.http.dns_upstreams.items():
@@ -1040,58 +1059,112 @@ def dns_outlet(source, mihomo):
                 assert used and set(used) == {node}, (host, used, node)
                 if healthy:
                     assert (host, 1) in rt.http.dns_upstreams[healthy]['queries'], host
-        resolve('both.fixture.test', labels[0])
-        resolve('cf-only.fixture.test', labels[0], '/dns-cf')
-        resolve('google-only.fixture.test', labels[0], '/dns-google')
+        resolve('both.fixture.test', preferred)
+        resolve('cf-only.fixture.test', preferred, '/dns-cf')
+        resolve('google-only.fixture.test', preferred, '/dns-google')
         # 精确域名 nameserver-policy 也必须使用相同出口。
-        resolve('hk.tv.global.mi.com', labels[0], '/dns-cf')
+        resolve('hk.tv.global.mi.com', preferred, '/dns-cf')
         rt.select('Google', '美国-机场名称3优先')
-        rt.select('通用代理', '香港-机场名称1优先')
-        resolve('business-changed.fixture.test', labels[0], '/dns-google')
+        rt.select('默认代理', '香港-机场名称1优先')
+        resolve('business-changed.fixture.test', preferred, '/dns-google')
+        # Google 健康失败不能驱逐具有独立 CF 健康记录的 DNS 出口。
+        assert rt.probe(preferred, LOCAL['CF'], 204)
+        rt.http.nodes[preferred].statuses[PATHS['Google']] = 503
+        assert not rt.probe(preferred, LOCAL['Google'], 204)
+        assert rt.probe(pool_name(3, '日本', 'CF'), LOCAL['CF'], 204)
+        assert rt.group('机场名称3优先-CF')['now'] == pool_name(3, '日本', 'CF')
+        resolve('google-probe-failed.fixture.test', preferred, '/dns-cf')
+        rt.http.nodes[preferred].statuses.pop(PATHS['Google'])
+        assert rt.probe(preferred, LOCAL['Google'], 204)
         rt.select('全部节点', labels[0])
-        for choice, label in [('日本-机场名称3优先-Google', '[机场名称3]日本 fast 1x'),
+        for choice, label in [('日本-机场名称3优先-CF', '[机场名称3]日本 fast 1x'),
                               ('全部节点', labels[0]), (labels[-1], labels[-1])]:
-            rt.select('DNS出口', choice)
+            rt.select('DNS代理', choice)
             # 排除持久连接及上一轮并发查询留下的空闲连接，只验证新连接。
             restart()
-            assert rt.group('DNS出口')['now'] == choice
+            assert rt.group('DNS代理')['now'] == choice
             resolve('manual-' + str(labels.index(label)) + '-' + str(len(choice)) + '.fixture.test', label)
         if 'Airport_02' in source['proxy-providers']:
-            rt.select('DNS出口', '香港-机场名称2优先-Google')
+            rt.select('DNS代理', '香港-机场名称2优先-CF')
             restart()
             resolve('four.fixture.test', '[机场名称2]香港 fast 1x')
-        rt.select('DNS出口', '机场名称1优先-Google')
+        rt.select('DNS代理', '机场名称3优先-CF')
         restart()
-        rt.http.nodes[labels[0]].statuses[PATHS['Google']] = 503
-        F.until(lambda: not rt.probe(pool_name(1, '日本', 'Google'), LOCAL['Google'], 204))
-        next_node = '[机场名称2]香港 fast 1x' if 'Airport_02' in source['proxy-providers'] else '[机场名称3]日本 fast 1x'
-        F.until(lambda: rt.group('机场名称1优先-Google')['now'] == (
-            pool_name(2, '香港', 'Google') if 'Airport_02' in source['proxy-providers'] else pool_name(3, '日本', 'Google')))
-        resolve('fallback.fixture.test', next_node)
+        rt.http.nodes[preferred].statuses[PATHS['CF']] = 503
+        assert not rt.probe(pool_name(3, '日本', 'CF'), LOCAL['CF'], 204)
+        F.until(lambda: rt.group('机场名称3优先-CF')['now'] == pool_name(1, '日本', 'CF'))
+        resolve('fallback.fixture.test', labels[0])
+        rt.http.nodes[preferred].statuses.pop(PATHS['CF'])
+        assert rt.probe(pool_name(3, '日本', 'CF'), LOCAL['CF'], 204)
+        F.until(lambda: rt.group('机场名称3优先-CF')['now'] == pool_name(3, '日本', 'CF'))
+        restart()
+        resolve('recovered.fixture.test', preferred)
         # 相同查询切换后继续命中旧缓存；重启排除存量 DNS 状态并保留手选。
-        rt.select('DNS出口', '日本-机场名称3优先-Google')
+        rt.select('DNS代理', '日本-机场名称3优先-CF')
         restart()
         resolve('cached.fixture.test', '[机场名称3]日本 fast 1x', '/dns-cf')
-        rt.select('DNS出口', '全部节点')
+        rt.select('DNS代理', '全部节点')
         with rt.http.lock:
             for u in rt.http.dns_upstreams.values():
                 u['nodes'].clear()
         assert F.query(port, 'cached.fixture.test') == (0, ['203.0.113.20'])
         assert not any(u['nodes'] for u in rt.http.dns_upstreams.values())
         restart()
-        assert rt.group('DNS出口')['now'] == '全部节点'
+        assert rt.group('DNS代理')['now'] == '全部节点'
         resolve('cached.fixture.test', labels[0], '/dns-google')
         # 新域名排除解析缓存，见证持久 DoH 连接仍沿用切换前的节点。
         rt.http.dns_keepalive = True
-        rt.select('DNS出口', '日本-机场名称3优先-Google')
+        rt.select('DNS代理', '日本-机场名称3优先-CF')
         restart()
         resolve('pooled-before.fixture.test', '[机场名称3]日本 fast 1x', '/dns-cf')
-        rt.select('DNS出口', '全部节点')
+        rt.select('DNS代理', '全部节点')
         # 正常上游复用旧连接；失败上游可重建连接并走新节点。
         resolve('pooled-after.fixture.test', '[机场名称3]日本 fast 1x', '/dns-cf', successful_only=True)
         restart()
         resolve('pooled-after.fixture.test', labels[0], '/dns-cf')
-    print('PASS: DNS 显式出口、双上游冗余、业务隔离、手选/机场回退、缓存/长连接及重启', flush=True)
+    print('PASS: DNS CF 探针隔离、显式出口、双上游冗余、业务隔离、手选/机场回退、缓存/长连接及重启', flush=True)
+
+
+def selection_migration(source, mihomo):
+    # 缓存按组名恢复；用同一运行目录见证旧名称、新名称与未更名业务。
+    renamed = {'默认代理': '通用代理', 'DNS代理': 'DNS出口',
+               'Telegram代理': 'Telegram', 'FCM': 'Google FCM'}
+    with tempfile.TemporaryDirectory(prefix='mihomo-selection-migration-') as directory, F.Runtime(directory, mihomo) as rt:
+        config = rt.base(source)
+        config.update(proxies=[], **{'sub-rules': {}, 'rules': ['MATCH,REJECT']})
+        config['proxy-groups'] = []
+        for original in source['proxy-groups']:
+            if original['name'] not in {*renamed, 'Microsoft'}:
+                continue
+            group = copy.deepcopy(original)
+            for field in ('use', 'filter'):
+                group.pop(field, None)
+            config['proxy-groups'].append(group)
+        choices = {p for g in config['proxy-groups'] for p in g['proxies']} - {'DIRECT'}
+        config['proxies'] = [rt.proxy(n) for n in sorted(choices)]
+        legacy = copy.deepcopy(config)
+        for group in legacy['proxy-groups']:
+            if group['name'] == 'DNS代理':
+                group['proxies'] = [n.removesuffix('-CF') + '-Google' if n.endswith('-CF') else n
+                                    for n in group['proxies']]
+            group['name'] = renamed.get(group['name'], group['name'])
+        choices = {p for g in legacy['proxy-groups'] for p in g['proxies']} - {'DIRECT'}
+        legacy['proxies'] = [rt.proxy(n) for n in sorted(choices)]
+        rt.start(legacy)
+        for new, old in renamed.items():
+            rt.select(old, '机场名称1优先-Google' if new == 'DNS代理' else '机场名称1优先')
+        rt.select('Microsoft', 'DIRECT')
+        for restart in (False, True):
+            if restart:
+                rt.stop()
+                rt.start(config)
+            else:
+                rt.reload(config)
+            for group in config['proxy-groups']:
+                expected = 'DIRECT' if group['name'] == 'Microsoft' else group['proxies'][0]
+                assert rt.group(group['name'])['now'] == expected, (group['name'], expected)
+            assert not set(renamed.values()) & rt.api('/proxies')['proxies'].keys()
+    print('PASS: 四组更名隔离旧选择，其他业务手选在重载/重启后保留', flush=True)
 
 
 def main():
@@ -1122,6 +1195,8 @@ def main():
         routing(sources[PRIMARY_CONFIG], args.mihomo, rules_dir)
         business(sources[FOUR_CONFIG], FOUR_CONFIG, args.mihomo, rules_dir)
         routing(sources[FOUR_CONFIG], args.mihomo, rules_dir, four=True)
+        for name in ACTIVE_CONFIGS:
+            selection_migration(sources[name], args.mihomo)
         if args.suite == 'full':
             for name in ACTIVE_CONFIGS:
                 node_filters(sources[name], args.mihomo)

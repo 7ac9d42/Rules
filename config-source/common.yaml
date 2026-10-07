@@ -135,18 +135,18 @@ settings:
       - https://doh.pub/dns-query#DIRECT
       rule-set:private_domain: rcode://name_error
       hk.tv.global.mi.com:
-      - https://cloudflare-dns.com/dns-query#DNS出口
-      - https://dns.google/dns-query#DNS出口
+      - https://cloudflare-dns.com/dns-query#DNS代理
+      - https://dns.google/dns-query#DNS代理
       rule-set:google_domain,biliintl_domain,TVB_domain,proxy_domain:
-      - https://cloudflare-dns.com/dns-query#DNS出口
-      - https://dns.google/dns-query#DNS出口
+      - https://cloudflare-dns.com/dns-query#DNS代理
+      - https://dns.google/dns-query#DNS代理
       rule-set:cn_domain,game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain,wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain,NetEaseMusic_domain,media_cn_domain,iptv_domain:
       - https://dns.alidns.com/dns-query#DIRECT
       - https://doh.pub/dns-query#DIRECT
     direct-nameserver-follow-policy: true
     nameserver:
-    - https://cloudflare-dns.com/dns-query#DNS出口
-    - https://dns.google/dns-query#DNS出口
+    - https://cloudflare-dns.com/dns-query#DNS代理
+    - https://dns.google/dns-query#DNS代理
 # 全订阅健康检查不承担自动准入；特殊节点仍须保留给显式手选。
 provider-defaults:
   type: http
@@ -156,7 +156,7 @@ provider-defaults:
     url: https://www.gstatic.com/generate_204
     expected-status: 204
     timeout: 5000
-    interval: 60
+    interval: 75
     lazy: false
   exclude-filter: "(?i)(剩余流量|流量剩余|已用流量|总流量|套餐流量|套餐到期|到期时间|下次重置|重置时间|订阅到期|官方公告|使用教程|Panel[ _-]*Notice|^Expired$|(?:^|[\\s\\[【(（_|｜丨-])(?:Traffic|Remaining|Quota|Used|Total|Expire(?:d|s)?)\\s*[:：]\\s*(?:[0-9]|∞|Unlimited)|(?:^|[\\s\\[【(（_|｜丨-])Email\\s*[:：]\\s*\\S+@|(?:^|[\\s\\[【(（_|｜丨-])Panel\\s*[:：]|(?:^|[\\s\\[【(（_|｜丨-])(?:官网|客服|工单|邮箱)(?:地址|链接|入口)?(?:$|[\\s\\]】)）|｜丨:：_-]))"
   proxy: DIRECT
@@ -297,8 +297,8 @@ manual-menu:
 - DIRECT
 # 业务 default 必须属于菜单；extra 只对当前业务开放，不互相嵌套。
 businesses:
-  DNS出口:
-    default: 机场名称1优先-Google
+  DNS代理:
+    default: 机场名称3优先-CF
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
   Cloudflare Tunnel:
     default: DIRECT
@@ -315,8 +315,8 @@ businesses:
   Google:
     default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
-  Google FCM:
-    default: 机场名称1优先
+  FCM:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   Microsoft:
     default: 机场名称1优先
@@ -324,8 +324,8 @@ businesses:
   OneDrive:
     default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
-  Telegram:
-    default: 机场名称1优先
+  Telegram代理:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
   境外通信:
     default: 机场名称1优先
@@ -378,8 +378,8 @@ businesses:
   游戏平台:
     default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
-  通用代理:
-    default: 机场名称1优先
+  默认代理:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
   台湾限定:
     default: 台湾-机场名称1优先
@@ -416,7 +416,7 @@ business-rules:
 - DOMAIN-SUFFIX,opencode.ai,AI
 - DOMAIN,origin-tracker.githubusercontent.com,AI
 - DOMAIN,copilotprodattachments.blob.core.windows.net,AI
-- DOMAIN,hk.tv.global.mi.com,通用代理
+- DOMAIN,hk.tv.global.mi.com,默认代理
 - DOMAIN,ykk.emby.moe,Emby
 - IP-CIDR,189.24.106.132/32,DIRECT,no-resolve
 - DOMAIN-SUFFIX,kuapt.top,DIRECT
@@ -483,14 +483,14 @@ business-rules:
 - DOMAIN-SUFFIX,kryptex.com,Kryptex
 - DOMAIN-SUFFIX,kryptex.org,Kryptex
 - DOMAIN-SUFFIX,kryptex.network,Kryptex
-- DOMAIN-SUFFIX,linux.do,通用代理
-- AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),通用代理
+- DOMAIN-SUFFIX,linux.do,默认代理
+- AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理
 - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
-- RULE-SET,telegram_domain,Telegram
+- RULE-SET,telegram_domain,Telegram代理
 - RULE-SET,bahamut_domain,台湾限定
 - RULE-SET,ai!cn_domain,AI
 - RULE-SET,youtube_domain,境外影音
-- RULE-SET,fcm_domain,Google FCM
+- RULE-SET,fcm_domain,FCM
 - RULE-SET,googlevpn_domain,Google
 - RULE-SET,twitch_domain,境外影音
 - RULE-SET,porn_domain,境外影音
@@ -530,17 +530,17 @@ business-rules:
 - RULE-SET,steamcdn_ip,DIRECT
 - RULE-SET,NetEaseMusic_ip,DIRECT
 - RULE-SET,bilibili_ip,哔哩哔哩
-- RULE-SET,telegram_ip,Telegram
+- RULE-SET,telegram_ip,Telegram代理
 - RULE-SET,talkatone_ip,Talkatone
 - RULE-SET,netflix_ip,Netflix
-- AND,((NETWORK,tcp),(DST-PORT,5228-5230),(OR,((RULE-SET,google_ip,no-resolve),(RULE-SET,google_asn_cn,no-resolve)))),Google FCM
+- AND,((NETWORK,tcp),(DST-PORT,5228-5230),(OR,((RULE-SET,google_ip,no-resolve),(RULE-SET,google_asn_cn,no-resolve)))),FCM
 - RULE-SET,google_asn_cn,Google
 - RULE-SET,google_ip,Google
 - RULE-SET,facebook_ip,境外社媒
 - RULE-SET,twitter_ip,境外社媒
 - RULE-SET,private_ip,DIRECT,no-resolve
 - RULE-SET,cn_ip,DIRECT
-- MATCH,通用代理
+- MATCH,默认代理
 # TG 仅对声明的机场优先政策生效；明确服务优先于 CF，每分支保留 UDP 护栏。
 classification:
 - match: OR,((RULE-SET,telegram_domain),(RULE-SET,telegram_ip,no-resolve))
