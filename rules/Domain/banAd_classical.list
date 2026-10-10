@@ -17,7 +17,6 @@ DOMAIN-REGEX,(?i)^ads\.livetv[^.]*\.me$
 DOMAIN-REGEX,(?i)^advert[^.]*\.livesportmedia\.eu$
 DOMAIN-REGEX,(?i)^aff[^.]*\.kolektiva\.net$
 DOMAIN-REGEX,(?i)^api-access\.pangolin-sdk-toutiao-[^.]*\.com$
-DOMAIN-REGEX,(?i)^asd8900\.oss-[^.]*\.aliyuncs\.com$
 DOMAIN-REGEX,(?i)^at[^.]*\.doubanio\.com$
 DOMAIN-REGEX,(?i)^bdcpro[^.]*\.techweb\.com\.cn$
 DOMAIN-REGEX,(?i)^bdlm[^.]*\.hc360\.com$
@@ -39,7 +38,6 @@ DOMAIN-REGEX,(?i)^impservice[^.]*\.yodao\.com$
 DOMAIN-REGEX,(?i)^impservice[^.]*\.youdao\.com$
 DOMAIN-REGEX,(?i)^ja[^.]*\.gamersky\.com$
 DOMAIN-REGEX,(?i)^js[^.]*\.abolezi\.com$
-DOMAIN-REGEX,(?i)^ky891\.oss-[^.]*\.aliyuncs\.com$
 DOMAIN-REGEX,(?i)^log-[^.]*\.previewnetworks\.com$
 DOMAIN-REGEX,(?i)^log-api\.pangolin-sdk-toutiao-[^.]*\.com$
 DOMAIN-REGEX,(?i)^mcdp-[^.]*\.outbrain\.com$
@@ -62,7 +60,6 @@ DOMAIN-REGEX,(?i)^uc[^.]*\.atobo\.com$
 DOMAIN-REGEX,(?i)^union[^.]*\.365inews\.com$
 DOMAIN-REGEX,(?i)^util-[^.]*\.simply-hentai\.com$
 DOMAIN-REGEX,(?i)^v[^.]*-be-pack\.pglstatp-toutiao\.com$
-DOMAIN-REGEX,(?i)^vns86\.oss-[^.]*\.aliyuncs\.com$
 DOMAIN-REGEX,(?i)^ya[^.]*\.dwstatic\.com$
 DOMAIN-REGEX,(?i)^ysdm[^.]*\.ys137\.com\.cn$
 DOMAIN-REGEX,(?i)^zhizhizhizhi\.oss-[^.]*\.aliyuncs\.com$
