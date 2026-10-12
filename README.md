@@ -49,7 +49,7 @@ ruby scripts/build-config.rb --check
 
 普通池继续保留倍率、机场名称1香港质量限制、机场名称3日新独立 CTCU 排除（保留 CTCUCM）及美国低倍率例外。自动候选之外的普通节点仍可手选；特殊节点按上述入口选择。成本取舍通过业务默认与机场、地区顺序表达，不承诺实际节省比例或动态评估 IP 信誉。
 
-进一步降本候选仅记录建议：Microsoft、境外通信、境外社媒和境外电商可改为三优先；CF 官方 IPv4／IPv6 规则更新仍使用 `机场名称1优先-CF`，也可改为三优先。本次保持这些政策，以及媒体解锁、地区限定和敏感专用出口；媒体及敏感业务替换前需验证机场名称3的实际适配。
+进一步降本候选仅记录建议：Microsoft、境外通信、境外社媒和境外电商可改为三优先。本次保持这些政策，以及媒体解锁、地区限定和敏感专用出口；媒体及敏感业务替换前需验证机场名称3的实际适配。
 
 各业务 select 保存独立选择；直接手选实际节点互不影响，选择共享辅助组则共用它的内部选择。独立自动池不代表独占节点、出口 IP、带宽或健康记录。同机场同地区仍可能换 IP，固定出口需求应手选实际节点。
 
@@ -58,19 +58,23 @@ ruby scripts/build-config.rb --check
 | 探针 | URL | 预期状态 | 用途 |
 |---|---|---|---|
 | Google | `https://www.gstatic.com/generate_204` | 204 | 其余自动目标的通用基准 |
-| CF | `https://cp.cloudflare.com/generate_204` | 204 | CF 自有域名、已知 CDN 域名及官方 IP 段 |
+| CF | `https://cp.cloudflare.com/generate_204` | 204 | 明确质询/API/探针及指定站点 |
 | GitHub | `https://github.com/robots.txt` | 200 | GitHub 相关目标与规则更新 |
 | TG | `https://flora.web.telegram.org/apiw1` | 501 | 顶层机场优先链路中的 Telegram 域名/IP |
 
-分类顺序：作用域内的 Telegram → GitHub 主站/API/Raw/codeload/Release 明确域名 → CF 域名/CDN/IP → 其余 GitHub → Google。GitBook 保留下载业务，但不强行归类 GitHub；明确 GitHub 服务优先于 CF 地址。CF 官方 IPv4/IPv6 文本规则每天更新，由 `机场名称1优先-CF` 获取；未知域名的 IP 分类可能需要解析真实地址。配置的 IPv6 默认关闭。
+分类顺序：作用域内的 Telegram → GitHub 主站/API/Raw/codeload/Release 明确域名 → CF 明确端点 → 其余 GitHub → Google。GitBook 保留下载业务，但不强行归类 GitHub。业务规则和探针分类均不再按 CF 官方 IP 段或 Pages/Workers/R2 等共享托管后缀接管未知站点；不再下载宽泛 CF 域名及 IP 规则。配置的 IPv6 默认关闭。
 
-业务规则将 CF 自有服务、独立质询、cdnjs 和 linux.do 交给 CF；CF 自有域名优先于宽泛国内域名集，包含其中国服务域名。其余已知 CF 托管域名及官方 IP 段仅在未命中更早的明确业务时进入 CF；通用代理规则放在 CF 兜底之后。AI、下载、通信、Tunnel、DNS、隐私拦截和明确直连仍保留各自用途，Docker 等既定 R2 下载端点不改走 CF。
+`cf_sensitive_domain` 共维护四项：独立质询 `challenges.cloudflare.com`、管理 API `api.cloudflare.com`、探针 `cp.cloudflare.com`，以及先前明确指定的 `linux.do` 后缀。业务分流和探针分类复用同一名单；其他 CF 主页、CDN 及托管站点按已有业务或普通规则处理。AI、下载、通信、Tunnel、DNS、隐私拦截和明确直连仍保留各自用途，Docker 等既定 R2 下载端点继续走下载。
 
 `challenges.cloudflare.com` 的 Turnstile 脚本进入 CF；网站自身 `/cdn-cgi/challenge-platform/…` 的 JS 质询仍随网站域名分流，例如 ChatGPT 随 AI。域名规则不能识别 HTTPS 路径，不增加 MITM。CF 探针 204 不代表质询成功；CF 与 AI 独立选点也不保证出口 IP 相同，质询过程中更换 IP 可能导致循环。[Turnstile 脚本](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/)、[JS 检测路径](https://developers.cloudflare.com/cloudflare-challenges/challenge-types/javascript-detections/)、[质询出口限制](https://developers.cloudflare.com/cloudflare-challenges/concepts/how-challenges-work/)。
 
-AI 本地补充源为 [ai.list](scripts/data/ai.list)，通过 `scripts/build/ai.sh` 生成 YAML/MRS，再由 `ai_extra_domain` 接入配置；每日上游同步后仍能重建，不直接在 `rules/` 维护补充。它与国外 AI 集位于宽泛国内域名、通用代理和 CF 兜底之前，国内 AI、明确下载及现有隐私规则保持优先。第一方后缀覆盖认证、API、ChatGPT/Codex 控制通道、桌面资源及附件；专属 Azure/CDN 主机使用精确匹配，LiveKit 仅限定既有专属子域，不扩大到整个共享云平台。桌面更新补入 `oaisidekickupdates.blob.core.windows.net`；既有 Statsig 遥测拦截不因 AI 补充而放行。[官方桌面端点](https://learn.chatgpt.com/docs/enterprise/govcloud-configuration)、[上游 OpenAI 集](https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/openai.list)。
+AI 本地补充源为 [ai.list](scripts/data/ai.list)，通过 `scripts/build/ai.sh` 生成 YAML/MRS，再由 `ai_extra_domain` 接入配置；每日上游同步后仍能重建，不直接在 `rules/` 维护补充。它与国外 AI 集位于宽泛国内域名、通用代理和 CF 明确端点之前，国内 AI、明确下载及现有隐私规则保持优先。第一方后缀覆盖认证、API、ChatGPT/Codex 控制通道、桌面资源及附件；专属 Azure/CDN 主机使用精确匹配，LiveKit 仅限定既有专属子域，不扩大到整个共享云平台。桌面更新补入 `oaisidekickupdates.blob.core.windows.net`；既有 Statsig 遥测拦截不因 AI 补充而放行。[官方桌面端点](https://learn.chatgpt.com/docs/enterprise/govcloud-configuration)、[上游 OpenAI 集](https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/openai.list)。
 
-官方 Remote Control 的配对、主机发现和中继属于此次 AI 域名核对范围；`openai.com`、`chatgpt.com` 的子域名保持 AI 路由，已公布的远程环境 WebSocket `codex-cloud-environments.chatgpt.com` 有独立回归见证。Remote Control 文档未公开完整中继主机清单，不猜测额外域名；本地回归验证分流和选择隔离，不代表真实远程配对、长连接或重连已经验证。自定义 SSH 主机不按端口泛归 AI。[远程连接说明](https://learn.chatgpt.com/docs/remote-connections)、[远程环境通道](https://developers.openai.com/api/docs/guides/agents-api/environments/self-hosted)。
+社区补充覆盖附件存储 `fileserviceuploadsperm.blob.core.windows.net`、功能配置 `featuregates.org`／`featureassets.org`／`prodregistryv2.org`、登录 CDN 和历史 Arkose 验证码主机。共享平台只列具体主机，不整体接管 Azure、Auth0 或 Arkose。异步回复通道使用锚定的 `DOMAIN-REGEX` 覆盖 `chatgpt-async-webps-prod-区域-编号.webpubsub.azure.com`，并保留历史生产主机 `fp-async-webps-prod.webpubsub.azure.com`；不覆盖 staging 或任意 Web PubSub 服务。旧客户端记录用于兼容，不能证明最新客户端仍调用所有主机。[附件下载记录](https://github.com/lencx/ChatGPT/issues/1033)、[功能配置记录](https://github.com/terminalcommandnewsletter/everything-chatgpt#statsig-feature-gates)、[社区规则](https://github.com/imetn/SurgeToolkit/blob/main/Rules/ai.list)、[异步通道故障记录](https://github.com/EFForg/privacybadger/issues/2949)。
+
+官方 Remote Control 的配对、主机发现和中继属于此次 AI 域名核对范围。社区日志确认 `wss://chatgpt.com/backend-api/wham/remote/control/server` 和桌面云端通道 `wss://codex-cloud-backend.chatgpt.com/`；它们与 `codex-cloud-environments.chatgpt.com` 均被现有 `chatgpt.com` 后缀覆盖，不重复添加子域名规则。回归验证这些域名的 AI 分流和选择隔离，不代表真实配对、长连接或重连已验证；绕过系统代理的连接仍需实际进入代理/TUN 才能应用规则。自定义 SSH 主机不按端口泛归 AI。[Remote Control 日志](https://github.com/openai/codex/issues/39856)、[桌面云端 WebSocket 排查](https://github.com/openai/codex/issues/49829)。
+
+AI 构建会移除相同条目及被后缀包含的子域条目，校验同时拒绝维护源中的这两类冗余。已有第一方后缀作为本地覆盖保障保留，不照抄外部 AI 集的所有条目；专属 CDN 和动态 Azure 通道只补缺口。`api.statsig.com` 的既有隐私拦截保持优先，即使部分客户端使用它初始化配置，也不在本次补齐中自动放行。
 
 TG 只覆盖三机场的两种、四机场的三种顶层机场优先。两模型分别有 11、16 个 TG 隐藏组，测速叶子与上层回退均使用同一 URL、预期 501。固定地区选项继续使用 Google／CF／GitHub 分类；GLOBAL 及敏感专用池保持原探针。TG 作用域从模型的 `priority-order` 自动推导，不另维护一份策略名单。
 
@@ -179,7 +183,7 @@ rules/ / icon/                             公开规则产物与图标
 - 健康检查、HEAD 与状态码：[adapter.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/adapter.go)、[健康检查配置](https://wiki.metacubex.one/config/proxy-groups/)、[parser.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/parser.go)、[healthcheck.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/provider/healthcheck.go)。
 - 候选、选点与手选缓存：[groupbase.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/groupbase.go)、[urltest.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/urltest.go)、[fallback.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/fallback.go)、[selector.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/selector.go)、[proxies.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/hub/route/proxies.go)；组包装器见 [config.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/config/config.go#L895)。
 - 重匹配与 UDP：[rematch.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outbound/rematch.go)、[tunnel.go](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/tunnel/tunnel.go)；设备设置见 [DNS](https://wiki.metacubex.one/config/dns/)、[TUN](https://wiki.metacubex.one/config/inbound/tun/)。
-- TG 端点：[Telegram DC 域名与传输](https://core.telegram.org/mtproto/transports#uri-format)、[Web K 的 apiw1 配置](https://github.com/morethanwords/tweb/blob/master/src/lib/mtproto/dcConfigurator.ts)；CF 分类来自 [官方 IPv4](https://www.cloudflare.com/ips-v4)、[IPv6](https://www.cloudflare.com/ips-v6) 列表。
+- TG 端点：[Telegram DC 域名与传输](https://core.telegram.org/mtproto/transports#uri-format)、[Web K 的 apiw1 配置](https://github.com/morethanwords/tweb/blob/master/src/lib/mtproto/dcConfigurator.ts)；CF 分类仅引用维护源中的明确端点名单。
 - 推送接管范围：[Google FCM 网络要求](https://firebase.google.com/docs/cloud-messaging/network-configuration)、[Apple APNs 网络要求](https://support.apple.com/en-ca/102266)。
 
 ## 使用声明与致谢

@@ -2180,10 +2180,10 @@ sub-rules:
   - DOMAIN-SUFFIX,kryptex.com,Kryptex
   - DOMAIN-SUFFIX,kryptex.org,Kryptex
   - DOMAIN-SUFFIX,kryptex.network,Kryptex
-  - DOMAIN-SUFFIX,linux.do,CF
+  - DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$,AI
   - RULE-SET,ai_extra_domain,AI
   - RULE-SET,ai!cn_domain,AI
-  - OR,((DOMAIN-SUFFIX,cloudflare.com),(DOMAIN-SUFFIX,cloudflare.net),(DOMAIN-SUFFIX,cdnjs.com),(RULE-SET,cloudflare_domain)),CF
+  - RULE-SET,cf_sensitive_domain,CF
   - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
   - RULE-SET,telegram_domain,Telegram代理
   - RULE-SET,bahamut_domain,台湾限定
@@ -2225,7 +2225,6 @@ sub-rules:
   - RULE-SET,meta_domain,境外社媒
   - RULE-SET,finance_domain,金融
   - RULE-SET,cryptocurrency_domain,金融
-  - RULE-SET,cloudflare_cdn_domain,CF
   - RULE-SET,steamcdn_ip,DIRECT
   - RULE-SET,NetEaseMusic_ip,DIRECT
   - RULE-SET,bilibili_ip,哔哩哔哩
@@ -2238,8 +2237,6 @@ sub-rules:
   - RULE-SET,facebook_ip,境外社媒
   - RULE-SET,twitter_ip,境外社媒
   - RULE-SET,private_ip,DIRECT,no-resolve
-  - RULE-SET,cloudflare_cdn_ipv4,CF
-  - RULE-SET,cloudflare_cdn_ipv6,CF
   - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理
   - RULE-SET,cn_ip,DIRECT
   - MATCH,默认代理
@@ -2248,8 +2245,8 @@ sub-rules:
   - AND,((NETWORK,udp),(AND,((OR,((REMATCH-NAME,机场名称1优先),(REMATCH-NAME,机场名称2优先),(REMATCH-NAME,机场名称3优先))),(OR,((RULE-SET,telegram_domain),(RULE-SET,telegram_ip,no-resolve)))))),REJECT
   - SUB-RULE,(OR,((DOMAIN,github.com),(DOMAIN,api.github.com),(DOMAIN,raw.githubusercontent.com),(DOMAIN,codeload.github.com),(DOMAIN,release-assets.githubusercontent.com))),分流-GitHub-出口
   - AND,((NETWORK,udp),(OR,((DOMAIN,github.com),(DOMAIN,api.github.com),(DOMAIN,raw.githubusercontent.com),(DOMAIN,codeload.github.com),(DOMAIN,release-assets.githubusercontent.com)))),REJECT
-  - SUB-RULE,(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain),(RULE-SET,cloudflare_cdn_ipv4),(RULE-SET,cloudflare_cdn_ipv6))),分流-CF-出口
-  - AND,((NETWORK,udp),(OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain),(RULE-SET,cloudflare_cdn_ipv4),(RULE-SET,cloudflare_cdn_ipv6)))),REJECT
+  - SUB-RULE,(RULE-SET,cf_sensitive_domain),分流-CF-出口
+  - AND,((NETWORK,udp),(RULE-SET,cf_sensitive_domain)),REJECT
   - SUB-RULE,(RULE-SET,github_domain),分流-GitHub-出口
   - AND,((NETWORK,udp),(RULE-SET,github_domain)),REJECT
   - SUB-RULE,(OR,((NETWORK,tcp),(NETWORK,udp))),分流-Google-出口
@@ -2365,19 +2362,14 @@ rule-providers:
     - 2606:4700:a8::8/128
     - 2606:4700:a8::9/128
     - 2606:4700:a8::10/128
-  cloudflare_cdn_domain:
+  cf_sensitive_domain:
     type: inline
     behavior: domain
     payload:
-    - "+.cloudflare.com"
-    - "+.cloudflare.net"
-    - "+.unpkg.com"
-    - "+.cdnjs.com"
-    - nodejs.org
-    - linux.do
-    - cdn.linux.do
-    - connect.linux.do
-    - discord.com
+    - challenges.cloudflare.com
+    - api.cloudflare.com
+    - cp.cloudflare.com
+    - "+.linux.do"
   telegram_domain:
     type: http
     interval: 86400
@@ -2539,13 +2531,6 @@ rule-providers:
     format: mrs
     proxy: 规则更新
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/github.mrs
-  cloudflare_domain:
-    type: http
-    interval: 86400
-    behavior: domain
-    format: mrs
-    proxy: 规则更新
-    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cloudflare.mrs
   netflix_domain:
     type: http
     interval: 86400
@@ -3015,17 +3000,3 @@ rule-providers:
     format: mrs
     proxy: 规则更新
     url: https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/IP/AS24424.mrs
-  cloudflare_cdn_ipv4:
-    type: http
-    interval: 86400
-    behavior: ipcidr
-    format: text
-    proxy: 机场名称1优先-CF
-    url: https://www.cloudflare.com/ips-v4
-  cloudflare_cdn_ipv6:
-    type: http
-    interval: 86400
-    behavior: ipcidr
-    format: text
-    proxy: 机场名称1优先-CF
-    url: https://www.cloudflare.com/ips-v6

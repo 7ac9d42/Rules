@@ -486,11 +486,13 @@ business-rules:
 - DOMAIN-SUFFIX,kryptex.com,Kryptex
 - DOMAIN-SUFFIX,kryptex.org,Kryptex
 - DOMAIN-SUFFIX,kryptex.network,Kryptex
-- DOMAIN-SUFFIX,linux.do,CF
-# 明确下载、国内 AI 和隐私规则优先；国外 AI 功能域名不落入宽泛 CN/代理或 CF 兜底。
+# 明确下载、国内 AI 和隐私规则优先；国外 AI 功能域名先于宽泛 CN/代理及明确 CF 端点。
+# 社区实测异步回复通道；只覆盖生产区域/编号主机，domain MRS 不支持标签内通配。
+# https://github.com/EFForg/privacybadger/issues/2949
+- 'DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$,AI'
 - RULE-SET,ai_extra_domain,AI
 - RULE-SET,ai!cn_domain,AI
-- OR,((DOMAIN-SUFFIX,cloudflare.com),(DOMAIN-SUFFIX,cloudflare.net),(DOMAIN-SUFFIX,cdnjs.com),(RULE-SET,cloudflare_domain)),CF
+- RULE-SET,cf_sensitive_domain,CF
 - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
 - RULE-SET,telegram_domain,Telegram代理
 - RULE-SET,bahamut_domain,台湾限定
@@ -532,7 +534,6 @@ business-rules:
 - RULE-SET,meta_domain,境外社媒
 - RULE-SET,finance_domain,金融
 - RULE-SET,cryptocurrency_domain,金融
-- RULE-SET,cloudflare_cdn_domain,CF
 - RULE-SET,steamcdn_ip,DIRECT
 - RULE-SET,NetEaseMusic_ip,DIRECT
 - RULE-SET,bilibili_ip,哔哩哔哩
@@ -545,8 +546,6 @@ business-rules:
 - RULE-SET,facebook_ip,境外社媒
 - RULE-SET,twitter_ip,境外社媒
 - RULE-SET,private_ip,DIRECT,no-resolve
-- RULE-SET,cloudflare_cdn_ipv4,CF
-- RULE-SET,cloudflare_cdn_ipv6,CF
 - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理
 - RULE-SET,cn_ip,DIRECT
 - MATCH,默认代理
@@ -556,7 +555,7 @@ classification:
   probe: TG
 - match: OR,((DOMAIN,github.com),(DOMAIN,api.github.com),(DOMAIN,raw.githubusercontent.com),(DOMAIN,codeload.github.com),(DOMAIN,release-assets.githubusercontent.com))
   probe: GitHub
-- match: OR,((RULE-SET,cloudflare_domain),(RULE-SET,cloudflare_cdn_domain),(RULE-SET,cloudflare_cdn_ipv4),(RULE-SET,cloudflare_cdn_ipv6))
+- match: RULE-SET,cf_sensitive_domain
   probe: CF
 - match: RULE-SET,github_domain
   probe: GitHub
@@ -614,19 +613,15 @@ rule-providers:
     - 2606:4700:a8::8/128
     - 2606:4700:a8::9/128
     - 2606:4700:a8::10/128
-  cloudflare_cdn_domain:
+  # 仅明确的质询/API/探针及指定站点，不按共享托管域名或 CF IP 扩大分流。
+  cf_sensitive_domain:
     type: inline
     behavior: domain
     payload:
-    - "+.cloudflare.com"
-    - "+.cloudflare.net"
-    - "+.unpkg.com"
-    - "+.cdnjs.com"
-    - nodejs.org
-    - linux.do
-    - cdn.linux.do
-    - connect.linux.do
-    - discord.com
+    - challenges.cloudflare.com
+    - api.cloudflare.com
+    - cp.cloudflare.com
+    - "+.linux.do"
   telegram_domain:
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs
   telegram_ip:
@@ -678,8 +673,6 @@ rule-providers:
     url: https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/google.mrs
   github_domain:
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/github.mrs
-  cloudflare_domain:
-    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cloudflare.mrs
   netflix_domain:
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.mrs
   paypal_domain:
@@ -827,13 +820,3 @@ rule-providers:
   google_asn_cn:
     behavior: ipcidr
     url: https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/IP/AS24424.mrs
-  cloudflare_cdn_ipv4:
-    behavior: ipcidr
-    format: text
-    url: https://www.cloudflare.com/ips-v4
-    proxy: 机场名称1优先-CF
-  cloudflare_cdn_ipv6:
-    behavior: ipcidr
-    format: text
-    url: https://www.cloudflare.com/ips-v6
-    proxy: 机场名称1优先-CF

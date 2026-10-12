@@ -23,6 +23,23 @@ DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
 DOMAIN-SUFFIX,chatgpt.livekit.cloud
 DOMAIN-SUFFIX,host.livekit.cloud
 DOMAIN-SUFFIX,turn.livekit.cloud
+# 社区实测附件与功能配置；共享平台仅补具体主机，不复制已被第一方后缀覆盖的子域。
+# https://github.com/lencx/ChatGPT/issues/1033
+# https://github.com/terminalcommandnewsletter/everything-chatgpt#statsig-feature-gates
+# https://github.com/imetn/SurgeToolkit/blob/main/Rules/ai.list
+DOMAIN,fileserviceuploadsperm.blob.core.windows.net
+DOMAIN,featuregates.org
+DOMAIN,featureassets.org
+DOMAIN,prodregistryv2.org
+# 登录及历史验证码依赖保持窄匹配，不扩大至 Auth0/Arkose 全平台。
+# https://github.com/SilentCoderHere/aihub-config-data/blob/main/domain_filtering_rules.json
+# https://github.com/blackmatrix7/ios_rule_script/blob/master/rule/Clash/OpenAI/OpenAI.list
+DOMAIN,cdn.auth0.com
+DOMAIN,openai-api.arkoselabs.com
+DOMAIN,client-api.arkoselabs.com
+# 历史生产 WebSocket；动态区域主机由配置中的锚定 DOMAIN-REGEX 覆盖。
+# https://github.com/zsodur/chatgpt-api-by-browser-script/issues/8
+DOMAIN,fp-async-webps-prod.webpubsub.azure.com
 # 保留原有补充项；纯遥测依旧由更早的隐私规则决定。
 DOMAIN-SUFFIX,oochat.space
 DOMAIN,ouochat.nloli.xyz

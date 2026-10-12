@@ -176,6 +176,8 @@ def static(source, name):
             assert groups[n]['proxies'][0] == '机场名称2优先', n
     assert 'pure_download_domain' not in source['rule-providers']
     assert source['rule-providers']['ai_extra_domain']['url'].endswith('/rules/Domain/ai.mrs')
+    assert not {'cloudflare_domain', 'cloudflare_cdn_domain', 'cloudflare_cdn_ipv4',
+                'cloudflare_cdn_ipv6'} & source['rule-providers'].keys()
     assert not re.search(r'(^|\s)[&*][A-Za-z_]|^\s*<<:', (ROOT / name).read_text(), re.M)
 
 
@@ -541,19 +543,28 @@ def health(source, mihomo):
 OPENAI_FUNCTIONAL = (
     'chatgpt.com', 'ws.chatgpt.com', 'auth.openai.com', 'setup.auth.openai.com',
     'api.openai.com', 'platform.openai.com', 'desktop.chat.openai.com',
-    'codex-cloud-environments.chatgpt.com', 'persistent.oaistatic.com',
+    'codex-cloud-environments.chatgpt.com', 'codex-cloud-backend.chatgpt.com', 'persistent.oaistatic.com',
     'files.oaiusercontent.com', 'oaisidekickupdates.blob.core.windows.net',
     'openaiassets.blob.core.windows.net', 'openaicomproductionae4b.blob.core.windows.net',
     'openaiapi-site.azureedge.net', 'production-openaicom-storage.azureedge.net',
     'openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net', 'openaicom.imgix.net',
     'openai.com.cdn.cloudflare.net', 'chatgpt.livekit.cloud',
     'relay.host.livekit.cloud', 'relay.turn.livekit.cloud',
+    'fileserviceuploadsperm.blob.core.windows.net', 'featuregates.org',
+    'featureassets.org', 'prodregistryv2.org', 'cdn.auth0.com',
+    'openai-api.arkoselabs.com', 'client-api.arkoselabs.com',
+    'fp-async-webps-prod.webpubsub.azure.com',
+    'chatgpt-async-webps-prod-eastus-23.webpubsub.azure.com',
+    'chatgpt-async-webps-prod-centralus-4.webpubsub.azure.com',
     'oochat.space', 'ouochat.nloli.xyz',
 )
 CF_DOMAINS = (
-    'cloudflare.com', 'challenges.cloudflare.com', 'cdnjs.cloudflare.com', 'api.cdnjs.com',
+    'challenges.cloudflare.com', 'api.cloudflare.com', 'cp.cloudflare.com',
+    'linux.do', 'connect.linux.do',
+)
+CF_UNBOUND = (
+    'cloudflare.com', 'dash.cloudflare.com', 'cdnjs.cloudflare.com', 'api.cdnjs.com',
     'static.cdnjs.com', 'example.pages.dev', 'example.workers.dev', 'example.r2.dev',
-    'cf-china.info', 'linux.do', 'connect.linux.do',
     'unknown-cf.fixture.example.com', 'compose-spec.io', '104.16.1.1', '2606:4700::1111',
 )
 BUSINESSES = {
@@ -593,7 +604,7 @@ FOUR_DEFAULTS = {**DEFAULTS, 'wise.com': '专用-机场名称2-香港-Google',
                  'talkatone.com': '专用-机场名称2-香港-Google', 'netflix.com': '机场名称2优先-Google'}
 TUNNEL = [('region1.v2.argotunnel.com', 7844, 'Cloudflare Tunnel'),
           ('region1.v2.argotunnel.com', 443, 'DIRECT'), ('unknown.argotunnel.com', 7844, 'DIRECT'),
-          ('198.41.192.167', 7844, 'Cloudflare Tunnel'), ('198.41.192.1', 7844, 'CF')]
+          ('198.41.192.167', 7844, 'Cloudflare Tunnel'), ('198.41.192.1', 7844, '默认代理')]
 
 
 def local_direct(rules):
@@ -618,6 +629,7 @@ def business(source, config_name, mihomo, rules_dir):
         config['hosts'] = {h: '1.1.1.1' for h in cases if not re.match(r'^\d+\.', h)}
         config['hosts'].update({'www.408os.cn': '106.75.74.76', 'google.com': '45.121.184.1'})
         config['hosts'].update(dict.fromkeys(('unknown-cf.fixture.example.com', 'compose-spec.io'), '104.16.1.1'))
+        config['hosts'].update({h: '104.16.1.1' for h in CF_UNBOUND if ':' not in h and not re.match(r'^\d+\.', h)})
         config['proxy-groups'], selections = [], {}
         for original in source['proxy-groups']:
             name = original['name']
@@ -642,7 +654,14 @@ def business(source, config_name, mihomo, rules_dir):
         for host, expected in cases.items():
             actual = rt.request(host)
             assert actual == expected, (config_name, host, expected, actual)
-        for host in ('other.blob.core.windows.net', 'other.azureedge.net', 'other.livekit.cloud'):
+        for host in CF_UNBOUND:
+            assert rt.request(host) != 'CF', (config_name, host, '未指定托管站/IP 误归 CF')
+        for host in ('other.blob.core.windows.net', 'other.azureedge.net', 'other.livekit.cloud',
+                'other.auth0.com', 'other.arkoselabs.com', 'other.webpubsub.azure.com',
+                'chatgpt-async-webps-staging-eastus-23.webpubsub.azure.com',
+                'chatgpt-async-webps-prod-eastus.webpubsub.azure.com',
+                'other-chatgpt-async-webps-prod-eastus-23.webpubsub.azure.com',
+                'chatgpt-async-webps-prod-eastus-23.webpubsub.azure.com.example.com'):
             assert rt.request(host) != 'AI', (config_name, host, '共享平台误归 AI')
         for host, port, expected in TUNNEL:
             actual = rt.request(host, port)
@@ -726,7 +745,7 @@ def routing(source, mihomo, rules_dir, four=False):
             'nameserver': [f'udp://127.0.0.1:{dns.server_address[1]}']})
         config['rules'] = ['NETWORK,tcp,默认代理', 'NETWORK,udp,默认代理', 'MATCH,DIRECT']
         rt.start(config)
-        cases = dict(zip(('www.google.com', 'dash.cloudflare.com', 'github.com', 'telegram.org'), FAMILIES))
+        cases = dict(zip(('www.google.com', 'challenges.cloudflare.com', 'github.com', 'telegram.org'), FAMILIES))
         entries = [('默认代理', '机场名称1优先', '机场名称1优先'),
                    ('默认代理', '机场名称3优先', '机场名称3优先'),
                    ('Telegram代理', '机场名称1优先', '机场名称1优先'),
@@ -769,8 +788,8 @@ def routing(source, mihomo, rules_dir, four=False):
             return
         rt.select('默认代理', '机场名称3优先')
         for host, family in [('api.github.com', 'GitHub'), ('release-assets.githubusercontent.com', 'GitHub'), ('raw.githubusercontent.com', 'GitHub'), ('codeload.github.com', 'GitHub'),
-                ('foo.github.io', 'GitHub'), ('gitbook.com', 'Google'), ('foo.pages.dev', 'CF'),
-                ('unknown-cf.fixture.test', 'CF'), ('dns-failed.fixture.test', 'Google')]:
+                ('foo.github.io', 'GitHub'), ('gitbook.com', 'Google'), ('foo.pages.dev', 'Google'),
+                ('unknown-cf.fixture.test', 'Google'), ('dns-failed.fixture.test', 'Google')]:
             assert rt.request(host) == f'机场名称3优先-{family}', (host, family)
         # 每类一组 UDP 正反例，不再对同类所有域名重复等待超时。
         for host, family in cases.items():
@@ -786,7 +805,7 @@ def routing(source, mihomo, rules_dir, four=False):
                 raise AssertionError(('UDP 不应泄漏', host, result))
         code, ips = F.query(dns_port, 'unknown-cf.fixture.test')
         assert code == 0 and ips[0].startswith('198.18.'), ips
-        name = '机场名称3优先-CF'
+        name = '机场名称3优先-Google'
         rt.select(name, 'fixture-' + name + '-udp')
         assert F.udp_request(rt.mixed, ips[0], sockets) == name
         code, ips = F.query(dns_port, 'telegram.org')

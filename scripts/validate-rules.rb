@@ -330,8 +330,16 @@ begin
   ai_yaml_path = File.join(ROOT, "rules/Domain/ai.yaml")
   source_lines = File.readlines(ai_source_path, chomp: true).map(&:strip)
                      .reject { |line| line.empty? || line.start_with?("#") }
-  add_duplicate_value_errors(errors, "scripts/data/ai.list", source_lines)
   expected = domain_payload_from_classical_source(ai_source_path)
+  source_entries = source_lines.map do |line|
+    type, domain = line.split(",", 2)
+    (type == "DOMAIN-SUFFIX" ? "+." : "") + domain.downcase
+  end
+  add_duplicate_value_errors(errors, "scripts/data/ai.list", source_entries)
+  redundant = source_entries.uniq - expected
+  unless redundant.empty?
+    errors << "scripts/data/ai.list: suffix-covered redundant rules #{redundant.first(3).inspect}"
+  end
   generated = yaml_payloads.fetch(ai_yaml_path)
   unless generated == expected
     errors << "rules/Domain/ai.yaml: source/generated mismatch " \
@@ -347,6 +355,8 @@ critical_rules = {
                 "+.cloudflare.net", "+.livekit.cloud", "+.statsig.com", "+.statsigapi.net"],
     required: ["+.openai.com", "+.chatgpt.com", "+.oaistatic.com", "+.oaiusercontent.com",
                "oaisidekickupdates.blob.core.windows.net", "+.openai.com.cdn.cloudflare.net",
+               "fileserviceuploadsperm.blob.core.windows.net", "featuregates.org",
+               "featureassets.org", "prodregistryv2.org", "fp-async-webps-prod.webpubsub.azure.com",
                "+.chatgpt.livekit.cloud", "+.host.livekit.cloud", "+.turn.livekit.cloud",
                "+.oochat.space", "ouochat.nloli.xyz"],
   },
