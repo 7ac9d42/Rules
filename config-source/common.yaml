@@ -321,8 +321,8 @@ businesses:
   FCM:
     default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
-  Microsoft:
-    default: 机场名称1优先
+  Microsoft站点:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
   OneDrive:
     default: 机场名称3优先
@@ -330,11 +330,11 @@ businesses:
   Telegram代理:
     default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
-  境外通信:
-    default: 机场名称1优先
+  海外通讯:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
-  TikTok:
-    default: 机场名称1优先
+  TikTok站点:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
   Netflix:
     default: 机场名称1优先
@@ -348,14 +348,14 @@ businesses:
   Prime Video:
     default: 机场名称1优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
-  哔哩东南亚:
-    default: 新加坡-机场名称1优先
+  哔哩东南亚站点:
+    default: 新加坡-机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
   Spotify:
     default: 机场名称1优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
-  TVB:
-    default: 机场名称1优先
+  TVB站点:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
   境外影音:
     default: 机场名称3优先
@@ -363,11 +363,11 @@ businesses:
   Reddit:
     default: 机场名称1优先
     icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
-  境外社媒:
-    default: 机场名称1优先
+  海外社媒:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
-  境外电商:
-    default: 机场名称1优先
+  海外电商:
+    default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
   Kryptex:
     default: 机场名称3优先
@@ -384,8 +384,8 @@ businesses:
   默认代理:
     default: 机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
-  台湾限定:
-    default: 台湾-机场名称1优先
+  台湾限定站点:
+    default: 台湾-机场名称3优先
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
   Emby:
     default: 低倍率/MITM节点
@@ -445,8 +445,8 @@ business-rules:
 - RULE-SET,banAd_pcdn_classical,隐私拦截
 - RULE-SET,appleTV_domain,境外影音
 - RULE-SET,apple_update_domain,Apple
-- DOMAIN-SUFFIX,mytv.com.hk,TVB
-- RULE-SET,TVB_domain,TVB
+- DOMAIN-SUFFIX,mytv.com.hk,TVB站点
+- RULE-SET,TVB_domain,TVB站点
 - RULE-SET,wechat_domain,DIRECT
 - RULE-SET,bank_cn_domain,DIRECT
 - RULE-SET,alibaba_domain,DIRECT
@@ -467,10 +467,10 @@ business-rules:
 - RULE-SET,media_cn_domain,DIRECT
 - RULE-SET,banAd_low_domain,隐私拦截
 - RULE-SET,apple_domain,Apple
-- RULE-SET,biliintl_domain,哔哩东南亚
+- RULE-SET,biliintl_domain,哔哩东南亚站点
 - RULE-SET,bilibili_domain,哔哩哔哩
-- DOMAIN-SUFFIX,pixiv.net,境外社媒
-- DOMAIN-SUFFIX,pximg.net,境外社媒
+- DOMAIN-SUFFIX,pixiv.net,海外社媒
+- DOMAIN-SUFFIX,pximg.net,海外社媒
 - DOMAIN-SUFFIX,huggingface.co,下载
 - DOMAIN-SUFFIX,hf.co,下载
 - DOMAIN-SUFFIX,docker.io,下载
@@ -495,7 +495,7 @@ business-rules:
 - RULE-SET,cf_sensitive_domain,CF
 - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
 - RULE-SET,telegram_domain,Telegram代理
-- RULE-SET,bahamut_domain,台湾限定
+- RULE-SET,bahamut_domain,台湾限定站点
 - RULE-SET,youtube_domain,境外影音
 - RULE-SET,fcm_domain,FCM
 - RULE-SET,googlevpn_domain,Google
@@ -504,11 +504,11 @@ business-rules:
 - RULE-SET,github_domain,下载
 - RULE-SET,gitbook_domain,下载
 - RULE-SET,onedrive_domain,OneDrive
-- RULE-SET,line_domain,境外通信
+- RULE-SET,line_domain,海外通讯
 - RULE-SET,talkatone_domain,Talkatone
-- RULE-SET,discord_domain,境外通信
-- RULE-SET,signal_domain,境外通信
-- RULE-SET,tiktok_domain,TikTok
+- RULE-SET,discord_domain,海外通讯
+- RULE-SET,signal_domain,海外通讯
+- RULE-SET,tiktok_domain,TikTok站点
 - RULE-SET,netflix_domain,Netflix
 - RULE-SET,disney_domain,Disney+
 - RULE-SET,hbo_domain,HBO
@@ -523,15 +523,15 @@ business-rules:
 - RULE-SET,UBI_domain,游戏平台
 - RULE-SET,Sony_domain,游戏平台
 - RULE-SET,Nintendo_domain,游戏平台
-- RULE-SET,communication_domain,境外通信
+- RULE-SET,communication_domain,海外通讯
 - RULE-SET,reddit_domain,Reddit
-- RULE-SET,social_media_non_cn_domain,境外社媒
-- RULE-SET,amazon_commerce_domain,境外电商
-- RULE-SET,ecommerce_domain,境外电商
+- RULE-SET,social_media_non_cn_domain,海外社媒
+- RULE-SET,amazon_commerce_domain,海外电商
+- RULE-SET,ecommerce_domain,海外电商
 - RULE-SET,speedtest_domain,Speedtest
 - RULE-SET,google_domain,Google
-- RULE-SET,microsoft_domain,Microsoft
-- RULE-SET,meta_domain,境外社媒
+- RULE-SET,microsoft_domain,Microsoft站点
+- RULE-SET,meta_domain,海外社媒
 - RULE-SET,finance_domain,金融
 - RULE-SET,cryptocurrency_domain,金融
 - RULE-SET,steamcdn_ip,DIRECT
@@ -543,8 +543,8 @@ business-rules:
 - AND,((NETWORK,tcp),(DST-PORT,5228-5230),(OR,((RULE-SET,google_ip,no-resolve),(RULE-SET,google_asn_cn,no-resolve)))),FCM
 - RULE-SET,google_asn_cn,Google
 - RULE-SET,google_ip,Google
-- RULE-SET,facebook_ip,境外社媒
-- RULE-SET,twitter_ip,境外社媒
+- RULE-SET,facebook_ip,海外社媒
+- RULE-SET,twitter_ip,海外社媒
 - RULE-SET,private_ip,DIRECT,no-resolve
 - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理
 - RULE-SET,cn_ip,DIRECT
@@ -613,15 +613,20 @@ rule-providers:
     - 2606:4700:a8::8/128
     - 2606:4700:a8::9/128
     - 2606:4700:a8::10/128
-  # 仅明确的质询/API/探针及指定站点，不按共享托管域名或 CF IP 扩大分流。
+  # 质询、管理 API/登录、Access 认证及探针；不按共享托管域名或 CF IP 扩大分流。
+  # https://developers.cloudflare.com/cloudflare-one/traffic-policies/global-policies/
   cf_sensitive_domain:
     type: inline
     behavior: domain
     payload:
     - challenges.cloudflare.com
     - api.cloudflare.com
+    - api.fed.cloudflare.com
+    - "+.dash.cloudflare.com"
+    - "+.dash.fed.cloudflare.com"
+    - dash.teams.cloudflare.com
+    - "+.cloudflareaccess.com"
     - cp.cloudflare.com
-    - "+.linux.do"
   telegram_domain:
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs
   telegram_ip:

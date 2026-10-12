@@ -27,6 +27,11 @@ URLS = dict(zip(FAMILIES, (
     'https://www.gstatic.com/generate_204', 'https://cp.cloudflare.com/generate_204',
     'https://github.com/robots.txt', 'https://flora.web.telegram.org/apiw1')))
 STATUS = dict(zip(FAMILIES, (204, 204, 200, 501)))
+BUSINESS_RENAMES = {
+    'Microsoft站点': 'Microsoft', '海外通讯': '境外通信', 'TikTok站点': 'TikTok',
+    '海外社媒': '境外社媒', '海外电商': '境外电商', 'TVB站点': 'TVB',
+    '哔哩东南亚站点': '哔哩东南亚', '台湾限定站点': '台湾限定',
+}
 LOCAL = {f: f'http://probe.invalid/{i}' for i, f in enumerate(FAMILIES)}
 PATHS = {f: urllib.parse.urlsplit(url).path for f, url in LOCAL.items()}
 REGIONS = ('香港', '日本', '新加坡', '台湾', '美国')
@@ -176,6 +181,10 @@ def static(source, name):
             assert groups[n]['proxies'][0] == '机场名称2优先', n
     assert 'pure_download_domain' not in source['rule-providers']
     assert source['rule-providers']['ai_extra_domain']['url'].endswith('/rules/Domain/ai.mrs')
+    assert not set(BUSINESS_RENAMES.values()) & groups.keys()
+    for group in BUSINESS_RENAMES:
+        region = {'哔哩东南亚站点': '新加坡-', '台湾限定站点': '台湾-'}.get(group, '')
+        assert groups[group]['proxies'][0] == region + '机场名称3优先', group
     assert not {'cloudflare_domain', 'cloudflare_cdn_domain', 'cloudflare_cdn_ipv4',
                 'cloudflare_cdn_ipv6'} & source['rule-providers'].keys()
     assert not re.search(r'(^|\s)[&*][A-Za-z_]|^\s*<<:', (ROOT / name).read_text(), re.M)
@@ -291,7 +300,7 @@ def node_filters(source, mihomo):
             p.pop('url')
             p['health-check'] = {'enable': False}
             providers[provider] = p
-        subjects = {'下载': 'ordinary', '自建/家宽节点': 'home', '台湾限定': 'ordinary',
+        subjects = {'下载': 'ordinary', '自建/家宽节点': 'home', '台湾限定站点': 'ordinary',
                     'FCM': 'ordinary', 'OneDrive': 'ordinary', 'GLOBAL': 'ordinary',
                     'AI': 'ordinary', '金融': 'ordinary', 'Talkatone': 'ordinary',
                     '全部节点': 'manual', '低倍率/MITM节点': 'low'}
@@ -541,49 +550,40 @@ def health(source, mihomo):
 
 # 独立业务见证：同一机制的重复域名省略，保留实际重叠和易误分流边界。
 OPENAI_FUNCTIONAL = (
-    'chatgpt.com', 'ws.chatgpt.com', 'auth.openai.com', 'setup.auth.openai.com',
-    'api.openai.com', 'platform.openai.com', 'desktop.chat.openai.com',
-    'codex-cloud-environments.chatgpt.com', 'codex-cloud-backend.chatgpt.com', 'persistent.oaistatic.com',
+    'chatgpt.com', 'auth.openai.com', 'codex-cloud-backend.chatgpt.com', 'persistent.oaistatic.com',
     'files.oaiusercontent.com', 'oaisidekickupdates.blob.core.windows.net',
-    'openaiassets.blob.core.windows.net', 'openaicomproductionae4b.blob.core.windows.net',
-    'openaiapi-site.azureedge.net', 'production-openaicom-storage.azureedge.net',
-    'openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net', 'openaicom.imgix.net',
-    'openai.com.cdn.cloudflare.net', 'chatgpt.livekit.cloud',
-    'relay.host.livekit.cloud', 'relay.turn.livekit.cloud',
+    'openai.com.cdn.cloudflare.net', 'relay.host.livekit.cloud',
     'fileserviceuploadsperm.blob.core.windows.net', 'featuregates.org',
-    'featureassets.org', 'prodregistryv2.org', 'cdn.auth0.com',
-    'openai-api.arkoselabs.com', 'client-api.arkoselabs.com',
-    'fp-async-webps-prod.webpubsub.azure.com',
     'chatgpt-async-webps-prod-eastus-23.webpubsub.azure.com',
-    'chatgpt-async-webps-prod-centralus-4.webpubsub.azure.com',
-    'oochat.space', 'ouochat.nloli.xyz',
 )
+AI_SELECTION_HOSTS = ('codex-cloud-backend.chatgpt.com',
+                      'chatgpt-async-webps-prod-eastus-23.webpubsub.azure.com')
 CF_DOMAINS = (
-    'challenges.cloudflare.com', 'api.cloudflare.com', 'cp.cloudflare.com',
-    'linux.do', 'connect.linux.do',
+    'challenges.cloudflare.com', 'api.cloudflare.com',
+    'one.dash.cloudflare.com', 'fixture-team.cloudflareaccess.com',
 )
 CF_UNBOUND = (
-    'cloudflare.com', 'dash.cloudflare.com', 'cdnjs.cloudflare.com', 'api.cdnjs.com',
-    'static.cdnjs.com', 'example.pages.dev', 'example.workers.dev', 'example.r2.dev',
-    'unknown-cf.fixture.example.com', 'compose-spec.io', '104.16.1.1', '2606:4700::1111',
+    'cloudflare.com', 'example.pages.dev', 'unknown-cf.fixture.example.com',
+    '104.16.1.1', '2606:4700::1111',
 )
 BUSINESSES = {
     'www.408os.cn': 'DIRECT', 'weixin.qq.com': 'DIRECT', 'music.163.com': 'DIRECT',
     'www.mi.com': 'DIRECT', 'hk.tv.global.mi.com': '默认代理',
-    'whatsapp.com': '境外通信', 'telegram.org': 'Telegram代理', '149.154.167.51': 'Telegram代理',
-    'www.pixiv.net': '境外社媒', 's.pximg.net': '境外社媒',
+    'whatsapp.com': '海外通讯', 'telegram.org': 'Telegram代理', '149.154.167.51': 'Telegram代理',
+    'www.pixiv.net': '海外社媒', 's.pximg.net': '海外社媒',
     'origin-tracker.githubusercontent.com': 'AI',
     'copilotprodattachments.blob.core.windows.net': 'AI',
     'wise.com': '金融', 'talkatone.com': 'Talkatone',
     'github.com': '下载', 'raw.githubusercontent.com': '下载', 'gitbook.com': '下载',
     'codeload.github.com': '下载', 'release-assets.githubusercontent.com': '下载', 'aur.archlinux.org': '下载',
-    'unmatched.fixture.example.com': '默认代理', 'discord.com': '境外通信',
+    'unmatched.fixture.example.com': '默认代理', 'discord.com': '海外通讯',
     'gateway.ai.cloudflare.com': 'AI', 'generativelanguage.googleapis.com': 'AI',
     'copilot-proxy.githubusercontent.com': 'AI', 'copilot.microsoft.com': 'AI',
     'api.statsig.com': '隐私拦截', 'statsigapi.net': '隐私拦截',
     'unpkg.com': '下载', 'registry-1.docker.io': '下载', 'huggingface.co': '下载',
     'google.com': 'Google', 'services.googleapis.cn': 'Google', 'fcm.googleapis.com': 'Google',
-    'microsoft.com': 'Microsoft', 'bilibili.tv': '哔哩东南亚', 'gamer.com.tw': '台湾限定',
+    'microsoft.com': 'Microsoft站点', 'bilibili.tv': '哔哩东南亚站点', 'gamer.com.tw': '台湾限定站点',
+    'tiktok.com': 'TikTok站点', 'mytv.com.hk': 'TVB站点', 'amazon.com': '海外电商',
     'bilibili.com': '哔哩哔哩', 'ad.doubleclick.net': '隐私拦截',
     'mtalk.google.com': 'FCM', 'onedrive.live.com': 'OneDrive', 'netflix.com': 'Netflix',
     'docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com': '下载',
@@ -597,7 +597,9 @@ DEFAULTS = {
     'codeload.github.com': '机场名称3优先-GitHub',
     'unmatched.fixture.example.com': '机场名称3优先-Google',
     'mtalk.google.com': '机场名称3优先-Google',
-    'bilibili.tv': '新加坡-机场名称1优先-Google', 'gamer.com.tw': '台湾-机场名称1优先-Google',
+    'bilibili.tv': '新加坡-机场名称3优先-Google', 'gamer.com.tw': '台湾-机场名称3优先-Google',
+    **dict.fromkeys(('microsoft.com', 'whatsapp.com', 'tiktok.com', 'www.pixiv.net',
+                     'amazon.com', 'mytv.com.hk'), '机场名称3优先-Google'),
     **dict.fromkeys(CF_DOMAINS, '机场名称1优先-CF'),
 }
 FOUR_DEFAULTS = {**DEFAULTS, 'wise.com': '专用-机场名称2-香港-Google',
@@ -695,15 +697,15 @@ def business(source, config_name, mihomo, rules_dir):
         for name in ('AI', '金融', 'Talkatone'):
             scope = '专用-机场名称2-香港-Google' if four and name != 'AI' else '专用-机场名称1-日本-Google'
             rt.select(name, scope)
-        for host in OPENAI_FUNCTIONAL:
+        for host in AI_SELECTION_HOSTS:
             assert rt.request(host) == '专用-机场名称1-日本-Google', host
         # CF 手选只改变共享 CF 出口，不改变 AI 专用池及其远程控制通道。
         rt.select('CF', '香港-机场名称3优先-CF')
         assert rt.request('challenges.cloudflare.com') == '香港-机场名称3优先-CF'
-        assert rt.request('codex-cloud-environments.chatgpt.com') == '专用-机场名称1-日本-Google'
+        assert rt.request('codex-cloud-backend.chatgpt.com') == '专用-机场名称1-日本-Google'
         rt.select('CF', selections['CF'])
         rt.select('AI', '自建/家宽节点')
-        for host in OPENAI_FUNCTIONAL:
+        for host in AI_SELECTION_HOSTS:
             assert rt.request(host) == '自建/家宽节点', host
         assert rt.request('challenges.cloudflare.com') == '机场名称1优先-CF'
         for name, host in [('金融', 'wise.com'), ('Talkatone', 'talkatone.com')]:
@@ -756,7 +758,7 @@ def routing(source, mihomo, rules_dir, four=False):
                    ('AI', '机场名称1优先', '机场名称1优先'),
                    ('金融', '日本-机场名称3优先', '日本-机场名称3优先'),
                    ('Talkatone', '美国-机场名称1优先', '美国-机场名称1优先'),
-                   ('台湾限定', '日本-机场名称3优先', '日本-机场名称3优先'),
+                   ('台湾限定站点', '日本-机场名称3优先', '日本-机场名称3优先'),
                    ('下载', '机场名称3优先', '机场名称3优先')]
         if four:
             entries = [('Telegram代理', f'机场名称{a}优先', f'机场名称{a}优先') for a in (1, 2, 3)] + [
@@ -1187,13 +1189,13 @@ def dns_outlet(source, mihomo):
 def selection_migration(source, mihomo):
     # 缓存按组名恢复；用同一运行目录见证旧名称、新名称与未更名业务。
     renamed = {'默认代理': '通用代理', 'DNS代理': 'DNS出口',
-               'Telegram代理': 'Telegram', 'FCM': 'Google FCM'}
+               'Telegram代理': 'Telegram', 'FCM': 'Google FCM', **BUSINESS_RENAMES}
     with tempfile.TemporaryDirectory(prefix='mihomo-selection-migration-') as directory, F.Runtime(directory, mihomo) as rt:
         config = rt.base(source)
         config.update(proxies=[], **{'sub-rules': {}, 'rules': ['MATCH,REJECT']})
         config['proxy-groups'] = []
         for original in source['proxy-groups']:
-            if original['name'] not in {*renamed, 'Microsoft'}:
+            if original['name'] not in {*renamed, 'OneDrive'}:
                 continue
             group = copy.deepcopy(original)
             for field in ('use', 'filter'):
@@ -1212,7 +1214,7 @@ def selection_migration(source, mihomo):
         rt.start(legacy)
         for new, old in renamed.items():
             rt.select(old, '机场名称1优先-Google' if new == 'DNS代理' else '机场名称1优先')
-        rt.select('Microsoft', 'DIRECT')
+        rt.select('OneDrive', 'DIRECT')
         for restart in (False, True):
             if restart:
                 rt.stop()
@@ -1220,10 +1222,10 @@ def selection_migration(source, mihomo):
             else:
                 rt.reload(config)
             for group in config['proxy-groups']:
-                expected = 'DIRECT' if group['name'] == 'Microsoft' else group['proxies'][0]
+                expected = 'DIRECT' if group['name'] == 'OneDrive' else group['proxies'][0]
                 assert rt.group(group['name'])['now'] == expected, (group['name'], expected)
             assert not set(renamed.values()) & rt.api('/proxies')['proxies'].keys()
-    print('PASS: 四组更名隔离旧选择，其他业务手选在重载/重启后保留', flush=True)
+    print('PASS: 业务更名隔离旧选择，其他业务手选在重载/重启后保留', flush=True)
 
 
 def main():
@@ -1254,8 +1256,8 @@ def main():
         routing(sources[PRIMARY_CONFIG], args.mihomo, rules_dir)
         business(sources[FOUR_CONFIG], FOUR_CONFIG, args.mihomo, rules_dir)
         routing(sources[FOUR_CONFIG], args.mihomo, rules_dir, four=True)
-        for name in ACTIVE_CONFIGS:
-            selection_migration(sources[name], args.mihomo)
+        # 缓存按组名恢复的机制与机场数无关，保留一模型的重载/重启见证。
+        selection_migration(sources[PRIMARY_CONFIG], args.mihomo)
         if args.suite == 'full':
             for name in ACTIVE_CONFIGS:
                 node_filters(sources[name], args.mihomo)

@@ -38,7 +38,7 @@ ruby scripts/build-config.rb --check
 
 机场名称1按日本 → 香港 → 新加坡 → 美国；机场名称2按香港 → 日本 → 新加坡 → 美国；机场名称3按日本 → 新加坡 → 香港 → 美国。机场名称4按香港 → 日本 → 新加坡 → 美国 → 台湾 → 欧洲 → 其他排序兜底。
 
-- 默认代理、Telegram代理、FCM、OneDrive、Google、下载、游戏平台、Kryptex、境外影音和 Speedtest 默认机场名称3优先。Microsoft、境外通信、境外社媒和境外电商继续默认机场名称1优先。哔哩东南亚默认新加坡，台湾限定默认台湾；默认项不限制主动手选。
+- 默认代理、Telegram代理、FCM、OneDrive、Google、下载、游戏平台、Kryptex、境外影音和 Speedtest 默认机场名称3优先。Microsoft站点、海外通讯、TikTok站点、海外社媒、海外电商、TVB站点也默认机场名称3优先。哔哩东南亚站点默认新加坡-机场名称3优先，台湾限定站点默认台湾-机场名称3优先；默认项不限制主动手选。
 - `纯下载`、`开发下载` 合并为 `下载`，共用普通准入及地区顺序，不保留 `下载-…` 自动链路。AUR、codeload、Release 保留较早的下载业务优先级；PKGBUILD 中其他源文件按实际目标分流。下载组不出现在其他业务菜单里。
 - 普通业务可选各机场优先、五地区的各机场优先、自建家宽、全部节点、DIRECT，以及符合普通准入的原始订阅节点。隐私拦截另有 REJECT、REJECT-DROP；仅 Emby 可选 `低倍率/MITM节点`。
 - CF 默认 `机场名称1优先-CF`，其机场优先和固定地区菜单均直接引用现有 CF 物理组；保留普通手选入口，复用通用节点池，不引用 AI 专用池，也不新增自动池或探针。
@@ -49,7 +49,7 @@ ruby scripts/build-config.rb --check
 
 普通池继续保留倍率、机场名称1香港质量限制、机场名称3日新独立 CTCU 排除（保留 CTCUCM）及美国低倍率例外。自动候选之外的普通节点仍可手选；特殊节点按上述入口选择。成本取舍通过业务默认与机场、地区顺序表达，不承诺实际节省比例或动态评估 IP 信誉。
 
-进一步降本候选仅记录建议：Microsoft、境外通信、境外社媒和境外电商可改为三优先。本次保持这些政策，以及媒体解锁、地区限定和敏感专用出口；媒体及敏感业务替换前需验证机场名称3的实际适配。
+上述八个业务的默认出口调整不改变 AI、金融、Talkatone 专用池及其他媒体业务默认项；新加坡、台湾业务保留同地区跨机场回退顺序。
 
 各业务 select 保存独立选择；直接手选实际节点互不影响，选择共享辅助组则共用它的内部选择。独立自动池不代表独占节点、出口 IP、带宽或健康记录。同机场同地区仍可能换 IP，固定出口需求应手选实际节点。
 
@@ -64,7 +64,11 @@ ruby scripts/build-config.rb --check
 
 分类顺序：作用域内的 Telegram → GitHub 主站/API/Raw/codeload/Release 明确域名 → CF 明确端点 → 其余 GitHub → Google。GitBook 保留下载业务，但不强行归类 GitHub。业务规则和探针分类均不再按 CF 官方 IP 段或 Pages/Workers/R2 等共享托管后缀接管未知站点；不再下载宽泛 CF 域名及 IP 规则。配置的 IPv6 默认关闭。
 
-`cf_sensitive_domain` 共维护四项：独立质询 `challenges.cloudflare.com`、管理 API `api.cloudflare.com`、探针 `cp.cloudflare.com`，以及先前明确指定的 `linux.do` 后缀。业务分流和探针分类复用同一名单；其他 CF 主页、CDN 及托管站点按已有业务或普通规则处理。AI、下载、通信、Tunnel、DNS、隐私拦截和明确直连仍保留各自用途，Docker 等既定 R2 下载端点继续走下载。
+`cf_sensitive_domain` 共维护八项：独立质询 `challenges.cloudflare.com`；管理 API `api.cloudflare.com`／`api.fed.cloudflare.com`；管理登录后缀 `dash.cloudflare.com`／`dash.fed.cloudflare.com`（包含 `one.dash.cloudflare.com`）；旧 Zero Trust 入口 `dash.teams.cloudflare.com`；Access 认证后缀 `cloudflareaccess.com`；探针 `cp.cloudflare.com`。精确端点与受限后缀分别覆盖质询、控制面和认证，不扩大到普通托管站。管理/API 入口的存在不等于它们均强制要求高信誉 IP；本配置将其与质询入口统一选路。[CF 控制面与认证域名](https://developers.cloudflare.com/cloudflare-one/traffic-policies/global-policies/)、[Access 认证接口](https://developers.cloudflare.com/cloudflare-one/access-controls/authenticate-agents/)。
+
+业务分流和探针分类复用同一名单；其他 CF 主页、CDN 及托管站点按已有业务或普通规则处理。`linux.do` 的 CF 特例已移除。AI、下载、通信、Tunnel、DNS、隐私拦截和明确直连仍保留各自用途，Docker 等既定 R2 下载端点继续走下载。
+
+去除特例后，使用 Google/Cloudflare 公开 DNS 的 IPv4 地址和实际规则快照核对，两模型中的 `linux.do`、`connect.linux.do`、PackyAPI 的 `.com`／`.ai` 主站及已解析的文档/API 子域、当前端点 `cf.api.fan` 均命中 `MATCH,默认代理`，无需另加域名规则。该核对不固化为逐站点回归；公开 DNS 地址及上游规则变化可能改变未来结果。[PackyAPI 当前入口与 API 端点](https://docs.packyapi.com/docs/register/)。
 
 `challenges.cloudflare.com` 的 Turnstile 脚本进入 CF；网站自身 `/cdn-cgi/challenge-platform/…` 的 JS 质询仍随网站域名分流，例如 ChatGPT 随 AI。域名规则不能识别 HTTPS 路径，不增加 MITM。CF 探针 204 不代表质询成功；CF 与 AI 独立选点也不保证出口 IP 相同，质询过程中更换 IP 可能导致循环。[Turnstile 脚本](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/)、[JS 检测路径](https://developers.cloudflare.com/cloudflare-challenges/challenge-types/javascript-detections/)、[质询出口限制](https://developers.cloudflare.com/cloudflare-challenges/concepts/how-challenges-work/)。
 
@@ -104,13 +108,15 @@ url-test 的 `tolerance: 50` 是 50ms 延迟差：当前节点健康时，候选
 
 TCP、UDP 共用业务规则。UDP 命中首个业务后，所选出口不支持 UDP 就拒绝，不继续匹配其他业务，也不会按 UDP 能力另选节点；需保留订阅能力声明并手选支持 UDP 的节点。FCM 先匹配既有域名集，缺失时仅用 TCP 5228–5230 与 Google IP／AS24424 的交集补足；Google 443、UDP、非 Google 地址不会只因端口进入 FCM。
 
-OneDrive、Telegram代理保留独立业务选择；Pixiv 归入境外社媒。国内明确直连规则优先，业务手选不覆盖更早的固定直连规则。Apple、哔哩哔哩、Cloudflare Tunnel 默认直连并保留手选；Tunnel 专用规则限制既定端点及 TCP/UDP 7844，保留真实 IP 解析。
+OneDrive、Telegram代理保留独立业务选择；Pixiv 归入海外社媒。国内明确直连规则优先，业务手选不覆盖更早的固定直连规则。Apple、哔哩哔哩、Cloudflare Tunnel 默认直连并保留手选；Tunnel 专用规则限制既定端点及 TCP/UDP 7844，保留真实 IP 解析。
 
 ## 迁移与设备使用
 
 旧正式配置已原样保存在两份 `.bak`；新文件接替原配置名。旧 `纯下载`／`开发下载` 选择不会自动迁移到 `下载`，旧普通日本池名称也已从敏感业务菜单移除。失效选择回到业务首项；仍有效的普通节点选择继续保留，新默认不覆盖有效缓存选择。迁移后核对自己的业务选择；Emby 和全部节点首次需要主动手选。
 
 本次将 `通用代理` → `默认代理`、`DNS出口` → `DNS代理`、`Telegram` → `Telegram代理`、`Google FCM` → `FCM`。四个新组名隔离旧名称的选择缓存，首次加载新组使用新的三优先默认项；不保留旧名称别名。`store-selected: true` 继续保存新组及其他业务的选择，不清空全局缓存。
+
+进一步更名：`Microsoft` → `Microsoft站点`、`境外通信` → `海外通讯`、`TikTok` → `TikTok站点`、`境外社媒` → `海外社媒`、`境外电商` → `海外电商`、`TVB` → `TVB站点`、`哔哩东南亚` → `哔哩东南亚站点`、`台湾限定` → `台湾限定站点`。这八组也隔离旧选择，首次使用三优先默认项，并保留新加坡、台湾地区偏好。
 
 名称不变的 `规则更新` 若固定过已移除的子组，应在面板解除固定选择，或使用控制器 `DELETE /proxies/{URL编码组名}` 恢复自动。订阅移除节点也不是即时撤销：v1.19.30 的 url-test 有 10 秒选点缓存，空池可能短暂保留旧节点，再收敛到 REJECT。上层 fallback 根据子组对应 URL 的健康记录切换；订阅更新和子组 `now` 的变化不会直接清除该记录，还需复测确认。
 
@@ -147,7 +153,7 @@ ruby scripts/validate-rules.rb --config configfull_new.yaml --config configfull_
 | 回归级别 | 覆盖范围 |
 |---|---|
 | `static` | 两产物生成一致性、四份配置基础加载、活动配置的引用／循环／菜单／专用池隔离；不下载规则 |
-| `smoke` | 两模型关键业务及默认出口、四组更名后的选择迁移、四类探针分类及 TG 作用域、UDP、Fake-IP、GLOBAL |
+| `smoke` | 两模型关键业务及默认出口、业务更名后的选择迁移、四类探针分类及 TG 作用域、UDP、Fake-IP、GLOBAL |
 | `full`（默认） | 再验证节点准入、探测范围／去重、故障隔离／恢复、同区测速、DNS 策略及实际出口／上游冗余／CF 与 Google 探针隔离、手选重载／重启、订阅移除及空池 |
 
 ```sh
@@ -159,6 +165,8 @@ python3 scripts/test-config.py --suite smoke --mihomo /path/to/mihomo-v1.19.31 -
 `--mihomo` 默认为 `MIHOMO_BIN` 或 PATH 中的 mihomo。不指定 `--rules-dir` 时使用临时快照；指定目录不存在则创建，已存在则核验 URL、SHA256 与工作区规则版本，不静默修补。更换来源后需使用新的快照目录。本仓库规则读取工作区产物，外部规则从配置 URL 下载；失败不退化为模拟规则。
 
 运行回归需允许回环监听。测试使用公开规则与本地模拟代理，不使用真实机场订阅，不验证公网端点、设备 TUN、吞吐、长期推送或媒体解锁；生成和测试不部署到设备。
+
+域名回归保留认证、远程通道、CDN 重叠及动态主机的代表见证，不逐条重测同类域名；完整源/YAML/MRS 一致性由规则校验负责。AI 选择切换只验证规则集与动态规则两类入口，组名缓存迁移只运行一模型；两模型业务默认出口和机场差异仍分别验证。
 
 ## 项目文件与实现依据
 

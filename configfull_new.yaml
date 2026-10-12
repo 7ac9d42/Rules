@@ -302,9 +302,9 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
-- name: Microsoft
+- name: Microsoft站点
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -323,16 +323,16 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
-- name: 境外通信
+- name: 海外通讯
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
-- name: TikTok
+- name: TikTok站点
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -365,9 +365,9 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
-- name: 哔哩东南亚
+- name: 哔哩东南亚站点
   type: select
-  proxies: [新加坡-机场名称1优先, 机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [新加坡-机场名称3优先, 机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -379,9 +379,9 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
-- name: TVB
+- name: TVB站点
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -400,16 +400,16 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
-- name: 境外社媒
+- name: 海外社媒
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
-- name: 境外电商
+- name: 海外电商
   type: select
-  proxies: [机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称3优先, 机场名称1优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -449,9 +449,9 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
-- name: 台湾限定
+- name: 台湾限定站点
   type: select
-  proxies: [台湾-机场名称1优先, 机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [台湾-机场名称3优先, 机场名称1优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 美国-机场名称1优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点, DIRECT]
   use: [Airport_01, Airport_03, Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
@@ -1594,8 +1594,8 @@ sub-rules:
   - RULE-SET,banAd_pcdn_classical,隐私拦截
   - RULE-SET,appleTV_domain,境外影音
   - RULE-SET,apple_update_domain,Apple
-  - DOMAIN-SUFFIX,mytv.com.hk,TVB
-  - RULE-SET,TVB_domain,TVB
+  - DOMAIN-SUFFIX,mytv.com.hk,TVB站点
+  - RULE-SET,TVB_domain,TVB站点
   - RULE-SET,wechat_domain,DIRECT
   - RULE-SET,bank_cn_domain,DIRECT
   - RULE-SET,alibaba_domain,DIRECT
@@ -1616,10 +1616,10 @@ sub-rules:
   - RULE-SET,media_cn_domain,DIRECT
   - RULE-SET,banAd_low_domain,隐私拦截
   - RULE-SET,apple_domain,Apple
-  - RULE-SET,biliintl_domain,哔哩东南亚
+  - RULE-SET,biliintl_domain,哔哩东南亚站点
   - RULE-SET,bilibili_domain,哔哩哔哩
-  - DOMAIN-SUFFIX,pixiv.net,境外社媒
-  - DOMAIN-SUFFIX,pximg.net,境外社媒
+  - DOMAIN-SUFFIX,pixiv.net,海外社媒
+  - DOMAIN-SUFFIX,pximg.net,海外社媒
   - DOMAIN-SUFFIX,huggingface.co,下载
   - DOMAIN-SUFFIX,hf.co,下载
   - DOMAIN-SUFFIX,docker.io,下载
@@ -1641,7 +1641,7 @@ sub-rules:
   - RULE-SET,cf_sensitive_domain,CF
   - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
   - RULE-SET,telegram_domain,Telegram代理
-  - RULE-SET,bahamut_domain,台湾限定
+  - RULE-SET,bahamut_domain,台湾限定站点
   - RULE-SET,youtube_domain,境外影音
   - RULE-SET,fcm_domain,FCM
   - RULE-SET,googlevpn_domain,Google
@@ -1650,11 +1650,11 @@ sub-rules:
   - RULE-SET,github_domain,下载
   - RULE-SET,gitbook_domain,下载
   - RULE-SET,onedrive_domain,OneDrive
-  - RULE-SET,line_domain,境外通信
+  - RULE-SET,line_domain,海外通讯
   - RULE-SET,talkatone_domain,Talkatone
-  - RULE-SET,discord_domain,境外通信
-  - RULE-SET,signal_domain,境外通信
-  - RULE-SET,tiktok_domain,TikTok
+  - RULE-SET,discord_domain,海外通讯
+  - RULE-SET,signal_domain,海外通讯
+  - RULE-SET,tiktok_domain,TikTok站点
   - RULE-SET,netflix_domain,Netflix
   - RULE-SET,disney_domain,Disney+
   - RULE-SET,hbo_domain,HBO
@@ -1669,15 +1669,15 @@ sub-rules:
   - RULE-SET,UBI_domain,游戏平台
   - RULE-SET,Sony_domain,游戏平台
   - RULE-SET,Nintendo_domain,游戏平台
-  - RULE-SET,communication_domain,境外通信
+  - RULE-SET,communication_domain,海外通讯
   - RULE-SET,reddit_domain,Reddit
-  - RULE-SET,social_media_non_cn_domain,境外社媒
-  - RULE-SET,amazon_commerce_domain,境外电商
-  - RULE-SET,ecommerce_domain,境外电商
+  - RULE-SET,social_media_non_cn_domain,海外社媒
+  - RULE-SET,amazon_commerce_domain,海外电商
+  - RULE-SET,ecommerce_domain,海外电商
   - RULE-SET,speedtest_domain,Speedtest
   - RULE-SET,google_domain,Google
-  - RULE-SET,microsoft_domain,Microsoft
-  - RULE-SET,meta_domain,境外社媒
+  - RULE-SET,microsoft_domain,Microsoft站点
+  - RULE-SET,meta_domain,海外社媒
   - RULE-SET,finance_domain,金融
   - RULE-SET,cryptocurrency_domain,金融
   - RULE-SET,steamcdn_ip,DIRECT
@@ -1689,8 +1689,8 @@ sub-rules:
   - AND,((NETWORK,tcp),(DST-PORT,5228-5230),(OR,((RULE-SET,google_ip,no-resolve),(RULE-SET,google_asn_cn,no-resolve)))),FCM
   - RULE-SET,google_asn_cn,Google
   - RULE-SET,google_ip,Google
-  - RULE-SET,facebook_ip,境外社媒
-  - RULE-SET,twitter_ip,境外社媒
+  - RULE-SET,facebook_ip,海外社媒
+  - RULE-SET,twitter_ip,海外社媒
   - RULE-SET,private_ip,DIRECT,no-resolve
   - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理
   - RULE-SET,cn_ip,DIRECT
@@ -1804,8 +1804,12 @@ rule-providers:
     payload:
     - challenges.cloudflare.com
     - api.cloudflare.com
+    - api.fed.cloudflare.com
+    - "+.dash.cloudflare.com"
+    - "+.dash.fed.cloudflare.com"
+    - dash.teams.cloudflare.com
+    - "+.cloudflareaccess.com"
     - cp.cloudflare.com
-    - "+.linux.do"
   telegram_domain:
     type: http
     interval: 86400
