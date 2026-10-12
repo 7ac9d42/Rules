@@ -82,9 +82,9 @@ def generate(s)
       own_pair = private_pair.call(sensitive.fetch(name))
       choices = own_pair + (private_names - own_pair) + choices
     end
-    # Explicit DNS dialers bypass rule matching, so their entire menu must be physical.
-    if %w[GLOBAL DNS代理].include?(name)
-      probe = name == 'DNS代理' ? 'CF' : 'Google'
+    # DNS/GLOBAL bypass matching; CF also pins every automatic choice to its probe.
+    if %w[GLOBAL DNS代理 CF].include?(name)
+      probe = name == 'GLOBAL' ? 'Google' : 'CF'
       choices = choices.map { |n| policies.key?(n) ? "#{n}-#{probe}" : n }
     end
     choices = choices.reject { |n| n == 'DIRECT' } if name == 'DNS代理'

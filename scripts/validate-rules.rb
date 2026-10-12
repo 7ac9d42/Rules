@@ -325,7 +325,31 @@ rescue StandardError => e
   errors << "direct/proxy source/generated validation: #{e.message}"
 end
 
+begin
+  ai_source_path = File.join(ROOT, "scripts/data/ai.list")
+  ai_yaml_path = File.join(ROOT, "rules/Domain/ai.yaml")
+  source_lines = File.readlines(ai_source_path, chomp: true).map(&:strip)
+                     .reject { |line| line.empty? || line.start_with?("#") }
+  add_duplicate_value_errors(errors, "scripts/data/ai.list", source_lines)
+  expected = domain_payload_from_classical_source(ai_source_path)
+  generated = yaml_payloads.fetch(ai_yaml_path)
+  unless generated == expected
+    errors << "rules/Domain/ai.yaml: source/generated mismatch " \
+              "missing=#{(expected - generated).first(3).inspect} extra=#{(generated - expected).first(3).inspect}"
+  end
+rescue StandardError => e
+  errors << "AI source/generated validation: #{e.message}"
+end
+
 critical_rules = {
+  "rules/Domain/ai.yaml" => {
+    forbidden: ["+.blob.core.windows.net", "+.azureedge.net", "+.azurefd.net",
+                "+.cloudflare.net", "+.livekit.cloud", "+.statsig.com", "+.statsigapi.net"],
+    required: ["+.openai.com", "+.chatgpt.com", "+.oaistatic.com", "+.oaiusercontent.com",
+               "oaisidekickupdates.blob.core.windows.net", "+.openai.com.cdn.cloudflare.net",
+               "+.chatgpt.livekit.cloud", "+.host.livekit.cloud", "+.turn.livekit.cloud",
+               "+.oochat.space", "ouochat.nloli.xyz"],
+  },
   "rules/Domain/tvb.yaml" => {
     forbidden: ["+.content.jwplatform.com", "+.videos-f.jwpsrv.com", "edge.api.brightcove.com",
                 "bcbolt446c5271-a.akamaihd.net", "+.youboranqs01.com"],

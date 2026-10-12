@@ -294,6 +294,13 @@ proxy-groups:
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
+- name: CF
+  type: select
+  proxies: [机场名称1优先-CF, 机场名称2优先-CF, 机场名称3优先-CF, 香港-机场名称1优先-CF, 香港-机场名称2优先-CF, 香港-机场名称3优先-CF, 日本-机场名称1优先-CF, 日本-机场名称2优先-CF, 日本-机场名称3优先-CF, 新加坡-机场名称1优先-CF, 新加坡-机场名称2优先-CF, 新加坡-机场名称3优先-CF, 台湾-机场名称1优先-CF, 台湾-机场名称2优先-CF, 台湾-机场名称3优先-CF, 美国-机场名称1优先-CF, 美国-机场名称2优先-CF, 美国-机场名称3优先-CF, 自建/家宽节点, 全部节点, DIRECT]
+  use: [Airport_01, Airport_02, Airport_03, Airport_04]
+  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
+  empty-fallback: REJECT
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
 - name: Cloudflare Tunnel
   type: select
   proxies: [DIRECT, 机场名称1优先, 机场名称2优先, 机场名称3优先, 香港-机场名称1优先, 香港-机场名称2优先, 香港-机场名称3优先, 日本-机场名称1优先, 日本-机场名称2优先, 日本-机场名称3优先, 新加坡-机场名称1优先, 新加坡-机场名称2优先, 新加坡-机场名称3优先, 台湾-机场名称1优先, 台湾-机场名称2优先, 台湾-机场名称3优先, 美国-机场名称1优先, 美国-机场名称2优先, 美国-机场名称3优先, 自建/家宽节点, 全部节点]
@@ -2173,12 +2180,13 @@ sub-rules:
   - DOMAIN-SUFFIX,kryptex.com,Kryptex
   - DOMAIN-SUFFIX,kryptex.org,Kryptex
   - DOMAIN-SUFFIX,kryptex.network,Kryptex
-  - DOMAIN-SUFFIX,linux.do,默认代理
-  - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理
+  - DOMAIN-SUFFIX,linux.do,CF
+  - RULE-SET,ai_extra_domain,AI
+  - RULE-SET,ai!cn_domain,AI
+  - OR,((DOMAIN-SUFFIX,cloudflare.com),(DOMAIN-SUFFIX,cloudflare.net),(DOMAIN-SUFFIX,cdnjs.com),(RULE-SET,cloudflare_domain)),CF
   - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
   - RULE-SET,telegram_domain,Telegram代理
   - RULE-SET,bahamut_domain,台湾限定
-  - RULE-SET,ai!cn_domain,AI
   - RULE-SET,youtube_domain,境外影音
   - RULE-SET,fcm_domain,FCM
   - RULE-SET,googlevpn_domain,Google
@@ -2217,6 +2225,7 @@ sub-rules:
   - RULE-SET,meta_domain,境外社媒
   - RULE-SET,finance_domain,金融
   - RULE-SET,cryptocurrency_domain,金融
+  - RULE-SET,cloudflare_cdn_domain,CF
   - RULE-SET,steamcdn_ip,DIRECT
   - RULE-SET,NetEaseMusic_ip,DIRECT
   - RULE-SET,bilibili_ip,哔哩哔哩
@@ -2229,6 +2238,9 @@ sub-rules:
   - RULE-SET,facebook_ip,境外社媒
   - RULE-SET,twitter_ip,境外社媒
   - RULE-SET,private_ip,DIRECT,no-resolve
+  - RULE-SET,cloudflare_cdn_ipv4,CF
+  - RULE-SET,cloudflare_cdn_ipv6,CF
+  - AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理
   - RULE-SET,cn_ip,DIRECT
   - MATCH,默认代理
   分流-探针分类:
@@ -2357,9 +2369,10 @@ rule-providers:
     type: inline
     behavior: domain
     payload:
+    - "+.cloudflare.com"
+    - "+.cloudflare.net"
     - "+.unpkg.com"
-    - cdnjs.com
-    - api.cdnjs.com
+    - "+.cdnjs.com"
     - nodejs.org
     - linux.do
     - cdn.linux.do
@@ -2498,6 +2511,13 @@ rule-providers:
     format: mrs
     proxy: 规则更新
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-ai-!cn.mrs
+  ai_extra_domain:
+    type: http
+    interval: 86400
+    behavior: domain
+    format: mrs
+    proxy: 规则更新
+    url: https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/ai.mrs
   youtube_domain:
     type: http
     interval: 86400

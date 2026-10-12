@@ -1,0 +1,28 @@
+# 第一方域名覆盖认证、API、桌面资源和官方远程控制的子域名。
+# https://learn.chatgpt.com/docs/remote-connections
+# https://developers.openai.com/api/docs/guides/agents-api/environments/self-hosted
+DOMAIN-SUFFIX,openai.com
+DOMAIN-SUFFIX,chatgpt.com
+DOMAIN-SUFFIX,chat.com
+DOMAIN-SUFFIX,sora.com
+DOMAIN-SUFFIX,oaistatic.com
+DOMAIN-SUFFIX,oaiusercontent.com
+DOMAIN-SUFFIX,oaistatsig.com
+# 桌面分发的 Azure 主机使用精确匹配，不扩大到整个共享云平台。
+# https://learn.chatgpt.com/docs/enterprise/govcloud-configuration
+DOMAIN,oaisidekickupdates.blob.core.windows.net
+# 与上游 OpenAI 集保持一致的专属第三方资源和语音端点。
+# https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/openai.list
+DOMAIN,openaiapi-site.azureedge.net
+DOMAIN,openaiassets.blob.core.windows.net
+DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
+DOMAIN,openaicom.imgix.net
+DOMAIN,openaicomproductionae4b.blob.core.windows.net
+DOMAIN,production-openaicom-storage.azureedge.net
+DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
+DOMAIN-SUFFIX,chatgpt.livekit.cloud
+DOMAIN-SUFFIX,host.livekit.cloud
+DOMAIN-SUFFIX,turn.livekit.cloud
+# 保留原有补充项；纯遥测依旧由更早的隐私规则决定。
+DOMAIN-SUFFIX,oochat.space
+DOMAIN,ouochat.nloli.xyz

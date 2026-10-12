@@ -70,8 +70,9 @@ def static(source, name):
     priorities = {1: (1, 2, 3), 2: (2, 1, 3), 3: (3, 1, 2)} if four else {1: (1, 3), 3: (3, 1)}
     providers = [f'Airport_0{a}' for a in (*airports, 4)]
     assert list(source['proxy-providers']) == providers
-    assert len(groups) == (160 if four else 120)
+    assert len(groups) == (161 if four else 121)
     visit('DNS代理', global_mode=True)
+    visit('CF', global_mode=True)
     assert len(outbounds) == (19 if four else 13)
     tg_groups = {n for n in groups if n.endswith('-TG')}
     assert len(tg_groups) == (16 if four else 11)
@@ -134,7 +135,8 @@ def static(source, name):
             extras = {'低倍率/MITM节点'}
         if n == '隐私拦截':
             extras = {'REJECT', 'REJECT-DROP'}
-        assert choices == required | extras, n
+        expected_menu = {p + '-CF' if p in outbounds else p for p in required} if n == 'CF' else required | extras
+        assert choices == expected_menu, n
         assert g['use'] == providers
         assert 'filter' in g and 'exclude-filter' not in g, n
     physical = {n + '-Google' if n in outbounds else n for n in required}
@@ -143,6 +145,9 @@ def static(source, name):
     dns_physical = {n + '-CF' if n in outbounds else n for n in required - {'DIRECT'}}
     assert set(dns_group['proxies']) == dns_physical
     assert dns_group['proxies'][0] == '机场名称3优先-CF'
+    assert groups['CF']['proxies'][0] == '机场名称1优先-CF'
+    assert groups['CF']['filter'] == dns_group['filter']
+    assert groups['CF']['empty-fallback'] == 'REJECT'
     assert not {'通用代理', 'DNS出口', 'Telegram', 'Google FCM'} & known
     for n in ('默认代理', 'Telegram代理', 'FCM'):
         assert groups[n]['proxies'][0] == '机场名称3优先', n
@@ -170,6 +175,7 @@ def static(source, name):
         for n in ('Netflix', 'Disney+', 'HBO', 'Prime Video', 'Spotify', 'Reddit'):
             assert groups[n]['proxies'][0] == '机场名称2优先', n
     assert 'pure_download_domain' not in source['rule-providers']
+    assert source['rule-providers']['ai_extra_domain']['url'].endswith('/rules/Domain/ai.mrs')
     assert not re.search(r'(^|\s)[&*][A-Za-z_]|^\s*<<:', (ROOT / name).read_text(), re.M)
 
 
@@ -532,39 +538,62 @@ def health(source, mihomo):
 
 
 # 独立业务见证：同一机制的重复域名省略，保留实际重叠和易误分流边界。
+OPENAI_FUNCTIONAL = (
+    'chatgpt.com', 'ws.chatgpt.com', 'auth.openai.com', 'setup.auth.openai.com',
+    'api.openai.com', 'platform.openai.com', 'desktop.chat.openai.com',
+    'codex-cloud-environments.chatgpt.com', 'persistent.oaistatic.com',
+    'files.oaiusercontent.com', 'oaisidekickupdates.blob.core.windows.net',
+    'openaiassets.blob.core.windows.net', 'openaicomproductionae4b.blob.core.windows.net',
+    'openaiapi-site.azureedge.net', 'production-openaicom-storage.azureedge.net',
+    'openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net', 'openaicom.imgix.net',
+    'openai.com.cdn.cloudflare.net', 'chatgpt.livekit.cloud',
+    'relay.host.livekit.cloud', 'relay.turn.livekit.cloud',
+    'oochat.space', 'ouochat.nloli.xyz',
+)
+CF_DOMAINS = (
+    'cloudflare.com', 'challenges.cloudflare.com', 'cdnjs.cloudflare.com', 'api.cdnjs.com',
+    'static.cdnjs.com', 'example.pages.dev', 'example.workers.dev', 'example.r2.dev',
+    'cf-china.info', 'linux.do', 'connect.linux.do',
+    'unknown-cf.fixture.example.com', 'compose-spec.io', '104.16.1.1', '2606:4700::1111',
+)
 BUSINESSES = {
     'www.408os.cn': 'DIRECT', 'weixin.qq.com': 'DIRECT', 'music.163.com': 'DIRECT',
     'www.mi.com': 'DIRECT', 'hk.tv.global.mi.com': '默认代理',
     'whatsapp.com': '境外通信', 'telegram.org': 'Telegram代理', '149.154.167.51': 'Telegram代理',
     'www.pixiv.net': '境外社媒', 's.pximg.net': '境外社媒',
-    'chatgpt.com': 'AI', 'origin-tracker.githubusercontent.com': 'AI',
+    'origin-tracker.githubusercontent.com': 'AI',
     'copilotprodattachments.blob.core.windows.net': 'AI',
     'wise.com': '金融', 'talkatone.com': 'Talkatone',
     'github.com': '下载', 'raw.githubusercontent.com': '下载', 'gitbook.com': '下载',
     'codeload.github.com': '下载', 'release-assets.githubusercontent.com': '下载', 'aur.archlinux.org': '下载',
-    'cloudflare.com': '默认代理', 'example.pages.dev': '默认代理', 'cf-china.info': 'DIRECT',
-    'linux.do': '默认代理', 'unmatched.fixture.example.com': '默认代理',
+    'unmatched.fixture.example.com': '默认代理', 'discord.com': '境外通信',
+    'gateway.ai.cloudflare.com': 'AI', 'generativelanguage.googleapis.com': 'AI',
+    'copilot-proxy.githubusercontent.com': 'AI', 'copilot.microsoft.com': 'AI',
+    'api.statsig.com': '隐私拦截', 'statsigapi.net': '隐私拦截',
     'unpkg.com': '下载', 'registry-1.docker.io': '下载', 'huggingface.co': '下载',
     'google.com': 'Google', 'services.googleapis.cn': 'Google', 'fcm.googleapis.com': 'Google',
     'microsoft.com': 'Microsoft', 'bilibili.tv': '哔哩东南亚', 'gamer.com.tw': '台湾限定',
     'bilibili.com': '哔哩哔哩', 'ad.doubleclick.net': '隐私拦截',
     'mtalk.google.com': 'FCM', 'onedrive.live.com': 'OneDrive', 'netflix.com': 'Netflix',
+    'docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com': '下载',
+    **dict.fromkeys(OPENAI_FUNCTIONAL, 'AI'), **dict.fromkeys(CF_DOMAINS, 'CF'),
 }
 DEFAULTS = {
     'google.com': '机场名称3优先-Google',
     'telegram.org': '机场名称3优先-TG', '149.154.167.51': '机场名称3优先-TG',
     'wise.com': '专用-机场名称1-日本-Google', 'talkatone.com': '专用-机场名称1-日本-Google',
     'github.com': '机场名称3优先-GitHub', 'raw.githubusercontent.com': '机场名称3优先-GitHub',
-    'codeload.github.com': '机场名称3优先-GitHub', 'cloudflare.com': '机场名称3优先-CF',
-    'linux.do': '机场名称3优先-CF', 'unmatched.fixture.example.com': '机场名称3优先-Google',
+    'codeload.github.com': '机场名称3优先-GitHub',
+    'unmatched.fixture.example.com': '机场名称3优先-Google',
     'mtalk.google.com': '机场名称3优先-Google',
     'bilibili.tv': '新加坡-机场名称1优先-Google', 'gamer.com.tw': '台湾-机场名称1优先-Google',
+    **dict.fromkeys(CF_DOMAINS, '机场名称1优先-CF'),
 }
 FOUR_DEFAULTS = {**DEFAULTS, 'wise.com': '专用-机场名称2-香港-Google',
                  'talkatone.com': '专用-机场名称2-香港-Google', 'netflix.com': '机场名称2优先-Google'}
 TUNNEL = [('region1.v2.argotunnel.com', 7844, 'Cloudflare Tunnel'),
           ('region1.v2.argotunnel.com', 443, 'DIRECT'), ('unknown.argotunnel.com', 7844, 'DIRECT'),
-          ('198.41.192.167', 7844, 'Cloudflare Tunnel'), ('198.41.192.1', 7844, '默认代理')]
+          ('198.41.192.167', 7844, 'Cloudflare Tunnel'), ('198.41.192.1', 7844, 'CF')]
 
 
 def local_direct(rules):
@@ -588,6 +617,7 @@ def business(source, config_name, mihomo, rules_dir):
         config['sub-rules'] = {n: local_direct(rules) for n, rules in source['sub-rules'].items()}
         config['hosts'] = {h: '1.1.1.1' for h in cases if not re.match(r'^\d+\.', h)}
         config['hosts'].update({'www.408os.cn': '106.75.74.76', 'google.com': '45.121.184.1'})
+        config['hosts'].update(dict.fromkeys(('unknown-cf.fixture.example.com', 'compose-spec.io'), '104.16.1.1'))
         config['proxy-groups'], selections = [], {}
         for original in source['proxy-groups']:
             name = original['name']
@@ -612,6 +642,8 @@ def business(source, config_name, mihomo, rules_dir):
         for host, expected in cases.items():
             actual = rt.request(host)
             assert actual == expected, (config_name, host, expected, actual)
+        for host in ('other.blob.core.windows.net', 'other.azureedge.net', 'other.livekit.cloud'):
+            assert rt.request(host) != 'AI', (config_name, host, '共享平台误归 AI')
         for host, port, expected in TUNNEL:
             actual = rt.request(host, port)
             assert actual == expected, (config_name, host, port, expected, actual)
@@ -644,9 +676,17 @@ def business(source, config_name, mihomo, rules_dir):
         for name in ('AI', '金融', 'Talkatone'):
             scope = '专用-机场名称2-香港-Google' if four and name != 'AI' else '专用-机场名称1-日本-Google'
             rt.select(name, scope)
-        assert rt.request('chatgpt.com') == '专用-机场名称1-日本-Google'
+        for host in OPENAI_FUNCTIONAL:
+            assert rt.request(host) == '专用-机场名称1-日本-Google', host
+        # CF 手选只改变共享 CF 出口，不改变 AI 专用池及其远程控制通道。
+        rt.select('CF', '香港-机场名称3优先-CF')
+        assert rt.request('challenges.cloudflare.com') == '香港-机场名称3优先-CF'
+        assert rt.request('codex-cloud-environments.chatgpt.com') == '专用-机场名称1-日本-Google'
+        rt.select('CF', selections['CF'])
         rt.select('AI', '自建/家宽节点')
-        assert rt.request('chatgpt.com') == '自建/家宽节点'
+        for host in OPENAI_FUNCTIONAL:
+            assert rt.request(host) == '自建/家宽节点', host
+        assert rt.request('challenges.cloudflare.com') == '机场名称1优先-CF'
         for name, host in [('金融', 'wise.com'), ('Talkatone', 'talkatone.com')]:
             scope = '专用-机场名称2-香港-Google' if four else '专用-机场名称1-日本-Google'
             assert rt.group(name)['now'] == scope
