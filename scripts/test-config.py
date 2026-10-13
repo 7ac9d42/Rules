@@ -462,7 +462,10 @@ def health(source, mihomo):
                 node.statuses.clear()
             rt.api('/providers/proxies/Airport_03/healthcheck')
             for child in children:
-                assert probe(child, family)
+                try:
+                    F.until(lambda: probe(child, family))
+                except AssertionError as error:
+                    raise AssertionError(('恢复探测未收敛', child, family, rt.group(child))) from error
             assert rt.group(root)['now'] == children[0]
         for status in (403, 429, 503):
             rt.http.nodes[fast].statuses[PATHS['GitHub']] = status
