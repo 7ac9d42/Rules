@@ -300,9 +300,6 @@ businesses:
   DNS代理:
     default: 机场名称3优先-CF
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
-  CF:
-    default: 机场名称1优先-CF
-    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
   Cloudflare Tunnel:
     default: DIRECT
     icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
@@ -492,7 +489,7 @@ business-rules:
 - 'DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$,AI'
 - RULE-SET,ai_extra_domain,AI
 - RULE-SET,ai!cn_domain,AI
-- RULE-SET,cf_sensitive_domain,CF
+- RULE-SET,cf_sensitive_domain,AI
 - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
 - RULE-SET,telegram_domain,Telegram代理
 - RULE-SET,bahamut_domain,台湾限定站点

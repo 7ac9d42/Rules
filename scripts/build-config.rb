@@ -82,8 +82,8 @@ def generate(s)
       own_pair = private_pair.call(sensitive.fetch(name))
       choices = own_pair + (private_names - own_pair) + choices
     end
-    # DNS/GLOBAL bypass matching; CF also pins every automatic choice to its probe.
-    if %w[GLOBAL DNS代理 CF].include?(name)
+    # DNS/GLOBAL bypass matching and pin automatic choices to their probe.
+    if %w[GLOBAL DNS代理].include?(name)
       probe = name == 'GLOBAL' ? 'Google' : 'CF'
       choices = choices.map { |n| policies.key?(n) ? "#{n}-#{probe}" : n }
     end

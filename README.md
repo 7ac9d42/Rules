@@ -6,8 +6,8 @@
 
 | 文件 | 用途 |
 |---|---|
-| [configfull_new.yaml](configfull_new.yaml) | 三机场完整配置：机场名称1、3、4，121 个组 |
-| [configfull_new_4.yaml](configfull_new_4.yaml) | 四机场完整配置：增加机场名称2家宽，161 个组 |
+| [configfull_new.yaml](configfull_new.yaml) | 三机场完整配置：机场名称1、3、4，120 个组 |
+| [configfull_new_4.yaml](configfull_new_4.yaml) | 四机场完整配置：增加机场名称2家宽，160 个组 |
 | [configfull_new.yaml.bak](configfull_new.yaml.bak) | 本次迁移前的三机场正式配置 |
 | [configfull_new_4.yaml.bak](configfull_new_4.yaml.bak) | 本次迁移前的四机场正式配置 |
 
@@ -41,7 +41,7 @@ ruby scripts/build-config.rb --check
 - 默认代理、Telegram代理、FCM、OneDrive、Google、下载、游戏平台、Kryptex、境外影音和 Speedtest 默认机场名称3优先。Microsoft站点、海外通讯、TikTok站点、海外社媒、海外电商、TVB站点也默认机场名称3优先。哔哩东南亚站点默认新加坡-机场名称3优先，台湾限定站点默认台湾-机场名称3优先；默认项不限制主动手选。
 - `纯下载`、`开发下载` 合并为 `下载`，共用普通准入及地区顺序，不保留 `下载-…` 自动链路。AUR、codeload、Release 保留较早的下载业务优先级；PKGBUILD 中其他源文件按实际目标分流。下载组不出现在其他业务菜单里。
 - 普通业务可选各机场优先、五地区的各机场优先、自建家宽、全部节点、DIRECT，以及符合普通准入的原始订阅节点。隐私拦截另有 REJECT、REJECT-DROP；仅 Emby 可选 `低倍率/MITM节点`。
-- CF 默认 `机场名称1优先-CF`，其机场优先和固定地区菜单均直接引用现有 CF 物理组；保留普通手选入口，复用通用节点池，不引用 AI 专用池，也不新增自动池或探针。
+- 明确 CF 质询、管理 API、Access 等分流合入 AI，共用 AI 业务选择；不再单设 CF 业务组。CF 探针、普通 CF 物理组、DNS代理和 Cloudflare Tunnel 继续保留。
 - 只有 AI、金融、Talkatone 可选专用池，业务入口保持 select。机场名称1日本 Google／CF 两个池采用 fallback，沿订阅顺序选择首个健康节点，不因后备延迟更低切换，首选失败时回退、恢复后回切；三机场的金融、Talkatone 共用这两个池。四机场另有机场名称2香港 Google／CF 两个 url-test 池，金融、Talkatone 默认使用香港 Google；三项敏感业务均可手选四个池。默认 Google，CF 相邻备选；同一专用池的选点状态由选用它的业务共用，并与普通池分开。已有手动固定选点在重载、重启后保留，解除固定后恢复自动选点。默认不自动跨探针、地区、机场或直连；仍可主动改选普通政策、其他地区或实际节点。
 - `自建/家宽节点` 是共享手选入口，换点影响所有选用它的业务。识别明确自建、家宽或独立英文标签，不以运营商名称判断。机场名称2订阅统一追加 ` [家宽]`，请确认订阅性质，替换机场名称时保留此后缀。
 - 大小写不敏感的 `MITM|pornhub` 从所有自动池、普通业务及 GLOBAL 的原始节点列表、自建家宽入口排除。它们仅能从 `全部节点`、`低倍率/MITM节点` 显式手选；这两个入口首项及空池均为 REJECT。低倍率入口限制港日新及既有倍率／标签，其他地区特殊节点可在全部节点中选择。
@@ -66,11 +66,11 @@ ruby scripts/build-config.rb --check
 
 `cf_sensitive_domain` 共维护八项：独立质询 `challenges.cloudflare.com`；管理 API `api.cloudflare.com`／`api.fed.cloudflare.com`；管理登录后缀 `dash.cloudflare.com`／`dash.fed.cloudflare.com`（包含 `one.dash.cloudflare.com`）；旧 Zero Trust 入口 `dash.teams.cloudflare.com`；Access 认证后缀 `cloudflareaccess.com`；探针 `cp.cloudflare.com`。精确端点与受限后缀分别覆盖质询、控制面和认证，不扩大到普通托管站。管理/API 入口的存在不等于它们均强制要求高信誉 IP；本配置将其与质询入口统一选路。[CF 控制面与认证域名](https://developers.cloudflare.com/cloudflare-one/traffic-policies/global-policies/)、[Access 认证接口](https://developers.cloudflare.com/cloudflare-one/access-controls/authenticate-agents/)。
 
-业务分流和探针分类复用同一名单；其他 CF 主页、CDN 及托管站点按已有业务或普通规则处理。`linux.do` 的 CF 特例已移除。AI、下载、通信、Tunnel、DNS、隐私拦截和明确直连仍保留各自用途，Docker 等既定 R2 下载端点继续走下载。
+业务分流和探针分类复用同一名单：业务指向 AI，探针分类仍使用 CF。其他 CF 主页、CDN 及托管站点按已有业务或普通规则处理。`linux.do` 的 CF 特例已移除。AI、下载、通信、Tunnel、DNS、隐私拦截和明确直连仍保留各自用途，Docker 等既定 R2 下载端点继续走下载。
 
 去除特例后，使用 Google/Cloudflare 公开 DNS 的 IPv4 地址和实际规则快照核对，两模型中的 `linux.do`、`connect.linux.do`、PackyAPI 的 `.com`／`.ai` 主站及已解析的文档/API 子域、当前端点 `cf.api.fan` 均命中 `MATCH,默认代理`，无需另加域名规则。该核对不固化为逐站点回归；公开 DNS 地址及上游规则变化可能改变未来结果。[PackyAPI 当前入口与 API 端点](https://docs.packyapi.com/docs/register/)。
 
-`challenges.cloudflare.com` 的 Turnstile 脚本进入 CF；网站自身 `/cdn-cgi/challenge-platform/…` 的 JS 质询仍随网站域名分流，例如 ChatGPT 随 AI。域名规则不能识别 HTTPS 路径，不增加 MITM。CF 探针 204 不代表质询成功；CF 与 AI 独立选点也不保证出口 IP 相同，质询过程中更换 IP 可能导致循环。[Turnstile 脚本](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/)、[JS 检测路径](https://developers.cloudflare.com/cloudflare-challenges/challenge-types/javascript-detections/)、[质询出口限制](https://developers.cloudflare.com/cloudflare-challenges/concepts/how-challenges-work/)。
+`challenges.cloudflare.com` 的 Turnstile 脚本随 AI 选择；默认专用池路径下，ChatGPT 与该质询入口共用池内选点。网站自身 `/cdn-cgi/challenge-platform/…` 的 JS 质询仍随网站域名分流。域名规则不能识别 HTTPS 路径，不增加 MITM。CF 探针 204 不代表质询成功；AI 手选普通政策时仍按目标分类使用 Google／CF 物理组，不保证最终节点相同。AI 改选出口或专用池故障回退仍可能更换 IP，其他业务的网站与质询入口也未必使用同一出口。[Turnstile 脚本](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/)、[JS 检测路径](https://developers.cloudflare.com/cloudflare-challenges/challenge-types/javascript-detections/)、[质询出口限制](https://developers.cloudflare.com/cloudflare-challenges/concepts/how-challenges-work/)。
 
 AI 本地补充源为 [ai.list](scripts/data/ai.list)，通过 `scripts/build/ai.sh` 生成 YAML/MRS，再由 `ai_extra_domain` 接入配置；每日上游同步后仍能重建，不直接在 `rules/` 维护补充。它与国外 AI 集位于宽泛国内域名、通用代理和 CF 明确端点之前，国内 AI、明确下载及现有隐私规则保持优先。第一方后缀覆盖认证、API、ChatGPT/Codex 控制通道、桌面资源及附件；专属 Azure/CDN 主机使用精确匹配，LiveKit 仅限定既有专属子域，不扩大到整个共享云平台。桌面更新补入 `oaisidekickupdates.blob.core.windows.net`；既有 Statsig 遥测拦截不因 AI 补充而放行。[官方桌面端点](https://learn.chatgpt.com/docs/enterprise/govcloud-configuration)、[上游 OpenAI 集](https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/openai.list)。
 
