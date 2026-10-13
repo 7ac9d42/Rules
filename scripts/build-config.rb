@@ -146,8 +146,9 @@ def generate(s)
   end
   private_targets.each do |target|
     airport, region = target.values_at('airport', 'region')
+    type = target == sensitive.fetch('AI') ? 'fallback' : 'url-test'
     s.fetch('sensitive-probes').zip(private_pair.call(target)).each do |probe, name|
-      groups << automatic.call(name, 'url-test', probe).merge(
+      groups << automatic.call(name, type, probe).merge(
         'use' => [airports.fetch(airport).fetch('provider')], 'filter' => pool_filter.call(airport, region))
     end
   end

@@ -1524,23 +1524,25 @@ proxy-groups:
   expected-status: 501
   proxies: [机场名称3-日本-TG, 机场名称3-新加坡-TG, 机场名称3-香港-TG, 机场名称3-美国-TG, 机场名称1-日本-TG, 机场名称1-香港-TG, 机场名称1-新加坡-TG, 机场名称1-美国-TG, 机场名称4-备用-TG]
 - name: 专用-机场名称1-日本-Google
-  type: url-test
+  type: fallback
   timeout: 5000
   max-failed-times: 3
   empty-fallback: REJECT
   hidden: true
-  tolerance: 50
+  interval: 30
+  lazy: true
   url: https://www.gstatic.com/generate_204
   expected-status: 204
   use: [Airport_01]
   filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub))(?=[\\s\\S]*(?:(日本|\U0001F1EF\U0001F1F5|\\bJP[0-9]*\\b|Japan)))[\\s\\S]*$"
 - name: 专用-机场名称1-日本-CF
-  type: url-test
+  type: fallback
   timeout: 5000
   max-failed-times: 3
   empty-fallback: REJECT
   hidden: true
-  tolerance: 50
+  interval: 30
+  lazy: true
   url: https://cp.cloudflare.com/generate_204
   expected-status: 204
   use: [Airport_01]

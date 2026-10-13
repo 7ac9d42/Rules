@@ -165,11 +165,18 @@ def static(source, name):
             assert value in (source['dns']['nameserver'], source['dns']['direct-nameserver']), value
     for n in sensitive:
         scope = '专用-机场名称2-香港' if four and n != 'AI' else '专用-机场名称1-日本'
+        assert groups[n]['type'] == 'select', n
         assert groups[n]['proxies'][:2] == [scope + '-Google', scope + '-CF']
         assert set(groups[n]['proxies'][:len(private)]) == private
     for n in private:
         provider = 'Airport_02' if '机场名称2' in n else 'Airport_01'
-        assert groups[n]['type'] == 'url-test' and groups[n]['use'] == [provider]
+        assert groups[n]['use'] == [provider]
+        if provider == 'Airport_01':
+            assert groups[n]['type'] == 'fallback', n
+            assert groups[n]['interval'] == 30 and groups[n]['lazy'] is True, n
+            assert 'tolerance' not in groups[n], n
+        else:
+            assert groups[n]['type'] == 'url-test' and groups[n]['tolerance'] == 50, n
         assert 'proxies' not in groups[n]
     for n in ('低倍率/MITM节点', '全部节点'):
         assert groups[n]['proxies'] == ['REJECT'] and groups[n]['empty-fallback'] == 'REJECT'
@@ -548,6 +555,61 @@ def health(source, mihomo):
     print('PASS: 探针范围/去重、故障隔离/恢复、同区测速、缓存与空池', flush=True)
 
 
+def private_pool_fallback(source, mihomo):
+    # 首个订阅节点较慢：见证 fallback 按顺序选点，而旧 url-test 会优先第二个快节点。
+    with tempfile.TemporaryDirectory(prefix='mihomo-private-fallback-') as directory, F.Runtime(
+            directory, mihomo, {PATHS[f]: STATUS[f] for f in FAMILIES}) as rt:
+        config = rt.base(source)
+        config.update(proxies=[], **{'sub-rules': {}, 'rules': ['MATCH,REJECT']})
+        choices = ['[机场名称1]日本 slow 1x', '[机场名称1]日本 fast 1x']
+        path = Path(directory) / 'Airport_01.json'
+        path.write_text(json.dumps({'proxies': [rt.proxy(n) for n in choices]}))
+        config['proxy-providers'] = {'Airport_01': dict(type='file', path=str(path), **{
+            'health-check': dict(enable=True, url=LOCAL['Google'], interval=86400,
+                                 timeout=5000, lazy=False, **{'expected-status': 204})})}
+        groups = {g['name']: g for g in source['proxy-groups']}
+        names = ['专用-机场名称1-日本-' + f for f in ('Google', 'CF')]
+        config['proxy-groups'] = [copy.deepcopy(groups[n]) for n in names]
+        for group, family in zip(config['proxy-groups'], ('Google', 'CF')):
+            group.update(url=LOCAL[family], interval=86400)
+        legacy = copy.deepcopy(config)
+        for group in legacy['proxy-groups']:
+            group.update(type='url-test', tolerance=50)
+            for field in ('interval', 'lazy'):
+                group.pop(field, None)
+        rt.start(legacy)
+        F.until(lambda: all(rt.group(n)['all'] == choices for n in names))
+        for family in ('Google', 'CF'):
+            for choice in choices:
+                assert rt.probe(choice, LOCAL[family], STATUS[family])
+        F.until(lambda: all(rt.group(n)['now'] == choices[1] for n in names))
+        for name in names:
+            rt.select(name, choices[1])
+            assert rt.group(name)['fixed'] == choices[1], name
+        # 同名池由 url-test 改 fallback，现有 fixed 在重载及进程重启后继续生效。
+        for restart in (False, True):
+            if restart:
+                rt.stop()
+                rt.start(config)
+            else:
+                rt.reload(config)
+            F.until(lambda: all(rt.group(n)['fixed'] == choices[1] and
+                                rt.group(n)['now'] == choices[1] for n in names))
+        for name, family in zip(names, ('Google', 'CF')):
+            rt.api('/proxies/' + urllib.parse.quote(name, safe=''), 'DELETE')
+            assert rt.group(name)['fixed'] == '', name
+            assert rt.probe(choices[0], LOCAL[family], STATUS[family])
+            assert rt.probe(choices[1], LOCAL[family], STATUS[family])
+            assert rt.group(name)['now'] == choices[0], (name, '首个健康节点优先，后备更快也不切换')
+            rt.http.nodes[choices[0]].statuses[PATHS[family]] = 503
+            assert not rt.probe(choices[0], LOCAL[family], STATUS[family])
+            assert rt.group(name)['now'] == choices[1], (name, '首节点失败后回退')
+            rt.http.nodes[choices[0]].statuses.pop(PATHS[family])
+            assert rt.probe(choices[0], LOCAL[family], STATUS[family])
+            assert rt.group(name)['now'] == choices[0], (name, '首节点恢复后回切')
+    print('PASS: 日本专用池自动优先/故障回退/恢复，旧 fixed 重载及重启兼容', flush=True)
+
+
 # 独立业务见证：同一机制的重复域名省略，保留实际重叠和易误分流边界。
 OPENAI_FUNCTIONAL = (
     'chatgpt.com', 'auth.openai.com', 'codex-cloud-backend.chatgpt.com', 'persistent.oaistatic.com',
@@ -652,7 +714,11 @@ def business(source, config_name, mihomo, rules_dir):
         dns.answer, dns.answers, dns.queries = '1.1.1.1', {}, set()
         config['dns'] = dict(enable=True, nameserver=[f'udp://127.0.0.1:{dns.server_address[1]}'])
         rt.start(config)
-        F.until(lambda: all(p['ruleCount'] > 0 for p in rt.api('/providers/rules')['providers'].values()))
+        def rules_ready():
+            providers = rt.api('/providers/rules')['providers']
+            return bool(providers) and set(config['rule-providers']) <= providers.keys() and all(
+                p['ruleCount'] > 0 for p in providers.values())
+        F.until(rules_ready)
         for host, expected in cases.items():
             actual = rt.request(host)
             assert actual == expected, (config_name, host, expected, actual)
@@ -827,7 +893,7 @@ def four_airport_health(source, mihomo):
         config = rt.base(source)
         config['proxy-providers'], provider_nodes = {}, {}
         samples = {'Airport_01': ('日本 fast 1x',),
-                   'Airport_02': ('香港 fast 1x', '香港 slow 1x', '日本 fast 1x', '台湾 fast 1x'),
+                   'Airport_02': ('香港 slow 1x', '香港 fast 1x', '日本 fast 1x', '台湾 fast 1x'),
                    'Airport_03': ('日本 fast 1x',), 'Airport_04': ('日本 fast 1x',)}
         for provider, values in samples.items():
             nodes = []
@@ -863,6 +929,16 @@ def four_airport_health(source, mihomo):
             assert rt.group(business_name)['now'] == '机场名称2优先', business_name
         def probe(name, family):
             return rt.probe(name, LOCAL[family], STATUS[family])
+        # 香港专用池保持按延迟选点；后备显著变快及延迟恢复都应重新选出最快节点。
+        for name, family in ((scoped, 'Google'), (scoped_cf, 'CF')):
+            rt.http.nodes[fast].delays[PATHS[family]] = .12
+            rt.http.nodes[slow].delays[PATHS[family]] = .01
+            assert probe(fast, family) and probe(slow, family)
+            F.until(lambda: rt.group(name)['now'] == slow)
+            rt.http.nodes[fast].delays[PATHS[family]] = .04
+            rt.http.nodes[slow].delays[PATHS[family]] = .12
+            assert probe(fast, family) and probe(slow, family)
+            F.until(lambda: rt.group(name)['now'] == fast)
         for family in FAMILIES:
             # fallback 检查子组包装器的 URL 健康记录，不会从子组 now 推导存活状态。
             for airport, region in ((1, '日本'), (2, '香港'), (2, '日本'), (3, '日本')):
@@ -1258,6 +1334,7 @@ def main():
         routing(sources[FOUR_CONFIG], args.mihomo, rules_dir, four=True)
         # 缓存按组名恢复的机制与机场数无关，保留一模型的重载/重启见证。
         selection_migration(sources[PRIMARY_CONFIG], args.mihomo)
+        private_pool_fallback(sources[PRIMARY_CONFIG], args.mihomo)
         if args.suite == 'full':
             for name in ACTIVE_CONFIGS:
                 node_filters(sources[name], args.mihomo)
