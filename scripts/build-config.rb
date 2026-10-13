@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Generates the two importable configs from maintained sources; never writes backups.
+# Generates the two importable configs from maintained sources.
 require 'json'
 require 'optparse'
 require 'yaml'

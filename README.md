@@ -8,10 +8,8 @@
 |---|---|
 | [configfull_new.yaml](configfull_new.yaml) | 三机场完整配置：机场名称1、3、4，120 个组 |
 | [configfull_new_4.yaml](configfull_new_4.yaml) | 四机场完整配置：增加机场名称2家宽，160 个组 |
-| [configfull_new.yaml.bak](configfull_new.yaml.bak) | 本次迁移前的三机场正式配置 |
-| [configfull_new_4.yaml.bak](configfull_new_4.yaml.bak) | 本次迁移前的四机场正式配置 |
 
-每次导入一份完整配置，无需拼接。两份正式配置采用同一架构，最低支持官方 **Mihomo v1.19.30**，不依赖 v1.19.31 独有特性。备份仅用于查阅与回退，更早版本从 Git 历史获取。
+每次导入一份完整配置，无需拼接。两份正式配置采用同一架构，最低支持官方 **Mihomo v1.19.30**，不依赖 v1.19.31 独有特性。
 
 人工维护源为 [common.yaml](config-source/common.yaml) 和两个模型文件 [three-airports.yaml](config-source/three-airports.yaml)、[four-airports.yaml](config-source/four-airports.yaml)。共同源维护设备设置、机场订阅、地区识别、准入、探针、业务规则和规则集；模型文件只声明启用机场、优先顺序、敏感池目标及业务默认覆盖。模型按顶层字段覆盖共同源，不进行递归合并；`business-defaults` 单独按业务名覆盖默认项。
 
@@ -20,7 +18,7 @@ ruby scripts/build-config.rb
 ruby scripts/build-config.rb --check
 ```
 
-默认命令离线生成两份正式配置；`--check` 只检查两份产物是否与维护源一致。生成器不修改备份。产物无锚点、别名或 `<<` 合并，代理组的 `proxies`、`use` 使用行内列表并保留顺序。维护源集中定义规则，展开后的行数不是人工维护量。
+默认命令离线生成两份正式配置；`--check` 只检查两份产物是否与维护源一致。产物无锚点、别名或 `<<` 合并，代理组的 `proxies`、`use` 使用行内列表并保留顺序。维护源集中定义规则，展开后的行数不是人工维护量。
 
 填写当前模型启用机场的订阅、替换机场名称和调整监听地址、控制器密钥、DNS、TUN 后重新生成，再导入客户端。不要在生成产物中长期维护修改。源中的 `机场名称1`、`机场名称2`、`机场名称3`、`机场名称4` 是完整文本替换目标，不能先改成缩写；provider 键继续保留。首次订阅通过 DIRECT 获取。
 
@@ -112,7 +110,7 @@ OneDrive、Telegram代理保留独立业务选择；Pixiv 归入海外社媒。�
 
 ## 迁移与设备使用
 
-旧正式配置已原样保存在两份 `.bak`；新文件接替原配置名。旧 `纯下载`／`开发下载` 选择不会自动迁移到 `下载`，旧普通日本池名称也已从敏感业务菜单移除。失效选择回到业务首项；仍有效的普通节点选择继续保留，新默认不覆盖有效缓存选择。迁移后核对自己的业务选择；Emby 和全部节点首次需要主动手选。
+旧版本从 Git 历史获取；现有文件继续作为正式导入入口。旧 `纯下载`／`开发下载` 选择不会自动迁移到 `下载`，旧普通日本池名称也已从敏感业务菜单移除。失效选择回到业务首项；仍有效的普通节点选择继续保留，新默认不覆盖有效缓存选择。迁移后核对自己的业务选择；Emby 和全部节点首次需要主动手选。
 
 本次将 `通用代理` → `默认代理`、`DNS出口` → `DNS代理`、`Telegram` → `Telegram代理`、`Google FCM` → `FCM`。四个新组名隔离旧名称的选择缓存，首次加载新组使用新的三优先默认项；不保留旧名称别名。`store-selected: true` 继续保存新组及其他业务的选择，不清空全局缓存。
 
@@ -148,11 +146,11 @@ ruby scripts/validate-rules.rb
 ruby scripts/validate-rules.rb --config configfull_new.yaml --config configfull_new_4.yaml
 ```
 
-配置检查继续使用独立只读 CI，在正式配置、备份、维护源、回归脚本或相关校验／工作流变化时触发，也可手动运行；单纯更新规则不触发。两份活动配置均执行回归，备份仅基础校验。v1.19.30 执行 full，v1.19.31 复用同一规则快照执行 smoke，不追踪浮动最新版。
+配置检查继续使用独立只读 CI，在正式配置、维护源、回归脚本或相关校验／工作流变化时触发，也可手动运行；单纯更新规则不触发。两份正式配置均执行回归。v1.19.30 执行 full，v1.19.31 复用同一规则快照执行 smoke，不追踪浮动最新版。
 
 | 回归级别 | 覆盖范围 |
 |---|---|
-| `static` | 两产物生成一致性、四份配置基础加载、活动配置的引用／循环／菜单／专用池隔离；不下载规则 |
+| `static` | 两产物生成一致性、两份配置基础加载及引用／循环／菜单／专用池隔离；不下载规则 |
 | `smoke` | 两模型关键业务及默认出口、业务更名后的选择迁移、日本专用池按序回退与恢复、手选在池类型变更及重载／重启后保留和解除固定、四类探针分类及 TG 作用域、UDP、Fake-IP、GLOBAL |
 | `full`（默认） | 再验证节点准入、探测范围／去重、故障隔离／恢复、同区测速、DNS 策略及实际出口／上游冗余／CF 与 Google 探针隔离、手选重载／重启、订阅移除及空池 |
 
@@ -172,7 +170,6 @@ python3 scripts/test-config.py --suite smoke --mihomo /path/to/mihomo-v1.19.31 -
 
 ```text
 configfull_new.yaml / configfull_new_4.yaml    可导入的正式配置
-configfull_new.yaml.bak / configfull_new_4.yaml.bak  迁移前备份
 config-source/common.yaml                   共同维护源
 config-source/three-airports.yaml / four-airports.yaml  模型差异
 scripts/build-config.rb                     两模型离线生成及一致性检查

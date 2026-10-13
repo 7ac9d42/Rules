@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""配置回归：static=双模型及备份基础；smoke=关键分流；full=共同机制与四机场差异。"""
+"""配置回归：static=双模型基础；smoke=关键分流；full=共同机制与四机场差异。"""
 import argparse
 import concurrent.futures
 import copy
@@ -20,7 +20,7 @@ import mihomo_fixture as F
 
 ROOT = F.ROOT
 ACTIVE_CONFIGS = ('configfull_new.yaml', 'configfull_new_4.yaml')
-CONFIGS = ACTIVE_CONFIGS + tuple(name + '.bak' for name in ACTIVE_CONFIGS)
+CONFIGS = ACTIVE_CONFIGS
 PRIMARY_CONFIG, FOUR_CONFIG = ACTIVE_CONFIGS
 FAMILIES = ('Google', 'CF', 'GitHub', 'TG')
 URLS = dict(zip(FAMILIES, (
