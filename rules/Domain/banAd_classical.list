@@ -30,7 +30,6 @@ DOMAIN-REGEX,(?i)^fanpingbi[^.]*\.gaokao\.com$
 DOMAIN-REGEX,(?i)^faro-collector-[^.]*\.grafana-ops\.net$
 DOMAIN-REGEX,(?i)^faro-collector-prod-[^.]*\.grafana\.net$
 DOMAIN-REGEX,(?i)^fls-[^.]*\.amazon\.com$
-DOMAIN-REGEX,(?i)^fpb[^.]*\.51edu\.com$
 DOMAIN-REGEX,(?i)^gcw[^.]*\.2liang\.cn$
 DOMAIN-REGEX,(?i)^geotargetly-api-[^.]*\.com$
 DOMAIN-REGEX,(?i)^hn-ping[^.]*\.hashnode\.com$
