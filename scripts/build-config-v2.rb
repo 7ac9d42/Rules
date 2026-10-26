@@ -147,17 +147,20 @@ OptionParser.new do |options|
 end.parse!
 abort "Unexpected arguments: #{ARGV.join(' ')}" unless ARGV.empty?
 settings, policy, routing = %w[settings policy routing].map do |name|
-  YAML.safe_load_file(File.join(ROOT, "config-source/v2/#{name}.yaml"), aliases: false)
+  YAML.safe_load_file(File.join(ROOT, "config-source/v2/#{name}.yaml"), aliases: name == 'settings')
 end
-OUTPUTS.each do |model, filename|
+outputs = OUTPUTS.to_h do |model, filename|
   config = generate(settings, policy, routing, model)
-  output = emit(config)
+  [filename, [emit(config), config.fetch('proxy-groups').length]]
+end
+# 先生成全部模型，配置错误时不留下只更新了一份的产物。
+outputs.each do |filename, (output, count)|
   path = File.join(ROOT, filename)
   if check
     abort "#{filename} is stale: run ruby scripts/build-config-v2.rb" unless File.file?(path) && File.binread(path) == output.b
     puts "#{filename} is current."
   else
     File.write(path, output)
-    puts "Generated #{filename} (#{config.fetch('proxy-groups').length} groups)."
+    puts "Generated #{filename} (#{count} groups)."
   end
 end

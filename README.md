@@ -41,6 +41,8 @@ ruby scripts/build-config-v2.rb --check
 
 生成器只读取这三个维护源，输出两份 v2 文件。`policy.yaml` 中，每个机场的订阅、地区顺序和筛选例外放在一起；业务 `default` 直接写最终出口，`four-default` 只覆盖四机场默认，`independent: true` 开放独立选点组，`extra` 追加既有特殊选项。三／四机场的启用机场和优先顺序集中在 `models`。填写订阅、替换完整的机场名称、调整设备参数后，重新生成再导入。
 
+`settings.yaml` 用 `&direct_dns`／`&proxy_dns` 两个浅层锚点复用直连和代理 DNS 列表，修改定义处即可同步所有引用；导出文件仍完全展开。这沿用参考仓库的 [DNS 列表复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%B8%89%E9%98%B6%E6%AE%B5%EF%BC%9A%E8%BF%9B%E9%98%B6%E7%AF%87#%E5%85%AD%E8%BF%9B%E9%98%B6-dns-%E5%AE%8C%E6%95%B4%E9%85%8D%E7%BD%AE) 思路。生成器先完成两模型的生成，再写文件；模型配置报错时不会只更新其中一份。
+
 运行链路为“业务 select → 机场／地区 fallback → 同区 url-test”，业务也可直接选择独立组、辅助入口或实际节点。所有普通自动政策使用 CF；Telegram 仅顶层机场优先使用 TG，固定地区仍复用普通 CF 政策。探针由菜单决定，不再按目标域名二次分类。
 
 | 使用场景 | 新版默认 |
@@ -50,7 +52,7 @@ ruby scripts/build-config-v2.rb --check
 | AI | 机场名称1日本独立 CF 选点组 |
 | 金融、Talkatone | 三机场共用 AI 的独立组；四机场默认机场名称2香港独立 CF 组 |
 
-独立组与对应普通组使用相同候选和探针，只独立保存选点、手动固定状态；不检测 IP 信誉、不独占节点、不保证固定 IP。三机场仅一个、四机场仅两个，均为可见 `url-test`。AI、金融、Talkatone 可手选当前模型中的独立组，其余业务沿用普通菜单。
+原先所称的“敏感专用测速池”就是独立选点组：与对应普通组共用节点和 CF 测速结果，只独立保存选点、手动固定状态，不检测 IP 信誉。例如，将 AI 使用的独立组固定到日本节点 A，不会固定普通日本组；选用同一个独立组的业务则共用该选择。三机场仅一个、四机场仅两个，均为可见 `url-test`，只向 AI、金融、Talkatone 开放。[Mihomo 选点实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/urltest.go#L96)
 
 Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。业务默认机场／地区、节点筛选、域名覆盖、明确 CF 端点归 AI、特殊节点隔离、统一延迟和探测周期沿用既定要求。DNS 默认机场3优先且无 DIRECT 自动入口，GLOBAL 也使用 CF 实体组；规则更新保留最后的 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
 
@@ -187,6 +189,8 @@ ruby scripts/validate-rules.rb --config configfull_new.yaml --config configfull_
 配置检查使用独立只读 CI，在新旧配置、维护源、回归脚本或相关校验／工作流变化时触发，也可手动运行；单纯更新规则不触发。自动 CI 仅用固定 v1.19.30 对四份配置执行 `static`，保留生成一致性、内核加载和结构约束检查，不下载外部规则快照、不等待故障切换、不重复运行第二内核。使用 runner 预装 Ruby/Python，缓存内核，整个任务限时 5 分钟。
 
 新版检查默认 `static`；运行机制变更时按需使用 `smoke`，复用本地代理／DNS 夹具验证 CF／TG 菜单、UDP 首命中、DNS/GLOBAL、回退及独立选点，不下载外部规则快照、不复制旧版完整测试。域名规则迁移通过源数据对照验收，模拟流量不代表公网业务可用。
+
+检查中的探针参数和业务默认读取 `policy.yaml`，调整这些值无需另改测试；CF／TG 分工、有效引用和独立组隔离仍受检查。动态用例显式设置自己的手选场景，不依赖当前业务默认。
 
 ```sh
 python3 scripts/test-config-v2.py --mihomo /path/to/mihomo-v1.19.30

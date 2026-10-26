@@ -15,13 +15,13 @@ import tempfile
 import mihomo_fixture as F
 
 CONFIGS = ('configfull_v2.yaml', 'configfull_v2_4.yaml')
-CF = 'https://cp.cloudflare.com/generate_204'
-TG = 'https://flora.web.telegram.org/apiw1'
 ENTRY = ['SUB-RULE,(OR,((NETWORK,tcp),(NETWORK,udp))),分流-业务规则', 'MATCH,REJECT']
 PRIVATE = '专用-机场名称1-日本-CF'
 
 
-def static(source, four):
+def static(source, four, policy):
+    probes = policy['probes']
+    assert set(probes) == {'CF', 'TG'}
     groups = {g['name']: g for g in source['proxy-groups']}
     assert len(groups) == len(source['proxy-groups']), '重复组名'
     assert source['proxies'] == [] and source['rules'] == ENTRY
@@ -38,7 +38,8 @@ def static(source, four):
         assert g['empty-fallback'] == 'REJECT', name
         assert not set(choices) & private or name in ('AI', '金融', 'Talkatone'), name
         if g['type'] != 'select':
-            assert (g['url'], g['expected-status']) == ((TG, 501) if name.endswith('-TG') else (CF, 204)), name
+            probe = probes['TG' if name.endswith('-TG') else 'CF']
+            assert (g['url'], g['expected-status']) == (probe['url'], probe['expected-status']), name
         if g['type'] == 'select' and name != 'Telegram代理':
             assert not any(n.endswith('-TG') for n in choices), name
     done = set()
@@ -52,20 +53,17 @@ def static(source, four):
     for name in groups:
         visit(name)
     for provider in providers.values():
-        assert (provider['health-check']['url'], provider['health-check']['expected-status']) == (CF, 204)
-    assert groups['Telegram代理']['proxies'][0] == '机场名称3优先-TG'
+        assert (provider['health-check']['url'], provider['health-check']['expected-status']) == (probes['CF']['url'], probes['CF']['expected-status'])
+    for name, business in policy['businesses'].items():
+        default = business.get('four-default', business['default']) if four else business['default']
+        assert groups[name]['proxies'][0] == default, name
     assert '日本-机场名称1优先' in groups['Telegram代理']['proxies']
-    for name in ('默认代理', 'DNS代理', 'GLOBAL'):
-        assert groups[name]['proxies'][0] == '机场名称3优先', name
     assert 'DIRECT' not in groups['DNS代理']['proxies']
     assert groups['规则更新']['proxies'][-1] == 'DIRECT'
     for name in private:
         g, shared = groups[name], groups[name.removeprefix('专用-')]
         assert g['type'] == 'url-test' and g['hidden'] is False, name
         assert (g['use'], g['filter'], g['url']) == (shared['use'], shared['filter'], shared['url']), name
-    assert groups['AI']['proxies'][0] == PRIVATE
-    for name in ('金融', 'Talkatone'):
-        assert groups[name]['proxies'][0] == ('专用-机场名称2-香港-CF' if four else PRIVATE), name
     assert 'RULE-SET,cf_sensitive_domain,AI' in source['sub-rules']['分流-业务规则']
 
 
@@ -104,6 +102,10 @@ def routing(source, mihomo):
         upstream = dict(status=200, answer='203.0.113.20', nodes=[], queries=set())
         rt.http.dns_upstreams = {'/dns': upstream}
         rt.start(config)
+        # 机制见证显式选择入口；用户在 policy 调整默认项无需同步修改用例。
+        for name, choice in [('默认代理', '机场名称3优先'), ('DNS代理', '机场名称3优先'),
+                             ('Telegram代理', '机场名称3优先-TG'), ('AI', PRIVATE)]:
+            rt.select(name, choice)
         assert rt.request('ordinary.fixture.test') == '机场名称3优先'
         assert rt.request('telegram.fixture.test') == '机场名称3优先-TG'
         rt.select('Telegram代理', '日本-机场名称1优先')
@@ -156,7 +158,7 @@ def pools(source, mihomo):
         names = {root, PRIVATE, *groups[root]['proxies']}
         config['proxy-groups'] = [copy.deepcopy(groups[n]) for n in names]
         for g in config['proxy-groups']:
-            g.update(url=url, interval=0)
+            g.update(url=url, interval=0, **{'expected-status': 204})
         rt.start(config)
         for values in nodes.values():
             for node in values:
@@ -203,9 +205,10 @@ def main():
     for name in CONFIGS:
         command.extend(['--config', str(F.ROOT / name)])
     subprocess.run(command, env={**os.environ, 'MIHOMO_BIN': args.mihomo}, check=True, timeout=150)
+    policy = F.load(F.ROOT / 'config-source/v2/policy.yaml')
     sources = [F.load(F.ROOT / name) for name in CONFIGS]
     for source, four in zip(sources, (False, True)):
-        static(source, four)
+        static(source, four, policy)
     if args.suite == 'smoke':
         for source in sources:
             routing(source, args.mihomo)
