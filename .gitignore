@@ -10,6 +10,9 @@
 # Local research and analysis notes
 /docs/
 
+# Local configuration previews
+/preview/
+
 # Python test caches
 __pycache__/
 *.py[cod]
