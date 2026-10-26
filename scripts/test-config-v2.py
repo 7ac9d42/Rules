@@ -16,7 +16,7 @@ import mihomo_fixture as F
 
 CONFIGS = ('configfull_v2.yaml', 'configfull_v2_4.yaml')
 ENTRY = ['SUB-RULE,(OR,((NETWORK,tcp),(NETWORK,udp))),分流-业务规则', 'MATCH,REJECT']
-PRIVATE = '专用-机场名称1-日本-CF'
+PRIVATE = '专用-机场名称1-日本'
 
 
 def static(source, four, policy):
@@ -24,12 +24,13 @@ def static(source, four, policy):
     assert set(probes) == {'CF', 'TG'}
     groups = {g['name']: g for g in source['proxy-groups']}
     assert len(groups) == len(source['proxy-groups']), '重复组名'
+    assert not any('-CF' in name or '优先' in name for name in groups)
     assert source['proxies'] == [] and source['rules'] == ENTRY
     assert set(source['sub-rules']) == {'分流-业务规则'}
     assert source['unified-delay'] is True
     providers = source['proxy-providers']
     assert set(providers) == {'Airport_01', 'Airport_03', 'Airport_04'} | ({'Airport_02'} if four else set())
-    private = {PRIVATE} | ({'专用-机场名称2-香港-CF'} if four else set())
+    private = {PRIVATE} | ({'专用-机场名称2-香港'} if four else set())
     known = set(groups) | {'DIRECT', 'REJECT', 'REJECT-DROP'}
     for name, g in groups.items():
         choices = g.get('proxies', [])
@@ -40,7 +41,7 @@ def static(source, four, policy):
         if g['type'] != 'select':
             probe = probes['TG' if name.endswith('-TG') else 'CF']
             assert (g['url'], g['expected-status']) == (probe['url'], probe['expected-status']), name
-        if g['type'] == 'select' and name != 'Telegram代理':
+        if g['type'] == 'select' and name != 'Telegram代理' and not name.endswith('-TG'):
             assert not any(n.endswith('-TG') for n in choices), name
     done = set()
     def visit(name, path=()):
@@ -57,7 +58,11 @@ def static(source, four, policy):
     for name, business in policy['businesses'].items():
         default = business.get('four-default', business['default']) if four else business['default']
         assert groups[name]['proxies'][0] == default, name
-    assert '日本-机场名称1优先' in groups['Telegram代理']['proxies']
+    model = policy['models']['four-airports' if four else 'three-airports']
+    for name in model['priority-order']:
+        for suffix in ('', '-TG'):
+            assert groups[name + suffix]['type'] == 'select' and groups[name + suffix]['hidden'] is False
+    assert '日本-机场名称1' in groups['Telegram代理']['proxies']
     assert 'DIRECT' not in groups['DNS代理']['proxies']
     assert groups['规则更新']['proxies'][-1] == 'DIRECT'
     for name in private:
@@ -83,13 +88,14 @@ def routing(source, mihomo):
                 label = 'fixture-' + name
                 config['proxies'].append(rt.proxy(label, name))
                 g = dict(name=name, type='select', proxies=[label])
-            if name in ('机场名称3优先', '机场名称1优先'):
+            if name in ('机场名称3', '机场名称1'):
                 label = 'udp-' + name
                 config['proxies'].append(rt.udp_proxy(label, name))
                 g['proxies'].append(label)
             config['proxy-groups'].append(g)
         config['sub-rules']['分流-业务规则'] = [
             'DOMAIN,telegram.fixture.test,Telegram代理', 'DOMAIN,ai.fixture.test,AI',
+            'DOMAIN,speedtest.fixture.test,Speedtest',
             'DOMAIN,udp.fixture.test,默认代理', 'DOMAIN,udp.fixture.test,下载', 'MATCH,默认代理']
         config['hosts'] = {'udp.fixture.test': '203.0.113.8'}
         bootstrap = rt.server(F.DNSHandler, socketserver.UDPServer)
@@ -103,38 +109,42 @@ def routing(source, mihomo):
         rt.http.dns_upstreams = {'/dns': upstream}
         rt.start(config)
         # 机制见证显式选择入口；用户在 policy 调整默认项无需同步修改用例。
-        for name, choice in [('默认代理', '机场名称3优先'), ('DNS代理', '机场名称3优先'),
-                             ('Telegram代理', '机场名称3优先-TG'), ('AI', PRIVATE)]:
+        for name, choice in [('默认代理', '机场名称3'), ('DNS代理', '机场名称3'),
+                             ('Telegram代理', '机场名称1-TG'), ('Speedtest', '默认代理'), ('AI', PRIVATE)]:
             rt.select(name, choice)
-        assert rt.request('ordinary.fixture.test') == '机场名称3优先'
-        assert rt.request('telegram.fixture.test') == '机场名称3优先-TG'
-        rt.select('Telegram代理', '日本-机场名称1优先')
-        assert rt.request('telegram.fixture.test') == '日本-机场名称1优先'
+        assert rt.request('ordinary.fixture.test') == '机场名称3-日本'
+        assert rt.request('speedtest.fixture.test') == '机场名称3-日本'
+        rt.select('默认代理', '机场名称1')
+        assert rt.request('speedtest.fixture.test') == '机场名称1-日本'
+        rt.select('默认代理', '机场名称3')
+        assert rt.request('telegram.fixture.test') == '机场名称1-日本-TG'
+        rt.select('Telegram代理', '日本-机场名称1')
+        assert rt.request('telegram.fixture.test') == '日本-机场名称1'
         assert rt.request('ai.fixture.test') == PRIVATE
-        rt.select('下载', '机场名称1优先')
-        rt.select('机场名称1优先', 'udp-机场名称1优先')
+        rt.select('下载', '机场名称1')
+        rt.select('机场名称1', 'udp-机场名称1')
         # 后续业务确实能收发 UDP；若首命中错误穿透，下面应收到机场1而非拒绝。
         config['sub-rules']['分流-业务规则'].insert(0, 'DOMAIN,control.fixture.test,下载')
         config['hosts']['control.fixture.test'] = '203.0.113.8'
         rt.reload(config)
-        assert F.udp_request(rt.mixed, 'control.fixture.test', sockets) == '机场名称1优先'
+        assert F.udp_request(rt.mixed, 'control.fixture.test', sockets) == '机场名称1'
         try:
             result = F.udp_request(rt.mixed, 'udp.fixture.test', sockets)
         except socket.timeout:
             pass
         else:
             raise AssertionError(('UDP 穿透首命中业务', result))
-        rt.select('机场名称3优先', 'udp-机场名称3优先')
-        assert F.udp_request(rt.mixed, 'udp.fixture.test', sockets) == '机场名称3优先'
-        rt.select('机场名称3优先', 'fixture-机场名称3优先')
+        rt.select('机场名称3', 'udp-机场名称3')
+        assert F.udp_request(rt.mixed, 'udp.fixture.test', sockets) == '机场名称3'
+        rt.select('机场名称3', '机场名称3-日本')
         rt.select('默认代理', 'DIRECT')
         code, ips = F.query(dns_port, 'dns-outlet.fixture.test')
         assert code == 0 and ips == ['203.0.113.20'], (code, ips)
-        assert {n for n, q in upstream['nodes'] if q == ('dns-outlet.fixture.test', 1)} == {'机场名称3优先'}
+        assert {n for n, q in upstream['nodes'] if q == ('dns-outlet.fixture.test', 1)} == {'机场名称3-日本'}
         rt.api('/configs', 'PATCH', {'mode': 'global'})
-        rt.select('GLOBAL', '日本-机场名称1优先')
-        assert rt.request('telegram.fixture.test') == '日本-机场名称1优先'
-    print('PASS: CF/TG 菜单、固定地区、UDP 首命中、DNS/GLOBAL', flush=True)
+        rt.select('GLOBAL', '日本-机场名称1')
+        assert rt.request('telegram.fixture.test') == '日本-机场名称1'
+    print('PASS: CF/TG 菜单、Speedtest 跟随、固定地区、UDP 首命中、DNS/GLOBAL', flush=True)
 
 
 def pools(source, mihomo):
@@ -154,42 +164,37 @@ def pools(source, mihomo):
             config['proxy-providers'][provider] = dict(type='file', path=str(path), **{
                 'health-check': dict(enable=False, url=url, interval=86400, **{'expected-status': 204})})
         groups = {g['name']: g for g in source['proxy-groups']}
-        root = '机场名称3优先'
+        root = '机场名称3'
         names = {root, PRIVATE, *groups[root]['proxies']}
         config['proxy-groups'] = [copy.deepcopy(groups[n]) for n in names]
         for g in config['proxy-groups']:
-            g.update(url=url, interval=0, **{'expected-status': 204})
+            if g['type'] != 'select':
+                g.update(url=url, interval=0, **{'expected-status': 204})
         rt.start(config)
         for values in nodes.values():
             for node in values:
                 assert rt.probe(node, url, 204)
-        ordinary = '机场名称1-日本-CF'
+        ordinary = '机场名称1-日本'
         assert set(rt.group(ordinary)['all']) == set(rt.group(PRIVATE)['all']) == set(nodes[1][:2])
         rt.select(ordinary, nodes[1][0])
         rt.select(PRIVATE, nodes[1][1])
         assert rt.group(ordinary)['now'] == nodes[1][0] and rt.group(PRIVATE)['now'] == nodes[1][1]
-        preferred = '机场名称3-日本-CF'
+        preferred = '机场名称3-日本'
         F.until(lambda: rt.group(preferred)['now'] == nodes[3][0])
-        def refresh():
-            for name in groups[root]['proxies']:
-                rt.probe(name, url, 204)
-        refresh()
         assert rt.group(root)['now'] == preferred
         for node in nodes[3][:2]:
             rt.http.nodes[node].statuses['/cf'] = 503
             assert not rt.probe(node, url, 204)
-        refresh()
-        assert rt.group(root)['now'] == '机场名称3-新加坡-CF'
-        rt.http.nodes[nodes[3][2]].statuses['/cf'] = 503
-        assert not rt.probe(nodes[3][2], url, 204)
-        refresh()
+        # 地区池故障不自动换地区或机场；只有手选才改变入口。
+        assert rt.group(root)['now'] == preferred
+        rt.select(root, '机场名称3-新加坡')
+        assert rt.group(root)['now'] == '机场名称3-新加坡'
+        rt.select(root, ordinary)
         assert rt.group(root)['now'] == ordinary
         rt.http.nodes[nodes[3][0]].statuses.pop('/cf')
         assert rt.probe(nodes[3][0], url, 204)
-        F.until(lambda: rt.group(preferred)['now'] == nodes[3][0])
-        refresh()
-        assert rt.group(root)['now'] == preferred
-    print('PASS: 同区测速、同机场地区顺序、跨机场回退/恢复、独立固定状态', flush=True)
+        assert rt.group(root)['now'] == ordinary
+    print('PASS: 同区测速、地区手选、故障/恢复不漂移、独立固定状态', flush=True)
 
 
 def main():

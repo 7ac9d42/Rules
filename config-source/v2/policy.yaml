@@ -1,6 +1,6 @@
 # 新版出口政策；修改后运行 ruby scripts/build-config-v2.rb。
 ---
-# 模型仅声明启用机场和优先顺序；备用机场由生成器追加到末尾。
+# 模型声明启用机场及候选顺序；机场入口手选，固定地区和规则更新沿用此顺序回退。
 models:
   three-airports:
     active-airports:
@@ -8,10 +8,10 @@ models:
     - 机场名称3
     - 机场名称4
     priority-order:
-      机场名称1优先:
+      机场名称1:
       - 机场名称1
       - 机场名称3
-      机场名称3优先:
+      机场名称3:
       - 机场名称3
       - 机场名称1
   four-airports:
@@ -21,15 +21,15 @@ models:
     - 机场名称3
     - 机场名称4
     priority-order:
-      机场名称1优先:
+      机场名称1:
       - 机场名称1
       - 机场名称2
       - 机场名称3
-      机场名称2优先:
+      机场名称2:
       - 机场名称2
       - 机场名称1
       - 机场名称3
-      机场名称3优先:
+      机场名称3:
       - 机场名称3
       - 机场名称1
       - 机场名称2
@@ -107,7 +107,7 @@ airports:
       欧洲: "(?i)(\U0001F1E6\U0001F1F1|\U0001F1E6\U0001F1E9|\U0001F1E6\U0001F1F9|\U0001F1E7\U0001F1FE|\U0001F1E7\U0001F1EA|\U0001F1E7\U0001F1E6|\U0001F1E7\U0001F1EC|\U0001F1ED\U0001F1F7|\U0001F1E8\U0001F1FE|\U0001F1E8\U0001F1FF|\U0001F1E9\U0001F1F0|\U0001F1EA\U0001F1EA|\U0001F1EB\U0001F1EE|\U0001F1EB\U0001F1F7|\U0001F1E9\U0001F1EA|\U0001F1EC\U0001F1F7|\U0001F1ED\U0001F1FA|\U0001F1EE\U0001F1F8|\U0001F1EE\U0001F1EA|\U0001F1EE\U0001F1F9|\U0001F1FD\U0001F1F0|\U0001F1F1\U0001F1FB|\U0001F1F1\U0001F1EE|\U0001F1F1\U0001F1F9|\U0001F1F1\U0001F1FA|\U0001F1F2\U0001F1F9|\U0001F1F2\U0001F1E9|\U0001F1F2\U0001F1E8|\U0001F1F2\U0001F1EA|\U0001F1F3\U0001F1F1|\U0001F1F2\U0001F1F0|\U0001F1F3\U0001F1F4|\U0001F1F5\U0001F1F1|\U0001F1F5\U0001F1F9|\U0001F1F7\U0001F1F4|\U0001F1F7\U0001F1FA|\U0001F1F8\U0001F1F2|\U0001F1F7\U0001F1F8|\U0001F1F8\U0001F1F0|\U0001F1F8\U0001F1EE|\U0001F1EA\U0001F1F8|\U0001F1F8\U0001F1EA|\U0001F1E8\U0001F1ED|\U0001F1F9\U0001F1F7|\U0001F1FA\U0001F1E6|\U0001F1EC\U0001F1E7|\U0001F1FB\U0001F1E6|欧洲|歐洲|欧盟|歐盟|英国|英國|德国|德國|法国|法國|荷兰|荷蘭|瑞士|瑞典|挪威|芬兰|芬蘭|丹麦|丹麥|意大利|義大利|西班牙|葡萄牙|波兰|波蘭|奥地利|奧地利|爱尔兰|愛爾蘭|比利时|比利時|\\b(?:United ?Kingdom|Britain|England|London|Germany|Frankfurt|Berlin|Munich|France|Paris|Netherlands|Amsterdam|Switzerland|Zurich|Sweden|Stockholm|Norway|Oslo|Finland|Helsinki|Denmark|Copenhagen|Italy|Milan|Rome|Spain|Madrid|Portugal|Lisbon|Poland|Warsaw|Austria|Vienna|Ireland|Dublin|Belgium|Brussels|Romania|Bucharest|Czech(?:ia| Republic)?|Prague|Hungary|Budapest|Greece|Athens|Iceland|Luxembourg|Russia|Moscow|Turkey|Istanbul|Ukraine|Kyiv|Kiev|UK|GB|DE|FR|NL|CH|SE|NO|FI|DK|IT|ES|PT|PL|AT|IE|BE|RO|CZ|HU|GR|IS|LU|RU|TR|UA)\\b)"
       其他: ".*"
 
-# CF 为通用探针；TG 仅用于 Telegram 顶层机场优先。
+# CF 为通用探针；TG 仅用于 Telegram 机场入口下的地区组。
 probes:
   CF:
     url: https://cp.cloudflare.com/generate_204
@@ -151,14 +151,14 @@ admission:
 
 # 备用排序定义在该机场条目；规则更新保持原先末级 DIRECT。
 reserve-airport: 机场名称4
-rule-update-policy: 机场名称3优先
+rule-update-policy: 机场名称3
 
 # 独立保存选点，不独占节点或检测 IP 信誉；仅为当前模型启用的机场生成。
 independent-pools:
-  专用-机场名称1-日本-CF:
+  专用-机场名称1-日本:
     airport: 机场名称1
     region: 日本
-  专用-机场名称2-香港-CF:
+  专用-机场名称2-香港:
     airport: 机场名称2
     region: 香港
 
@@ -187,102 +187,104 @@ manual-menu:
 # default 直接写最终出口；four-default 只覆盖四机场默认。independent 追加独立选点组，extra 追加本业务选项。
 businesses:
   DNS代理:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
   Cloudflare Tunnel:
     default: DIRECT
     icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
   AI:
-    default: 专用-机场名称1-日本-CF
+    default: 专用-机场名称1-日本
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
     independent: true
   金融:
-    default: 专用-机场名称1-日本-CF
+    default: 专用-机场名称1-日本
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/wise.png
-    four-default: 专用-机场名称2-香港-CF
+    four-default: 专用-机场名称2-香港
     independent: true
   Talkatone:
-    default: 专用-机场名称1-日本-CF
+    default: 专用-机场名称1-日本
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
-    four-default: 专用-机场名称2-香港-CF
+    four-default: 专用-机场名称2-香港
     independent: true
   Google:
-    default: 机场名称3优先
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   FCM:
-    default: 机场名称3优先
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   Microsoft站点:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
   OneDrive:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
   Telegram代理:
-    default: 机场名称3优先-TG
+    default: 机场名称1-TG
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
   海外通讯:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
   TikTok站点:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
   Netflix:
-    default: 机场名称1优先
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/netflix.png
-    four-default: 机场名称2优先
+    four-default: 机场名称2
   Disney+:
-    default: 机场名称1优先
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/disney.png
-    four-default: 机场名称2优先
+    four-default: 机场名称2
   HBO:
-    default: 机场名称1优先
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/hbo.png
-    four-default: 机场名称2优先
+    four-default: 机场名称2
   Prime Video:
-    default: 机场名称1优先
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
-    four-default: 机场名称2优先
+    four-default: 机场名称2
   哔哩东南亚站点:
-    default: 新加坡-机场名称3优先
+    default: 新加坡-机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
   Spotify:
-    default: 机场名称1优先
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
-    four-default: 机场名称2优先
+    four-default: 机场名称2
   TVB站点:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
   境外影音:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
   Reddit:
-    default: 机场名称1优先
+    default: 机场名称1
     icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
-    four-default: 机场名称2优先
+    four-default: 机场名称2
   海外社媒:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
   海外电商:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
   Kryptex:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/automation.png
   Speedtest:
-    default: 机场名称3优先
+    default: 默认代理
+    extra:
+    - 默认代理
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/speedtest.png
   下载:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
   游戏平台:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
   默认代理:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
   台湾限定站点:
-    default: 台湾-机场名称3优先
+    default: 台湾-机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
   Emby:
     default: 低倍率/MITM节点
@@ -302,5 +304,5 @@ businesses:
     - REJECT
     - REJECT-DROP
   GLOBAL:
-    default: 机场名称3优先
+    default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global.png

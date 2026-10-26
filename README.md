@@ -43,22 +43,25 @@ ruby scripts/build-config-v2.rb --check
 
 `settings.yaml` 用 `&direct_dns`／`&proxy_dns` 两个浅层锚点复用直连和代理 DNS 列表，修改定义处即可同步所有引用；导出文件仍完全展开。这沿用参考仓库的 [DNS 列表复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%B8%89%E9%98%B6%E6%AE%B5%EF%BC%9A%E8%BF%9B%E9%98%B6%E7%AF%87#%E5%85%AD%E8%BF%9B%E9%98%B6-dns-%E5%AE%8C%E6%95%B4%E9%85%8D%E7%BD%AE) 思路。生成器先完成两模型的生成，再写文件；模型配置报错时不会只更新其中一份。
 
-运行链路为“业务 select → 机场／地区 fallback → 同区 url-test”，业务也可直接选择独立组、辅助入口或实际节点。所有普通自动政策使用 CF；Telegram 仅顶层机场优先使用 TG，固定地区仍复用普通 CF 政策。探针由菜单决定，不再按目标域名二次分类。
+普通运行链路为“业务 select → 机场 select → 同区 url-test”：机场入口可见，由用户手选地区组，入口自身不自动切换候选；原有候选顺序保留，首项作为初始选择。固定地区入口仍为 fallback，只在同地区跨机场回退；手选机场4备用时，该备用组仍可跨地区回退。业务也可直接选择独立组、辅助入口或实际节点。普通测速使用 CF；Telegram 的机场入口使用 TG 地区组，固定地区仍复用普通 CF 政策。探针由菜单决定，不再按目标域名二次分类。
 
 | 使用场景 | 新版默认 |
 |---|---|
 | 普通业务、固定地区、DNS、GLOBAL、规则更新 | CF：`https://cp.cloudflare.com/generate_204`，预期 204 |
-| Telegram 顶层机场优先 | TG：`https://flora.web.telegram.org/apiw1`，预期 501 |
+| Telegram 机场入口下的地区组 | TG：`https://flora.web.telegram.org/apiw1`，预期 501 |
+| Telegram代理 | 机场名称1-TG |
+| Google、FCM | 机场名称1 |
+| Speedtest | 默认代理，随后列出机场及其他选项；跟随默认代理当前选择 |
 | AI | 机场名称1日本独立 CF 选点组 |
 | 金融、Talkatone | 三机场共用 AI 的独立组；四机场默认机场名称2香港独立 CF 组 |
 
 原先所称的“敏感专用测速池”就是独立选点组：与对应普通组共用节点和 CF 测速结果，只独立保存选点、手动固定状态，不检测 IP 信誉。例如，将 AI 使用的独立组固定到日本节点 A，不会固定普通日本组；选用同一个独立组的业务则共用该选择。三机场仅一个、四机场仅两个，均为可见 `url-test`，只向 AI、金融、Talkatone 开放。[Mihomo 选点实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/urltest.go#L96)
 
-Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。业务默认机场／地区、节点筛选、域名覆盖、明确 CF 端点归 AI、特殊节点隔离、统一延迟和探测周期沿用既定要求。DNS 默认机场3优先且无 DIRECT 自动入口，GLOBAL 也使用 CF 实体组；规则更新保留最后的 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
+Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。节点筛选、域名覆盖、明确 CF 端点归 AI、特殊节点隔离和统一延迟保持原有规则。DNS代理和 GLOBAL 默认选择机场名称3；DNS代理菜单无 DIRECT 选项。机场4备用、固定地区和规则更新保留自动回退，规则更新最后以 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
 
 主规则仅“进入有序业务子规则 → REJECT”。业务子规则先返回首个匹配出口；UDP 若不被该出口支持，就在外层拒绝，不继续匹配后续业务。无需 rematch 或逐条复制 UDP 护栏。[子规则实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/rules/logic/logic.go#L167)、[UDP 检查](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/tunnel/tunnel.go#L615)
 
-普通政策沿用“机场名称x优先”“地区-机场名称x优先”名称，改为实体 fallback；Telegram 顶层入口带 `-TG`。仍有效的业务手选保留，消失的选项回到新版默认；不清空缓存，也不创建旧探针别名。同一客户端切换新旧配置可能共享同名组的选择状态，导入后检查实际选择。
+新版组名去掉“优先”和 `-CF`，仅 TG 链保留 `-TG`，例如 `机场名称1`、`机场名称1-日本`、`日本-机场名称1` 和 `机场名称1-TG`。多个业务选择同一个机场入口时，共用该入口的地区选择；TG 入口独立保存选择。仍有效的业务手选保留，已删除或改名的选项回到新版默认；不清空缓存或创建旧名称别名。同一客户端切换新旧配置可能共享同名业务的选择状态，导入后检查实际选择。
 
 此次吸收 [MIHOMO_YAMLS 的公共参数与菜单复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/YAML-%E9%94%9A%E7%82%B9%E7%BB%86%E8%B0%88%EF%BC%9A%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE%E7%9A%84%E7%81%B5%E9%AD%82)、[分层过滤及显式节点来源](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%96%B0%E6%89%8B%E7%AF%87) 的做法：公共值只维护一次，provider 只排公告，自动池独立准入，`use` 明确限定机场，DNS 复用分流规则集。未引入 Smart、均衡策略或新的配置继承机制。
 
@@ -188,7 +191,7 @@ ruby scripts/validate-rules.rb --config configfull_new.yaml --config configfull_
 
 配置检查使用独立只读 CI，在新旧配置、维护源、回归脚本或相关校验／工作流变化时触发，也可手动运行；单纯更新规则不触发。自动 CI 仅用固定 v1.19.30 对四份配置执行 `static`，保留生成一致性、内核加载和结构约束检查，不下载外部规则快照、不等待故障切换、不重复运行第二内核。使用 runner 预装 Ruby/Python，缓存内核，整个任务限时 5 分钟。
 
-新版检查默认 `static`；运行机制变更时按需使用 `smoke`，复用本地代理／DNS 夹具验证 CF／TG 菜单、UDP 首命中、DNS/GLOBAL、回退及独立选点，不下载外部规则快照、不复制旧版完整测试。域名规则迁移通过源数据对照验收，模拟流量不代表公网业务可用。
+新版检查默认 `static`；运行机制变更时按需使用 `smoke`，复用本地代理／DNS 夹具验证 CF／TG 菜单、Speedtest 跟随、UDP 首命中、DNS/GLOBAL、地区手选及独立选点，不下载外部规则快照、不复制旧版完整测试。域名规则迁移通过源数据对照验收，模拟流量不代表公网业务可用。
 
 检查中的探针参数和业务默认读取 `policy.yaml`，调整这些值无需另改测试；CF／TG 分工、有效引用和独立组隔离仍受检查。动态用例显式设置自己的手选场景，不依赖当前业务默认。
 

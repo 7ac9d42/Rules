@@ -26,7 +26,7 @@ def generate(settings, policy, routing, model_name)
   special = policy.fetch('admission').fetch('special')
   ordinary = admission('.*', special)
   providers = airports.values.map { |a| a.fetch('provider') }
-  pool_name = ->(airport, region, probe) { "#{airport}-#{region}-#{probe}" }
+  pool_name = ->(airport, region, probe) { "#{airport}-#{region}#{probe == 'TG' ? '-TG' : ''}" }
   pool_filter = lambda do |airport, region|
     data = airports.fetch(airport)
     exclude = data.fetch('exclude-overrides', {}).fetch(region, policy['admission'].fetch('standard-exclude'))
@@ -40,7 +40,7 @@ def generate(settings, policy, routing, model_name)
   flat_order = lambda do |order, probe|
     order.flat_map do |airport|
       airports.fetch(airport).fetch('region-order').map { |region| pool_name.call(airport, region, probe) }
-    end + ["#{reserve}-备用-#{probe}"]
+    end + [pool_name.call(reserve, '备用', probe)]
   end
   independent = policy.fetch('independent-pools').select do |_name, target|
     policy.fetch('airports').fetch(target.fetch('airport'))
@@ -75,7 +75,7 @@ def generate(settings, policy, routing, model_name)
   %w[CF TG].each do |probe|
     airports.each do |airport, data|
       next if airport == reserve
-      # CF 支持全部固定地区菜单；TG 只需要机场优先链实际使用的地区。
+      # CF 支持全部固定地区菜单；TG 只需要机场菜单实际使用的地区。
       pool_regions = probe == 'CF' ? regions.keys : data.fetch('region-order')
       pool_regions.each do |region|
         groups << automatic.call(pool_name.call(airport, region, probe), 'url-test', probe).merge(
@@ -83,15 +83,15 @@ def generate(settings, policy, routing, model_name)
           'icon' => regions.fetch(region).fetch('icon'))
       end
     end
-    groups << automatic.call("#{reserve}-备用-#{probe}", 'fallback', probe).merge(
+    groups << automatic.call(pool_name.call(reserve, '备用', probe), 'fallback', probe).merge(
       'use' => [reserve_data.fetch('provider')],
       'filter' => reserve_data.fetch('region-order').map do |region|
         pattern = regions.key?(region) ? regions[region].fetch('match') : reserve_data.fetch('extra-match').fetch(region)
         admission(pattern, special)
       end.join('`'))
     priorities.each do |name, order|
-      groups << automatic.call(probe == 'CF' ? name : "#{name}-TG", 'fallback', probe).merge(
-        'proxies' => flat_order.call(order, probe))
+      groups << {'name' => probe == 'CF' ? name : "#{name}-TG", 'type' => 'select',
+                 'hidden' => false, 'empty-fallback' => 'REJECT', 'proxies' => flat_order.call(order, probe)}
       next if probe == 'TG'
       regions.each do |region, details|
         groups << automatic.call("#{region}-#{name}", 'fallback', 'CF').merge(
