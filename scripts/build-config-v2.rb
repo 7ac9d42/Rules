@@ -25,7 +25,6 @@ def generate(settings, policy, routing, model_name)
   reserve = policy.fetch('reserve-airport')
   reserve_data = airports.fetch(reserve)
   special = policy.fetch('admission').fetch('special')
-  ordinary = admission('.*', special)
   providers = airports.values.map { |a| a.fetch('provider') }
   pool_name = ->(airport, region, probe) { "#{airport}-#{region}#{probe == 'TG' ? '-TG' : ''}" }
   pool_filter = lambda do |airport, region|
@@ -64,7 +63,7 @@ def generate(settings, policy, routing, model_name)
     choices += business.fetch('extra', [])
     abort "#{name}: default #{default} is outside its menu" unless choices.include?(default)
     {'name' => name, 'type' => 'select', 'proxies' => [default] + choices.reject { |n| n == default },
-     'use' => providers, 'filter' => ordinary, 'empty-fallback' => 'REJECT', 'icon' => business.fetch('icon')}
+     'empty-fallback' => 'REJECT', 'icon' => business.fetch('icon')}
   end
   policy.fetch('helpers').each do |name, fields|
     group = {'name' => name, 'type' => 'select', 'use' => providers, 'empty-fallback' => 'REJECT'}.merge(fields)

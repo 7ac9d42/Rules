@@ -198,197 +198,141 @@ proxy-groups:
 - name: DNS代理
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
 - name: Cloudflare Tunnel
   type: select
   proxies: [DIRECT, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
 - name: AI
   type: select
   proxies: [专用-机场名称1-日本, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
 - name: 金融
   type: select
   proxies: [专用-机场名称1-日本, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/wise.png
 - name: Talkatone
   type: select
   proxies: [专用-机场名称1-日本, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
 - name: Google
   type: select
   proxies: [机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
 - name: FCM
   type: select
   proxies: [机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
 - name: Microsoft站点
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
 - name: OneDrive
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
 - name: Telegram代理
   type: select
   proxies: [机场名称1-TG, 机场名称3-TG, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
 - name: 海外通讯
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
 - name: TikTok站点
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
 - name: Netflix
   type: select
   proxies: [机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/netflix.png
 - name: Disney+
   type: select
   proxies: [机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/disney.png
 - name: HBO
   type: select
   proxies: [机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/hbo.png
 - name: Prime Video
   type: select
   proxies: [机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
 - name: 哔哩东南亚站点
   type: select
   proxies: [新加坡-机场名称3, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
 - name: Spotify
   type: select
   proxies: [机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
 - name: TVB站点
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
 - name: 境外影音
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
 - name: Reddit
   type: select
   proxies: [机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
 - name: 海外社媒
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
 - name: 海外电商
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
 - name: Kryptex
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/automation.png
 - name: Speedtest
   type: select
   proxies: [默认代理, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/speedtest.png
 - name: 下载
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
 - name: 游戏平台
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
 - name: 默认代理
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
 - name: 台湾限定站点
@@ -400,36 +344,26 @@ proxy-groups:
 - name: Emby
   type: select
   proxies: [低倍率/MITM节点, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/emby.png
 - name: Apple
   type: select
   proxies: [DIRECT, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.png
 - name: 哔哩哔哩
   type: select
   proxies: [DIRECT, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
 - name: 隐私拦截
   type: select
   proxies: [REJECT, 机场名称1, 机场名称3, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT, REJECT-DROP]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/block.png
 - name: GLOBAL
   type: select
   proxies: [机场名称3, 机场名称1, 香港-机场名称1, 香港-机场名称3, 日本-机场名称1, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global.png
 - name: 自建/家宽节点
