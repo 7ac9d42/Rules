@@ -108,15 +108,23 @@ def generate(settings, policy, routing, model_name)
   end
   independent.each do |name, target|
     airport, region = target.values_at('airport', 'region')
-    groups << automatic.call(name, 'url-test', 'CF').merge(target.slice('icon'),
-      'hidden' => false, 'use' => [airports.fetch(airport).fetch('provider')], 'filter' => pool_filter.call(airport, region))
+    fields = target.slice('icon').merge('use' => [airports.fetch(airport).fetch('provider')])
+    if target['home-pool']
+      groups << automatic.call(target['home-pool'], 'url-test', 'CF').merge(fields,
+        'filter' => admission(policy.fetch('helpers').fetch('自建/家宽节点').fetch('filter'), special))
+    end
+    group = automatic.call(name, target['home-pool'] ? 'fallback' : 'url-test', 'CF').merge(fields,
+      'hidden' => false, 'filter' => pool_filter.call(airport, region))
+    group['proxies'] = [target['home-pool']] if target['home-pool']
+    groups << group
   end
   groups << automatic.call('规则更新', 'fallback', 'CF').merge(
     'proxies' => flat_order.call(priorities.fetch(policy.fetch('rule-update-policy')), 'CF') + ['DIRECT'])
 
   groups.each do |group|
     next unless group.key?('use')
-    next if independent.key?(group['name']) || ['自建/家宽节点', '全部节点'].include?(group['name'])
+    next if independent.key?(group['name']) || independent.values.any? { |target| group['name'] == target['home-pool'] }
+    next if ['自建/家宽节点', '全部节点'].include?(group['name'])
     group['exclude-filter'] = policy.fetch('admission').fetch('default-exclude')
   end
 

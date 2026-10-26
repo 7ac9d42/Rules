@@ -155,11 +155,12 @@ admission:
 reserve-airport: 机场名称4
 rule-update-policy: 机场名称3
 
-# 独立保存选点，不独占节点或检测 IP 信誉；仅为当前模型启用的机场生成。
+# 独立保存选点；机场1先用独立家宽测速组，再回退原地区节点，不检测 IP 信誉。
 independent-pools:
   专用-机场名称1-日本:
     airport: 机场名称1
     region: 日本
+    home-pool: 机场名称1-家宽
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
   专用-机场名称2-香港:
     airport: 机场名称2

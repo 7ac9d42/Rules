@@ -762,18 +762,32 @@ proxy-groups:
   hidden: false
   empty-fallback: REJECT
   proxies: [机场名称3-日本-TG, 机场名称3-新加坡-TG, 机场名称3-香港-TG, 机场名称3-美国-TG, 机场名称1-日本-TG, 机场名称1-香港-TG, 机场名称1-新加坡-TG, 机场名称1-美国-TG, 机场名称4-备用-TG]
-- name: 专用-机场名称1-日本
+- name: 机场名称1-家宽
   type: url-test
   timeout: 5000
   max-failed-times: 3
   empty-fallback: REJECT
-  hidden: false
+  hidden: true
   tolerance: 50
   url: https://cp.cloudflare.com/generate_204
   expected-status: 204
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
   use: [Airport_01]
+  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(自建|家宽|住宅|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))))[\\s\\S]*$"
+- name: 专用-机场名称1-日本
+  type: fallback
+  timeout: 5000
+  max-failed-times: 3
+  empty-fallback: REJECT
+  hidden: false
+  interval: 30
+  lazy: true
+  url: https://cp.cloudflare.com/generate_204
+  expected-status: 204
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
+  use: [Airport_01]
   filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub))(?=[\\s\\S]*(?:(日本|东京|\U0001F1EF\U0001F1F5|\\bJP[0-9]*\\b|Japan)))[\\s\\S]*$"
+  proxies: [机场名称1-家宽]
 - name: 规则更新
   type: fallback
   timeout: 5000

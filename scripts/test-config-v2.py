@@ -71,8 +71,12 @@ def static(source, four, policy):
     assert groups['规则更新']['proxies'][-1] == 'DIRECT'
     for name in private:
         g, shared = groups[name], groups[name.removeprefix('专用-')]
-        assert g['type'] == 'url-test' and g['hidden'] is False, name
+        home = policy['independent-pools'][name].get('home-pool')
+        assert g['type'] == ('fallback' if home else 'url-test') and g['hidden'] is False, name
         assert (g['use'], g['filter'], g['url']) == (shared['use'], shared['filter'], shared['url']), name
+        if home:
+            assert g['proxies'] == [home] and groups[home]['type'] == 'url-test' and groups[home]['hidden'] is True
+            assert groups[home]['use'] == g['use'] and groups[home]['filter'] == groups['自建/家宽节点']['filter']
     assert 'RULE-SET,cf_sensitive_domain,AI' in source['sub-rules']['分流-业务规则']
 
 
@@ -157,7 +161,7 @@ def pools(source, mihomo):
     with tempfile.TemporaryDirectory(prefix='mihomo-v2-pools-') as directory, F.Runtime(directory, mihomo, {'/cf': 204}) as rt:
         config = rt.base(source)
         config.update(proxies=[], **{'rules': ['MATCH,REJECT'], 'sub-rules': {}, 'rule-providers': {}})
-        samples = {1: ['东京 fast 1x', '东京 slow 1x', '日本 MITM 1x', '日本住宅 1x', '台湾 1x'],
+        samples = {1: ['东京 fast 1x', '东京 slow 1x', '日本 MITM 1x', '日本住宅 fast 1x', '香港家宽 slow 1x', '台湾 1x'],
                    3: ['日本 fast 1x', '日本 slow 1x', '新加坡 fast 1x', '台湾 MITM 1x', '台湾 pornhub 1x', '台湾住宅 1x', '台湾 1x'],
                    4: ['香港 fast 1x', '香港住宅 0.1x', '台湾 1x']}
         config['proxy-providers'], nodes = {}, {}
@@ -171,6 +175,7 @@ def pools(source, mihomo):
         groups = {g['name']: g for g in source['proxy-groups']}
         root = '机场名称3'
         taiwan = '台湾限定站点'
+        home_pool = '机场名称1-家宽'
         names = {root} | {n for n, g in groups.items() if 'use' in g}
         config['proxy-groups'] = [copy.deepcopy(groups[n]) for n in names]
         for g in config['proxy-groups']:
@@ -181,16 +186,33 @@ def pools(source, mihomo):
         rt.select(taiwan, nodes[1][-1])
         assert rt.group(taiwan)['now'] == nodes[1][-1]
         residential = {n for values in nodes.values() for n in values if '住宅' in n}
-        assert set(rt.group('自建/家宽节点')['all']) == residential
+        assert set(rt.group('自建/家宽节点')['all']) == residential | {nodes[1][4]}
         assert residential <= set(rt.group('全部节点')['all'])
-        for name in names - {PRIVATE, '自建/家宽节点', '全部节点'}:
+        for name in names - {PRIVATE, home_pool, '自建/家宽节点', '全部节点'}:
             assert not residential.intersection(rt.group(name)['all']), name
+        rt.http.nodes[nodes[1][3]].delays['/cf'] = .08  # 住宅比普通节点慢，仍应优先。
         for values in nodes.values():
             for node in values:
                 assert rt.probe(node, url, 204)
         ordinary = '机场名称1-日本'
         assert set(rt.group(ordinary)['all']) == set(nodes[1][:2])
-        assert set(rt.group(PRIVATE)['all']) == set(nodes[1][:2] + [nodes[1][3]])
+        assert rt.group(PRIVATE)['all'] == [home_pool] + nodes[1][:2] + [nodes[1][3]]
+        assert rt.group(home_pool)['all'] == nodes[1][3:5]
+        F.until(lambda: rt.probe(home_pool, url, 204))
+        assert rt.group(home_pool)['now'] == nodes[1][3]
+        assert rt.group(PRIVATE)['now'] == home_pool
+        rt.http.nodes[nodes[1][3]].statuses['/cf'] = 503
+        assert not rt.probe(nodes[1][3], url, 204)
+        F.until(lambda: rt.group(home_pool)['now'] == nodes[1][4])
+        assert rt.probe(home_pool, url, 204) and rt.group(PRIVATE)['now'] == home_pool
+        rt.http.nodes[nodes[1][4]].statuses['/cf'] = 503
+        assert not rt.probe(nodes[1][4], url, 204)
+        assert not rt.probe(home_pool, url, 204)
+        assert rt.group(PRIVATE)['now'] == nodes[1][0]
+        rt.http.nodes[nodes[1][3]].statuses.pop('/cf')
+        assert rt.probe(nodes[1][3], url, 204)
+        F.until(lambda: rt.probe(home_pool, url, 204))
+        assert rt.group(PRIVATE)['now'] == home_pool
         rt.select(ordinary, nodes[1][0])
         rt.select(PRIVATE, nodes[1][1])
         assert rt.group(ordinary)['now'] == nodes[1][0] and rt.group(PRIVATE)['now'] == nodes[1][1]
@@ -209,7 +231,7 @@ def pools(source, mihomo):
         rt.http.nodes[nodes[3][0]].statuses.pop('/cf')
         assert rt.probe(nodes[3][0], url, 204)
         assert rt.group(root)['now'] == ordinary
-    print('PASS: 同区测速、住宅准入例外、台湾节点过滤/手选、地区手选、故障/恢复不漂移、独立固定状态', flush=True)
+    print('PASS: 同区测速、家宽优先/全故障回退/恢复、准入、台湾手选、地区手选不漂移、独立固定状态', flush=True)
 
 
 def main():

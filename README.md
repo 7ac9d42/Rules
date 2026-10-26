@@ -8,8 +8,8 @@
 |---|---|
 | [configfull_new.yaml](configfull_new.yaml) | 兼容版三机场：机场名称1、3、4，120 个组 |
 | [configfull_new_4.yaml](configfull_new_4.yaml) | 兼容版四机场：增加机场名称2家宽，160 个组 |
-| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，69 个组，无 rematch |
-| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，84 个组，无 rematch |
+| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，70 个组，无 rematch |
+| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，85 个组，无 rematch |
 
 每次导入一份完整配置，无需拼接。新旧配置均以官方 **Mihomo v1.19.30** 为兼容基线。新版独立试用，不替换旧下载地址、维护源或生成命令；规则库继续共享，每日规则更新照常进行。
 
@@ -47,7 +47,7 @@ ruby scripts/build-config-v2.rb --check
 
 普通业务（包括 DNS代理、GLOBAL）不再展开订阅节点，单节点手选统一进入“全部节点”；选用这个入口的业务共享其中的节点选择。“全部节点”默认 REJECT，需主动选点。台湾限定、自建／家宽、低倍率等有筛选用途的直选组继续保留节点列表。
 
-节点名称包含“住宅”时，默认不筛入普通组，包括低倍率、台湾直选及 CF／TG 备用组；排除关键词集中在 `admission.default-exclude`。`专用-机场名称X-地区`、`自建/家宽节点` 和 `全部节点` 允许筛入，仍遵守各自原有筛选条件。家宽入口同时识别“住宅”；订阅层保留这些节点，方便上述例外组使用。
+节点名称包含“住宅”时，默认不筛入普通组，包括低倍率、台湾直选及 CF／TG 备用组；排除关键词集中在 `admission.default-exclude`。专用组、家宽组及全部节点允许筛入，仍遵守各自原有筛选条件。家宽入口同时识别“住宅”；订阅层保留这些节点，方便上述例外组使用。
 
 台湾限定站点使用 `region: 台湾` 和原生 `use` 声明，直接生成台湾节点的 select 菜单，按机场3 → 1 → 2（仅四机场）→ 4 排列，不自动跨机场换点。节点沿用手选准入，排除特殊标签及住宅节点；空菜单返回 REJECT。不再生成 `机场名称X-台湾` 测速组或 `台湾-机场名称X` 回退组。
 
@@ -61,7 +61,9 @@ ruby scripts/build-config-v2.rb --check
 | AI | 机场名称1日本独立 CF 选点组 |
 | 金融、Talkatone | 三机场共用 AI 的独立组；四机场默认机场名称2香港独立 CF 组 |
 
-原先所称的“敏感专用测速池”就是独立选点组：与对应普通组共用订阅和 CF 测速结果，额外允许住宅节点，独立保存选点、手动固定状态，不检测 IP 信誉。例如，将 AI 使用的独立组固定到日本节点 A，不会固定普通日本组；选用同一个独立组的业务则共用该选择。三机场仅一个、四机场仅两个，均为可见 `url-test`，只向 AI、金融、Talkatone 开放。[Mihomo 选点实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/urltest.go#L96)
+原先所称的“敏感专用测速池”就是独立选点组：与对应普通组共用订阅和 CF 测速结果，独立保存选点、手动固定状态，不检测 IP 信誉。三机场一个专用入口、四机场两个，只向 AI、金融、Talkatone 开放。`专用-机场名称1-日本` 改为可见 `fallback`，首项是隐藏的 `机场名称1-家宽`，后面完整保留原有日本节点，包括住宅节点。家宽组只使用机场1订阅，复用 `自建/家宽节点` 的筛选条件，不限定地区，组内 `url-test` 择优；全部家宽不可用或家宽组为空时，才按顺序回退到后面的日本节点。家宽恢复且探针确认后自动切回。每份配置只增加这一个组，入口在 `independent-pools` 用 `home-pool` 指定；四机场的 `专用-机场名称2-香港` 继续保持可见 `url-test`。[测速选择](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/urltest.go#L96)、[顺序回退](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/fallback.go#L98)
+
+家宽优先仅在自动选择时生效。原专用入口名称保留，若曾手动固定节点，导入后需在面板“恢复自动”；不会清除其他手选状态。家宽测速复用 provider 周期，专用入口沿用 CF fallback 的 30 秒按需检查；切换还取决于健康记录及选点缓存，并非立即完成。CF 可达不代表 AI 业务、质询或地区解锁可用。
 
 Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。节点筛选、域名覆盖、明确 CF 端点归 AI、特殊节点隔离和统一延迟保持原有规则。DNS代理和 GLOBAL 默认选择机场名称3；DNS代理菜单无 DIRECT 选项。机场4备用、固定地区和规则更新保留自动回退，规则更新最后以 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
 
