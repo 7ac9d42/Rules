@@ -8,7 +8,7 @@ settings:
   mixed-port: 7890
   ipv6: false
   allow-lan: true
-  unified-delay: false
+  unified-delay: true
   tcp-concurrent: true
   authentication: []
   skip-auth-prefixes:
