@@ -50,12 +50,13 @@ def generate(settings, policy, routing, model_name)
   menu = priorities.keys + fixed_regions + policy.fetch('manual-menu')
 
   groups = policy.fetch('businesses').map do |name, business|
+    default = model_name == 'four-airports' ? business.fetch('four-default', business.fetch('default')) : business.fetch('default')
     choices = menu.dup
+    choices.reject! { |n| n.start_with?('台湾-') } unless default.start_with?('台湾-')
     choices = choices.map { |n| priorities.key?(n) ? "#{n}-TG" : n } if name == 'Telegram代理'
     choices.delete('DIRECT') if name == 'DNS代理'
     choices = independent.keys + choices if business['independent']
     choices += business.fetch('extra', [])
-    default = model_name == 'four-airports' ? business.fetch('four-default', business.fetch('default')) : business.fetch('default')
     abort "#{name}: default #{default} is outside its menu" unless choices.include?(default)
     {'name' => name, 'type' => 'select', 'proxies' => [default] + choices.reject { |n| n == default },
      'use' => providers, 'filter' => ordinary, 'empty-fallback' => 'REJECT', 'icon' => business.fetch('icon')}
