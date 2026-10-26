@@ -8,8 +8,8 @@
 |---|---|
 | [configfull_new.yaml](configfull_new.yaml) | 兼容版三机场：机场名称1、3、4，120 个组 |
 | [configfull_new_4.yaml](configfull_new_4.yaml) | 兼容版四机场：增加机场名称2家宽，160 个组 |
-| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，73 个组，无 rematch |
-| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，90 个组，无 rematch |
+| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，69 个组，无 rematch |
+| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，84 个组，无 rematch |
 
 每次导入一份完整配置，无需拼接。新旧配置均以官方 **Mihomo v1.19.30** 为兼容基线。新版独立试用，不替换旧下载地址、维护源或生成命令；规则库继续共享，每日规则更新照常进行。
 
@@ -45,7 +45,7 @@ ruby scripts/build-config-v2.rb --check
 
 普通运行链路为“业务 select → 机场 select → 同区 url-test”：机场入口可见，由用户手选地区组，入口自身不自动切换候选；原有候选顺序保留，首项作为初始选择。固定地区入口仍为 fallback，只在同地区跨机场回退；手选机场4备用时，该备用组仍可跨地区回退。业务也可直接选择独立组、辅助入口或实际节点。普通测速使用 CF；Telegram 的机场入口使用 TG 地区组，固定地区仍复用普通 CF 政策。探针由菜单决定，不再按目标域名二次分类。
 
-普通业务菜单不列出 `台湾-机场名称X` 入口；默认指定台湾的业务保留这些选项，目前为台湾限定站点。底层台湾测速组及同地区回退继续保留。
+台湾限定站点使用 `region: 台湾` 和原生 `use` 声明，直接生成台湾节点的 select 菜单，按机场3 → 1 → 2（仅四机场）→ 4 排列，不自动跨机场换点。节点沿用手选准入，只排除特殊标签；空菜单返回 REJECT。不再生成 `机场名称X-台湾` 测速组或 `台湾-机场名称X` 回退组。
 
 | 使用场景 | 新版默认 |
 |---|---|

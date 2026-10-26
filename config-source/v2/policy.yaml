@@ -285,7 +285,12 @@ businesses:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
   台湾限定站点:
-    default: 台湾-机场名称3
+    region: 台湾
+    use:
+    - Airport_03
+    - Airport_01
+    - Airport_02
+    - Airport_04
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
   Emby:
     default: 低倍率/MITM节点

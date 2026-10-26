@@ -56,8 +56,12 @@ def static(source, four, policy):
     for provider in providers.values():
         assert (provider['health-check']['url'], provider['health-check']['expected-status']) == (probes['CF']['url'], probes['CF']['expected-status'])
     for name, business in policy['businesses'].items():
-        default = business.get('four-default', business['default']) if four else business['default']
-        assert groups[name]['proxies'][0] == default, name
+        if 'region' in business:
+            assert groups[name]['type'] == 'select' and 'proxies' not in groups[name], name
+            assert groups[name]['use'] == [p for p in business['use'] if p in providers], name
+        else:
+            default = business.get('four-default', business['default']) if four else business['default']
+            assert groups[name]['proxies'][0] == default, name
     model = policy['models']['four-airports' if four else 'three-airports']
     for name in model['priority-order']:
         for suffix in ('', '-TG'):
@@ -153,8 +157,9 @@ def pools(source, mihomo):
     with tempfile.TemporaryDirectory(prefix='mihomo-v2-pools-') as directory, F.Runtime(directory, mihomo, {'/cf': 204}) as rt:
         config = rt.base(source)
         config.update(proxies=[], **{'rules': ['MATCH,REJECT'], 'sub-rules': {}, 'rule-providers': {}})
-        samples = {1: ['东京 fast 1x', '东京 slow 1x', '日本 MITM 1x'],
-                   3: ['日本 fast 1x', '日本 slow 1x', '新加坡 fast 1x'], 4: ['香港 fast 1x']}
+        samples = {1: ['东京 fast 1x', '东京 slow 1x', '日本 MITM 1x', '台湾 1x'],
+                   3: ['日本 fast 1x', '日本 slow 1x', '新加坡 fast 1x', '台湾 MITM 1x', '台湾 pornhub 1x', '台湾 1x'],
+                   4: ['香港 fast 1x', '台湾 1x']}
         config['proxy-providers'], nodes = {}, {}
         for airport, names in samples.items():
             provider = f'Airport_0{airport}'
@@ -165,12 +170,16 @@ def pools(source, mihomo):
                 'health-check': dict(enable=False, url=url, interval=86400, **{'expected-status': 204})})
         groups = {g['name']: g for g in source['proxy-groups']}
         root = '机场名称3'
-        names = {root, PRIVATE, *groups[root]['proxies']}
+        taiwan = '台湾限定站点'
+        names = {root, PRIVATE, taiwan, *groups[root]['proxies']}
         config['proxy-groups'] = [copy.deepcopy(groups[n]) for n in names]
         for g in config['proxy-groups']:
             if g['type'] != 'select':
                 g.update(url=url, interval=0, **{'expected-status': 204})
         rt.start(config)
+        assert rt.group(taiwan)['all'] == [nodes[a][-1] for a in (3, 1, 4)]
+        rt.select(taiwan, nodes[1][-1])
+        assert rt.group(taiwan)['now'] == nodes[1][-1]
         for values in nodes.values():
             for node in values:
                 assert rt.probe(node, url, 204)
@@ -194,7 +203,7 @@ def pools(source, mihomo):
         rt.http.nodes[nodes[3][0]].statuses.pop('/cf')
         assert rt.probe(nodes[3][0], url, 204)
         assert rt.group(root)['now'] == ordinary
-    print('PASS: 同区测速、地区手选、故障/恢复不漂移、独立固定状态', flush=True)
+    print('PASS: 同区测速、台湾节点过滤/手选、地区手选、故障/恢复不漂移、独立固定状态', flush=True)
 
 
 def main():

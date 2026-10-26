@@ -410,9 +410,8 @@ proxy-groups:
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
 - name: 台湾限定站点
   type: select
-  proxies: [台湾-机场名称3, 机场名称1, 机场名称2, 机场名称3, 香港-机场名称1, 香港-机场名称2, 香港-机场名称3, 日本-机场名称1, 日本-机场名称2, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称2, 新加坡-机场名称3, 台湾-机场名称1, 台湾-机场名称2, 美国-机场名称1, 美国-机场名称2, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
-  use: [Airport_01, Airport_02, Airport_03, Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:.*))[\\s\\S]*$"
+  use: [Airport_03, Airport_01, Airport_02, Airport_04]
+  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|\U0001F1F9\U0001F1FC|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
 - name: Emby
@@ -506,18 +505,6 @@ proxy-groups:
   use: [Airport_01]
   filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub))(?=[\\s\\S]*(?:(新加坡|狮城|\U0001F1F8\U0001F1EC|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
   icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
-- name: 机场名称1-台湾
-  type: url-test
-  timeout: 5000
-  max-failed-times: 3
-  empty-fallback: REJECT
-  hidden: true
-  tolerance: 50
-  url: https://cp.cloudflare.com/generate_204
-  expected-status: 204
-  use: [Airport_01]
-  filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|\U0001F1F9\U0001F1FC|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
-  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
 - name: 机场名称1-美国
   type: url-test
   timeout: 5000
@@ -566,18 +553,6 @@ proxy-groups:
   use: [Airport_02]
   filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub))(?=[\\s\\S]*(?:(新加坡|狮城|\U0001F1F8\U0001F1EC|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
   icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
-- name: 机场名称2-台湾
-  type: url-test
-  timeout: 5000
-  max-failed-times: 3
-  empty-fallback: REJECT
-  hidden: true
-  tolerance: 50
-  url: https://cp.cloudflare.com/generate_204
-  expected-status: 204
-  use: [Airport_02]
-  filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|\U0001F1F9\U0001F1FC|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
-  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
 - name: 机场名称2-美国
   type: url-test
   timeout: 5000
@@ -626,18 +601,6 @@ proxy-groups:
   use: [Airport_03]
   filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub|(?<![0-9A-Za-z])CTCU(?![0-9A-Za-z])))(?=[\\s\\S]*(?:(新加坡|狮城|\U0001F1F8\U0001F1EC|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
   icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
-- name: 机场名称3-台湾
-  type: url-test
-  timeout: 5000
-  max-failed-times: 3
-  empty-fallback: REJECT
-  hidden: true
-  tolerance: 50
-  url: https://cp.cloudflare.com/generate_204
-  expected-status: 204
-  use: [Airport_03]
-  filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|\U0001F1F9\U0001F1FC|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
-  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
 - name: 机场名称3-美国
   type: url-test
   timeout: 5000
@@ -709,20 +672,6 @@ proxy-groups:
   use: [Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(新加坡|狮城|\U0001F1F8\U0001F1EC|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
   icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
-- name: 台湾-机场名称1
-  type: fallback
-  timeout: 5000
-  max-failed-times: 3
-  empty-fallback: REJECT
-  hidden: true
-  interval: 30
-  lazy: true
-  url: https://cp.cloudflare.com/generate_204
-  expected-status: 204
-  proxies: [机场名称1-台湾, 机场名称2-台湾, 机场名称3-台湾]
-  use: [Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|\U0001F1F9\U0001F1FC|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
-  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
 - name: 美国-机场名称1
   type: fallback
   timeout: 5000
@@ -784,20 +733,6 @@ proxy-groups:
   use: [Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(新加坡|狮城|\U0001F1F8\U0001F1EC|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
   icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
-- name: 台湾-机场名称2
-  type: fallback
-  timeout: 5000
-  max-failed-times: 3
-  empty-fallback: REJECT
-  hidden: true
-  interval: 30
-  lazy: true
-  url: https://cp.cloudflare.com/generate_204
-  expected-status: 204
-  proxies: [机场名称2-台湾, 机场名称1-台湾, 机场名称3-台湾]
-  use: [Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|\U0001F1F9\U0001F1FC|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
-  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
 - name: 美国-机场名称2
   type: fallback
   timeout: 5000
@@ -859,20 +794,6 @@ proxy-groups:
   use: [Airport_04]
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(新加坡|狮城|\U0001F1F8\U0001F1EC|\\bSG[0-9]*\\b|Singapore)))[\\s\\S]*$"
   icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
-- name: 台湾-机场名称3
-  type: fallback
-  timeout: 5000
-  max-failed-times: 3
-  empty-fallback: REJECT
-  hidden: true
-  interval: 30
-  lazy: true
-  url: https://cp.cloudflare.com/generate_204
-  expected-status: 204
-  proxies: [机场名称3-台湾, 机场名称1-台湾, 机场名称2-台湾]
-  use: [Airport_04]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(台湾|台灣|臺灣|\U0001F1F9\U0001F1FC|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)))[\\s\\S]*$"
-  icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
 - name: 美国-机场名称3
   type: fallback
   timeout: 5000

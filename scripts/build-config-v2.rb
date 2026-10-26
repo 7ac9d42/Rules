@@ -20,6 +20,7 @@ def generate(settings, policy, routing, model_name)
   airports = model.fetch('active-airports').to_h { |n| [n, policy.fetch('airports').fetch(n)] }
   priorities = model.fetch('priority-order')
   regions = policy.fetch('regions')
+  automatic_regions = regions.except('台湾')
   probes = policy.fetch('probes')
   reserve = policy.fetch('reserve-airport')
   reserve_data = airports.fetch(reserve)
@@ -46,13 +47,17 @@ def generate(settings, policy, routing, model_name)
     policy.fetch('airports').fetch(target.fetch('airport'))
     airports.key?(target.fetch('airport'))
   end
-  fixed_regions = regions.keys.flat_map { |region| priorities.keys.map { |n| "#{region}-#{n}" } }
+  fixed_regions = automatic_regions.keys.flat_map { |region| priorities.keys.map { |n| "#{region}-#{n}" } }
   menu = priorities.keys + fixed_regions + policy.fetch('manual-menu')
 
   groups = policy.fetch('businesses').map do |name, business|
+    if business['region']
+      next {'name' => name, 'type' => 'select', 'use' => business.fetch('use') & providers,
+            'filter' => admission(regions.fetch(business.fetch('region')).fetch('match'), special),
+            'empty-fallback' => 'REJECT', 'icon' => business.fetch('icon')}
+    end
     default = model_name == 'four-airports' ? business.fetch('four-default', business.fetch('default')) : business.fetch('default')
     choices = menu.dup
-    choices.reject! { |n| n.start_with?('台湾-') } unless default.start_with?('台湾-')
     choices = choices.map { |n| priorities.key?(n) ? "#{n}-TG" : n } if name == 'Telegram代理'
     choices.delete('DIRECT') if name == 'DNS代理'
     choices = independent.keys + choices if business['independent']
@@ -77,7 +82,7 @@ def generate(settings, policy, routing, model_name)
     airports.each do |airport, data|
       next if airport == reserve
       # CF 支持全部固定地区菜单；TG 只需要机场菜单实际使用的地区。
-      pool_regions = probe == 'CF' ? regions.keys : data.fetch('region-order')
+      pool_regions = probe == 'CF' ? automatic_regions.keys : data.fetch('region-order')
       pool_regions.each do |region|
         groups << automatic.call(pool_name.call(airport, region, probe), 'url-test', probe).merge(
           'use' => [data.fetch('provider')], 'filter' => pool_filter.call(airport, region),
@@ -94,7 +99,7 @@ def generate(settings, policy, routing, model_name)
       groups << {'name' => probe == 'CF' ? name : "#{name}-TG", 'type' => 'select',
                  'hidden' => false, 'empty-fallback' => 'REJECT', 'proxies' => flat_order.call(order, probe)}
       next if probe == 'TG'
-      regions.each do |region, details|
+      automatic_regions.each do |region, details|
         groups << automatic.call("#{region}-#{name}", 'fallback', 'CF').merge(
           'proxies' => order.map { |a| pool_name.call(a, region, 'CF') },
           'use' => [reserve_data.fetch('provider')],
