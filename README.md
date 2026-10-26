@@ -146,7 +146,7 @@ ruby scripts/validate-rules.rb
 ruby scripts/validate-rules.rb --config configfull_new.yaml --config configfull_new_4.yaml
 ```
 
-配置检查继续使用独立只读 CI，在正式配置、维护源、回归脚本或相关校验／工作流变化时触发，也可手动运行；单纯更新规则不触发。两份正式配置均执行回归。v1.19.30 执行 full，v1.19.31 复用同一规则快照执行 smoke，不追踪浮动最新版。
+配置检查使用独立只读 CI，在正式配置、维护源、回归脚本或相关校验／工作流变化时触发，也可手动运行；单纯更新规则不触发。自动 CI 仅用固定 v1.19.30 对两份正式配置执行 `static`，保留生成一致性、内核加载和结构约束检查，不下载外部规则快照、不等待故障切换、不重复运行第二内核。使用 runner 预装 Ruby/Python，缓存内核，整个任务限时 5 分钟。涉及运行时分流、测速或 DNS 机制的改动，再按需本地运行 `smoke` 或 `full`。
 
 | 回归级别 | 覆盖范围 |
 |---|---|
