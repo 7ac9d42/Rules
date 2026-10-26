@@ -1067,6 +1067,7 @@ proxy-groups:
   tolerance: 50
   url: https://cp.cloudflare.com/generate_204
   expected-status: 204
+  icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
   use: [Airport_01]
   filter: "(?i)^(?![\\s\\S]*(?:(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))|MITM|pornhub))(?=[\\s\\S]*(?:(日本|东京|\U0001F1EF\U0001F1F5|\\bJP[0-9]*\\b|Japan)))[\\s\\S]*$"
 - name: 专用-机场名称2-香港

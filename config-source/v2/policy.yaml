@@ -158,6 +158,7 @@ independent-pools:
   专用-机场名称1-日本:
     airport: 机场名称1
     region: 日本
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
   专用-机场名称2-香港:
     airport: 机场名称2
     region: 香港

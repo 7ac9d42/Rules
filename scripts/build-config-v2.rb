@@ -104,7 +104,7 @@ def generate(settings, policy, routing, model_name)
   end
   independent.each do |name, target|
     airport, region = target.values_at('airport', 'region')
-    groups << automatic.call(name, 'url-test', 'CF').merge(
+    groups << automatic.call(name, 'url-test', 'CF').merge(target.slice('icon'),
       'hidden' => false, 'use' => [airports.fetch(airport).fetch('provider')], 'filter' => pool_filter.call(airport, region))
   end
   groups << automatic.call('规则更新', 'fallback', 'CF').merge(
