@@ -116,7 +116,7 @@ def generate(settings, policy, routing, model_name)
 
   groups.each do |group|
     next unless group.key?('use')
-    next if independent.key?(group['name']) || group['name'] == '自建/家宽节点'
+    next if independent.key?(group['name']) || ['自建/家宽节点', '全部节点'].include?(group['name'])
     group['exclude-filter'] = policy.fetch('admission').fetch('default-exclude')
   end
 

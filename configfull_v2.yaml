@@ -388,7 +388,6 @@ proxy-groups:
   use: [Airport_01, Airport_03, Airport_04]
   empty-fallback: REJECT
   proxies: [REJECT]
-  exclude-filter: 住宅
 - name: 机场名称1-香港
   type: url-test
   timeout: 5000

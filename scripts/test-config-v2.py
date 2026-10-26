@@ -182,7 +182,8 @@ def pools(source, mihomo):
         assert rt.group(taiwan)['now'] == nodes[1][-1]
         residential = {n for values in nodes.values() for n in values if '住宅' in n}
         assert set(rt.group('自建/家宽节点')['all']) == residential
-        for name in names - {PRIVATE, '自建/家宽节点'}:
+        assert residential <= set(rt.group('全部节点')['all'])
+        for name in names - {PRIVATE, '自建/家宽节点', '全部节点'}:
             assert not residential.intersection(rt.group(name)['all']), name
         for values in nodes.values():
             for node in values:
