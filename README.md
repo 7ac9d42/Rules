@@ -6,23 +6,61 @@
 
 | 文件 | 用途 |
 |---|---|
-| [configfull_new.yaml](configfull_new.yaml) | 三机场完整配置：机场名称1、3、4，120 个组 |
-| [configfull_new_4.yaml](configfull_new_4.yaml) | 四机场完整配置：增加机场名称2家宽，160 个组 |
+| [configfull_new.yaml](configfull_new.yaml) | 兼容版三机场：机场名称1、3、4，120 个组 |
+| [configfull_new_4.yaml](configfull_new_4.yaml) | 兼容版四机场：增加机场名称2家宽，160 个组 |
+| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，73 个组，无 rematch |
+| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，90 个组，无 rematch |
 
-每次导入一份完整配置，无需拼接。两份正式配置采用同一架构，最低支持官方 **Mihomo v1.19.30**，不依赖 v1.19.31 独有特性。
+每次导入一份完整配置，无需拼接。新旧配置均以官方 **Mihomo v1.19.30** 为兼容基线。新版独立试用，不替换旧下载地址、维护源或生成命令；规则库继续共享，每日规则更新照常进行。
 
-人工维护源为 [common.yaml](config-source/common.yaml) 和两个模型文件 [three-airports.yaml](config-source/three-airports.yaml)、[four-airports.yaml](config-source/four-airports.yaml)。共同源维护设备设置、机场订阅、地区识别、准入、探针、业务规则和规则集；模型文件只声明启用机场、优先顺序、敏感池目标及业务默认覆盖。模型按顶层字段覆盖共同源，不进行递归合并；`business-defaults` 单独按业务名覆盖默认项。
+兼容版维护源为 [common.yaml](config-source/common.yaml) 和两个模型文件 [three-airports.yaml](config-source/three-airports.yaml)、[four-airports.yaml](config-source/four-airports.yaml)。共同源维护设备设置、机场订阅、地区识别、准入、探针、业务规则和规则集；模型文件只声明启用机场、优先顺序、敏感池目标及业务默认覆盖。模型按顶层字段覆盖共同源，不进行递归合并；`business-defaults` 单独按业务名覆盖默认项。
 
 ```sh
 ruby scripts/build-config.rb
 ruby scripts/build-config.rb --check
 ```
 
-默认命令离线生成两份正式配置；`--check` 只检查两份产物是否与维护源一致。产物无锚点、别名或 `<<` 合并，代理组的 `proxies`、`use` 使用行内列表并保留顺序。维护源集中定义规则，展开后的行数不是人工维护量。
+上述命令离线生成两份兼容版配置；`--check` 只检查这两份产物是否与维护源一致。新旧产物均无锚点、别名或 `<<` 合并，代理组的 `proxies`、`use` 使用行内列表并保留顺序。
 
 填写当前模型启用机场的订阅、替换机场名称和调整监听地址、控制器密钥、DNS、TUN 后重新生成，再导入客户端。不要在生成产物中长期维护修改。源中的 `机场名称1`、`机场名称2`、`机场名称3`、`机场名称4` 是完整文本替换目标，不能先改成缩写；provider 键继续保留。首次订阅通过 DIRECT 获取。
 
-## 出口与手选
+## 新版试用：CF／TG
+
+新版将配置维护分成三个入口，不需要修改生成器来调整业务默认、机场筛选或分流规则：
+
+| 要修改的内容 | 维护位置 |
+|---|---|
+| 全局、DNS、TUN、嗅探、面板 | [settings.yaml](config-source/v2/settings.yaml)，使用原生 Mihomo 字段 |
+| 机场订阅、地区顺序、准入、探针、业务菜单与默认出口 | [policy.yaml](config-source/v2/policy.yaml) |
+| 有序业务规则及规则集 | [routing.yaml](config-source/v2/routing.yaml) |
+
+```sh
+ruby scripts/build-config-v2.rb
+ruby scripts/build-config-v2.rb --check
+```
+
+生成器只读取这三个维护源，输出两份 v2 文件。`policy.yaml` 中，每个机场的订阅、地区顺序和筛选例外放在一起；业务 `default` 直接写最终出口，`four-default` 只覆盖四机场默认，`independent: true` 开放独立选点组，`extra` 追加既有特殊选项。三／四机场的启用机场和优先顺序集中在 `models`。填写订阅、替换完整的机场名称、调整设备参数后，重新生成再导入。
+
+运行链路为“业务 select → 机场／地区 fallback → 同区 url-test”，业务也可直接选择独立组、辅助入口或实际节点。所有普通自动政策使用 CF；Telegram 仅顶层机场优先使用 TG，固定地区仍复用普通 CF 政策。探针由菜单决定，不再按目标域名二次分类。
+
+| 使用场景 | 新版默认 |
+|---|---|
+| 普通业务、固定地区、DNS、GLOBAL、规则更新 | CF：`https://cp.cloudflare.com/generate_204`，预期 204 |
+| Telegram 顶层机场优先 | TG：`https://flora.web.telegram.org/apiw1`，预期 501 |
+| AI | 机场名称1日本独立 CF 选点组 |
+| 金融、Talkatone | 三机场共用 AI 的独立组；四机场默认机场名称2香港独立 CF 组 |
+
+独立组与对应普通组使用相同候选和探针，只独立保存选点、手动固定状态；不检测 IP 信誉、不独占节点、不保证固定 IP。三机场仅一个、四机场仅两个，均为可见 `url-test`。AI、金融、Talkatone 可手选当前模型中的独立组，其余业务沿用普通菜单。
+
+Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。业务默认机场／地区、节点筛选、域名覆盖、明确 CF 端点归 AI、特殊节点隔离、统一延迟和探测周期沿用既定要求。DNS 默认机场3优先且无 DIRECT 自动入口，GLOBAL 也使用 CF 实体组；规则更新保留最后的 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
+
+主规则仅“进入有序业务子规则 → REJECT”。业务子规则先返回首个匹配出口；UDP 若不被该出口支持，就在外层拒绝，不继续匹配后续业务。无需 rematch 或逐条复制 UDP 护栏。[子规则实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/rules/logic/logic.go#L167)、[UDP 检查](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/tunnel/tunnel.go#L615)
+
+普通政策沿用“机场名称x优先”“地区-机场名称x优先”名称，改为实体 fallback；Telegram 顶层入口带 `-TG`。仍有效的业务手选保留，消失的选项回到新版默认；不清空缓存，也不创建旧探针别名。同一客户端切换新旧配置可能共享同名组的选择状态，导入后检查实际选择。
+
+此次吸收 [MIHOMO_YAMLS 的公共参数与菜单复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/YAML-%E9%94%9A%E7%82%B9%E7%BB%86%E8%B0%88%EF%BC%9A%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE%E7%9A%84%E7%81%B5%E9%AD%82)、[分层过滤及显式节点来源](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%96%B0%E6%89%8B%E7%AF%87) 的做法：公共值只维护一次，provider 只排公告，自动池独立准入，`use` 明确限定机场，DNS 复用分流规则集。未引入 Smart、均衡策略或新的配置继承机制。
+
+## 兼容版出口与手选
 
 普通自动路径为：业务 select → 机场优先或固定地区 rematch → 共享目标分类 → 对应探针 fallback → 同机场同地区 url-test。同区池按延迟选点，跨地区链路先换同机场地区，再跨机场；固定地区始终留在选定地区。
 
@@ -51,7 +89,7 @@ ruby scripts/build-config.rb --check
 
 各业务 select 保存独立选择；直接手选实际节点互不影响，选择共享辅助组则共用它的内部选择。独立自动池不代表独占节点、出口 IP、带宽或健康记录。同机场同地区仍可能换 IP，固定出口需求应手选实际节点。
 
-## 探针与分流边界
+## 兼容版探针与分流边界
 
 | 探针 | URL | 预期状态 | 用途 |
 |---|---|---|---|
@@ -108,7 +146,7 @@ TCP、UDP 共用业务规则。UDP 命中首个业务后，所选出口不支持
 
 OneDrive、Telegram代理保留独立业务选择；Pixiv 归入海外社媒。国内明确直连规则优先，业务手选不覆盖更早的固定直连规则。Apple、哔哩哔哩、Cloudflare Tunnel 默认直连并保留手选；Tunnel 专用规则限制既定端点及 TCP/UDP 7844，保留真实 IP 解析。
 
-## 迁移与设备使用
+## 兼容版迁移与设备使用
 
 旧版本从 Git 历史获取；现有文件继续作为正式导入入口。旧 `纯下载`／`开发下载` 选择不会自动迁移到 `下载`，旧普通日本池名称也已从敏感业务菜单移除。失效选择回到业务首项；仍有效的普通节点选择继续保留，新默认不覆盖有效缓存选择。迁移后核对自己的业务选择；Emby 和全部节点首次需要主动手选。
 
@@ -146,7 +184,16 @@ ruby scripts/validate-rules.rb
 ruby scripts/validate-rules.rb --config configfull_new.yaml --config configfull_new_4.yaml
 ```
 
-配置检查使用独立只读 CI，在正式配置、维护源、回归脚本或相关校验／工作流变化时触发，也可手动运行；单纯更新规则不触发。自动 CI 仅用固定 v1.19.30 对两份正式配置执行 `static`，保留生成一致性、内核加载和结构约束检查，不下载外部规则快照、不等待故障切换、不重复运行第二内核。使用 runner 预装 Ruby/Python，缓存内核，整个任务限时 5 分钟。涉及运行时分流、测速或 DNS 机制的改动，再按需本地运行 `smoke` 或 `full`。
+配置检查使用独立只读 CI，在新旧配置、维护源、回归脚本或相关校验／工作流变化时触发，也可手动运行；单纯更新规则不触发。自动 CI 仅用固定 v1.19.30 对四份配置执行 `static`，保留生成一致性、内核加载和结构约束检查，不下载外部规则快照、不等待故障切换、不重复运行第二内核。使用 runner 预装 Ruby/Python，缓存内核，整个任务限时 5 分钟。
+
+新版检查默认 `static`；运行机制变更时按需使用 `smoke`，复用本地代理／DNS 夹具验证 CF／TG 菜单、UDP 首命中、DNS/GLOBAL、回退及独立选点，不下载外部规则快照、不复制旧版完整测试。域名规则迁移通过源数据对照验收，模拟流量不代表公网业务可用。
+
+```sh
+python3 scripts/test-config-v2.py --mihomo /path/to/mihomo-v1.19.30
+python3 scripts/test-config-v2.py --suite smoke --mihomo /path/to/mihomo-v1.19.30
+```
+
+以下分级和快照参数仅用于兼容版回归：
 
 | 回归级别 | 覆盖范围 |
 |---|---|
@@ -173,6 +220,9 @@ configfull_new.yaml / configfull_new_4.yaml    可导入的正式配置
 config-source/common.yaml                   共同维护源
 config-source/three-airports.yaml / four-airports.yaml  模型差异
 scripts/build-config.rb                     两模型离线生成及一致性检查
+config-source/v2/                           新版设备设置、出口政策、有序规则
+scripts/build-config-v2.rb                  新版两模型离线生成，不改写兼容版
+scripts/test-config-v2.py                   新版精简 static / 按需 smoke
 scripts/test-config.py / mihomo_fixture.py   共用配置回归与回环夹具
 scripts/validate-rules.rb                    规则产物或指定配置基础校验
 scripts/build/ / scripts/data/              规则构建与手工规则源
