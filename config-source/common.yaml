@@ -218,7 +218,7 @@ regions:
     match: "(?i)(香港|港|\U0001F1ED\U0001F1F0|\\bHK[0-9]*\\b|Hong ?Kong)"
     icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
   日本:
-    match: "(?i)(日本|\U0001F1EF\U0001F1F5|\\bJP[0-9]*\\b|Japan)"
+    match: "(?i)(日本|东京|\U0001F1EF\U0001F1F5|\\bJP[0-9]*\\b|Japan)"
     icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
   新加坡:
     match: "(?i)(新加坡|狮城|\U0001F1F8\U0001F1EC|\\bSG[0-9]*\\b|Singapore)"
