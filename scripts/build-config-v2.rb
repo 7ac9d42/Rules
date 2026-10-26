@@ -114,6 +114,12 @@ def generate(settings, policy, routing, model_name)
   groups << automatic.call('规则更新', 'fallback', 'CF').merge(
     'proxies' => flat_order.call(priorities.fetch(policy.fetch('rule-update-policy')), 'CF') + ['DIRECT'])
 
+  groups.each do |group|
+    next unless group.key?('use')
+    next if independent.key?(group['name']) || group['name'] == '自建/家宽节点'
+    group['exclude-filter'] = policy.fetch('admission').fetch('default-exclude')
+  end
+
   config = settings.dup
   defaults = policy.fetch('provider-defaults')
   config['proxy-providers'] = airports.to_h do |_name, airport|

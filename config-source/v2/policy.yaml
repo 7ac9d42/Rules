@@ -147,6 +147,8 @@ regions:
     icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
 admission:
   special: MITM|pornhub
+  # 普通组不筛入住宅节点；独立专用组及自建/家宽入口例外。
+  default-exclude: 住宅
   standard-exclude: "(?i)(BETA|wcloud|\\btraffic\\b|(?<![0-9.])(?:0\\.(?=[0-9]*[1-9])(?:[0-2][0-9]*|30*)|(?:[5-9]|[1-9][0-9]+)(?:\\.[0-9]+)?)(?:倍|x)(?![0-9A-Za-z.]))"
 
 # 备用排序定义在该机场条目；规则更新保持原先末级 DIRECT。
@@ -167,7 +169,7 @@ independent-pools:
 helpers:
   自建/家宽节点:
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/private_node.png
-    filter: "(?i)(自建|家宽|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))"
+    filter: "(?i)(自建|家宽|住宅|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))"
   低倍率/MITM节点:
     filter-regions:
     - 香港

@@ -157,9 +157,9 @@ def pools(source, mihomo):
     with tempfile.TemporaryDirectory(prefix='mihomo-v2-pools-') as directory, F.Runtime(directory, mihomo, {'/cf': 204}) as rt:
         config = rt.base(source)
         config.update(proxies=[], **{'rules': ['MATCH,REJECT'], 'sub-rules': {}, 'rule-providers': {}})
-        samples = {1: ['东京 fast 1x', '东京 slow 1x', '日本 MITM 1x', '台湾 1x'],
-                   3: ['日本 fast 1x', '日本 slow 1x', '新加坡 fast 1x', '台湾 MITM 1x', '台湾 pornhub 1x', '台湾 1x'],
-                   4: ['香港 fast 1x', '台湾 1x']}
+        samples = {1: ['东京 fast 1x', '东京 slow 1x', '日本 MITM 1x', '日本住宅 1x', '台湾 1x'],
+                   3: ['日本 fast 1x', '日本 slow 1x', '新加坡 fast 1x', '台湾 MITM 1x', '台湾 pornhub 1x', '台湾住宅 1x', '台湾 1x'],
+                   4: ['香港 fast 1x', '香港住宅 0.1x', '台湾 1x']}
         config['proxy-providers'], nodes = {}, {}
         for airport, names in samples.items():
             provider = f'Airport_0{airport}'
@@ -171,7 +171,7 @@ def pools(source, mihomo):
         groups = {g['name']: g for g in source['proxy-groups']}
         root = '机场名称3'
         taiwan = '台湾限定站点'
-        names = {root, PRIVATE, taiwan, *groups[root]['proxies']}
+        names = {root} | {n for n, g in groups.items() if 'use' in g}
         config['proxy-groups'] = [copy.deepcopy(groups[n]) for n in names]
         for g in config['proxy-groups']:
             if g['type'] != 'select':
@@ -180,11 +180,16 @@ def pools(source, mihomo):
         assert rt.group(taiwan)['all'] == [nodes[a][-1] for a in (3, 1, 4)]
         rt.select(taiwan, nodes[1][-1])
         assert rt.group(taiwan)['now'] == nodes[1][-1]
+        residential = {n for values in nodes.values() for n in values if '住宅' in n}
+        assert set(rt.group('自建/家宽节点')['all']) == residential
+        for name in names - {PRIVATE, '自建/家宽节点'}:
+            assert not residential.intersection(rt.group(name)['all']), name
         for values in nodes.values():
             for node in values:
                 assert rt.probe(node, url, 204)
         ordinary = '机场名称1-日本'
-        assert set(rt.group(ordinary)['all']) == set(rt.group(PRIVATE)['all']) == set(nodes[1][:2])
+        assert set(rt.group(ordinary)['all']) == set(nodes[1][:2])
+        assert set(rt.group(PRIVATE)['all']) == set(nodes[1][:2] + [nodes[1][3]])
         rt.select(ordinary, nodes[1][0])
         rt.select(PRIVATE, nodes[1][1])
         assert rt.group(ordinary)['now'] == nodes[1][0] and rt.group(PRIVATE)['now'] == nodes[1][1]
@@ -203,7 +208,7 @@ def pools(source, mihomo):
         rt.http.nodes[nodes[3][0]].statuses.pop('/cf')
         assert rt.probe(nodes[3][0], url, 204)
         assert rt.group(root)['now'] == ordinary
-    print('PASS: 同区测速、台湾节点过滤/手选、地区手选、故障/恢复不漂移、独立固定状态', flush=True)
+    print('PASS: 同区测速、住宅准入例外、台湾节点过滤/手选、地区手选、故障/恢复不漂移、独立固定状态', flush=True)
 
 
 def main():
