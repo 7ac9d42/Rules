@@ -155,7 +155,7 @@ admission:
 reserve-airport: 机场名称4
 rule-update-policy: 机场名称3
 
-# 独立保存选点；机场1先用独立家宽测速组，再回退原地区节点，不检测 IP 信誉。
+# 独立保存选点；机场1先用同地区家宽测速组，再回退原地区节点，不检测 IP 信誉。
 independent-pools:
   专用-机场名称1-日本:
     airport: 机场名称1

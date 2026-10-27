@@ -110,8 +110,10 @@ def generate(settings, policy, routing, model_name)
     airport, region = target.values_at('airport', 'region')
     fields = target.slice('icon').merge('use' => [airports.fetch(airport).fetch('provider')])
     if target['home-pool']
+      home_filter = admission(policy.fetch('helpers').fetch('自建/家宽节点').fetch('filter'), special)
+      region_match = regions.fetch(region).fetch('match').delete_prefix('(?i)')
       groups << automatic.call(target['home-pool'], 'url-test', 'CF').merge(fields,
-        'filter' => admission(policy.fetch('helpers').fetch('自建/家宽节点').fetch('filter'), special))
+        'filter' => home_filter.sub('^', "^(?=[\\s\\S]*(?:#{region_match}))"))
     end
     group = automatic.call(name, target['home-pool'] ? 'fallback' : 'url-test', 'CF').merge(fields,
       'hidden' => false, 'filter' => pool_filter.call(airport, region))

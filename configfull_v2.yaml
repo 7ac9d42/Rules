@@ -773,7 +773,7 @@ proxy-groups:
   expected-status: 204
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
   use: [Airport_01]
-  filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(自建|家宽|住宅|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))))[\\s\\S]*$"
+  filter: "(?i)^(?=[\\s\\S]*(?:(日本|东京|\U0001F1EF\U0001F1F5|\\bJP[0-9]*\\b|Japan)))(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(自建|家宽|住宅|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))))[\\s\\S]*$"
 - name: 专用-机场名称1-日本
   type: fallback
   timeout: 5000

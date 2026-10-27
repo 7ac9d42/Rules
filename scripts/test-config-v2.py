@@ -76,7 +76,7 @@ def static(source, four, policy):
         assert (g['use'], g['filter'], g['url']) == (shared['use'], shared['filter'], shared['url']), name
         if home:
             assert g['proxies'] == [home] and groups[home]['type'] == 'url-test' and groups[home]['hidden'] is True
-            assert groups[home]['use'] == g['use'] and groups[home]['filter'] == groups['自建/家宽节点']['filter']
+            assert groups[home]['use'] == g['use']
     assert 'RULE-SET,cf_sensitive_domain,AI' in source['sub-rules']['分流-业务规则']
 
 
@@ -161,7 +161,7 @@ def pools(source, mihomo):
     with tempfile.TemporaryDirectory(prefix='mihomo-v2-pools-') as directory, F.Runtime(directory, mihomo, {'/cf': 204}) as rt:
         config = rt.base(source)
         config.update(proxies=[], **{'rules': ['MATCH,REJECT'], 'sub-rules': {}, 'rule-providers': {}})
-        samples = {1: ['东京 fast 1x', '东京 slow 1x', '日本 MITM 1x', '日本住宅 fast 1x', '香港家宽 slow 1x', '台湾 1x'],
+        samples = {1: ['东京 fast 1x', '东京 slow 1x', '日本 MITM 1x', '日本住宅 fast 1x', '家宽 东京住宅 slow 1x', '香港住宅 fast 1x', '台湾 1x'],
                    3: ['日本 fast 1x', '日本 slow 1x', '新加坡 fast 1x', '台湾 MITM 1x', '台湾 pornhub 1x', '台湾住宅 1x', '台湾 1x'],
                    4: ['香港 fast 1x', '香港住宅 0.1x', '台湾 1x']}
         config['proxy-providers'], nodes = {}, {}
@@ -186,7 +186,7 @@ def pools(source, mihomo):
         rt.select(taiwan, nodes[1][-1])
         assert rt.group(taiwan)['now'] == nodes[1][-1]
         residential = {n for values in nodes.values() for n in values if '住宅' in n}
-        assert set(rt.group('自建/家宽节点')['all']) == residential | {nodes[1][4]}
+        assert set(rt.group('自建/家宽节点')['all']) == residential
         assert residential <= set(rt.group('全部节点')['all'])
         for name in names - {PRIVATE, home_pool, '自建/家宽节点', '全部节点'}:
             assert not residential.intersection(rt.group(name)['all']), name
@@ -196,7 +196,7 @@ def pools(source, mihomo):
                 assert rt.probe(node, url, 204)
         ordinary = '机场名称1-日本'
         assert set(rt.group(ordinary)['all']) == set(nodes[1][:2])
-        assert rt.group(PRIVATE)['all'] == [home_pool] + nodes[1][:2] + [nodes[1][3]]
+        assert rt.group(PRIVATE)['all'] == [home_pool] + nodes[1][:2] + nodes[1][3:5]
         assert rt.group(home_pool)['all'] == nodes[1][3:5]
         F.until(lambda: rt.probe(home_pool, url, 204))
         assert rt.group(home_pool)['now'] == nodes[1][3]

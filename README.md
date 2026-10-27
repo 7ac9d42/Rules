@@ -61,7 +61,7 @@ ruby scripts/build-config-v2.rb --check
 | AI | 机场名称1日本独立 CF 选点组 |
 | 金融、Talkatone | 三机场共用 AI 的独立组；四机场默认机场名称2香港独立 CF 组 |
 
-原先所称的“敏感专用测速池”就是独立选点组：与对应普通组共用订阅和 CF 测速结果，独立保存选点、手动固定状态，不检测 IP 信誉。三机场一个专用入口、四机场两个，只向 AI、金融、Talkatone 开放。`专用-机场名称1-日本` 改为可见 `fallback`，首项是隐藏的 `机场名称1-家宽`，后面完整保留原有日本节点，包括住宅节点。家宽组只使用机场1订阅，复用 `自建/家宽节点` 的筛选条件，不限定地区，组内 `url-test` 择优；全部家宽不可用或家宽组为空时，才按顺序回退到后面的日本节点。家宽恢复且探针确认后自动切回。每份配置只增加这一个组，入口在 `independent-pools` 用 `home-pool` 指定；四机场的 `专用-机场名称2-香港` 继续保持可见 `url-test`。[测速选择](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/urltest.go#L96)、[顺序回退](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/fallback.go#L98)
+原先所称的“敏感专用测速池”就是独立选点组：与对应普通组共用订阅和 CF 测速结果，独立保存选点、手动固定状态，不检测 IP 信誉。三机场一个专用入口、四机场两个，只向 AI、金融、Talkatone 开放。`专用-机场名称1-日本` 改为可见 `fallback`，首项是隐藏的 `机场名称1-家宽`，后面完整保留原有日本节点，包括住宅节点。家宽组只使用机场1订阅，同时满足 `自建/家宽节点` 的关键词和外层专用组的日本地区识别（含东京），组内 `url-test` 择优；全部家宽不可用或家宽组为空时，才按顺序回退到后面的日本节点。家宽恢复且探针确认后自动切回。每份配置只增加这一个组，入口在 `independent-pools` 用 `home-pool` 指定；四机场的 `专用-机场名称2-香港` 继续保持可见 `url-test`。[测速选择](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/urltest.go#L96)、[顺序回退](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/adapter/outboundgroup/fallback.go#L98)
 
 家宽优先仅在自动选择时生效。原专用入口名称保留，若曾手动固定节点，导入后需在面板“恢复自动”；不会清除其他手选状态。家宽测速复用 provider 周期，专用入口沿用 CF fallback 的 30 秒按需检查；切换还取决于健康记录及选点缓存，并非立即完成。CF 可达不代表 AI 业务、质询或地区解锁可用。
 
