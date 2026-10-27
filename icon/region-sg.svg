@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <clipPath id="tile"><rect x="1" y="1" width="62" height="62" rx="16"/></clipPath>
+    <path id="star" d="m0-3.2.9 2.2 2.4.2-1.8 1.6.5 2.4L0 2-2 3.2l.5-2.4-1.8-1.6 2.4-.2Z"/>
+  </defs>
+  <g clip-path="url(#tile)">
+    <path d="M0 0h64v64H0Z" fill="#f8fafc"/>
+    <path d="M0 0h64v32H0Z" fill="#e74750"/>
+    <circle cx="18" cy="20" r="10" fill="#fff"/>
+    <circle cx="22" cy="17" r="8.5" fill="#e74750"/>
+    <g fill="#fff">
+      <use href="#star" transform="translate(39 10)"/>
+      <use href="#star" transform="translate(48 17)"/>
+      <use href="#star" transform="translate(45 27)"/>
+      <use href="#star" transform="translate(33 27)"/>
+      <use href="#star" transform="translate(30 17)"/>
+    </g>
+  </g>
+  <rect x="1" y="1" width="62" height="62" rx="16" fill="none" stroke="#94a3b8" stroke-opacity=".45"/>
+</svg>

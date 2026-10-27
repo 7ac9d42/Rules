@@ -51,6 +51,8 @@ airports:
   机场名称1:
     provider: Airport_01
     url: 订阅链接1
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-1.svg
+    tg-icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-1-tg.svg
     override:
       additional-prefix: "[机场名称1]"
       skip-cert-verify: false
@@ -64,6 +66,8 @@ airports:
   机场名称2:
     provider: Airport_02
     url: 订阅链接2
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-2.svg
+    tg-icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-2-tg.svg
     override:
       additional-prefix: "[机场名称2]"
       additional-suffix: " [家宽]"
@@ -76,6 +80,8 @@ airports:
   机场名称3:
     provider: Airport_03
     url: 订阅链接3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-3.svg
+    tg-icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-3-tg.svg
     override:
       additional-prefix: "[机场名称3]"
       skip-cert-verify: false
@@ -92,6 +98,8 @@ airports:
   机场名称4:
     provider: Airport_04
     url: 订阅链接4
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-4.svg
+    tg-icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-4-tg.svg
     override:
       additional-prefix: "[机场名称4]"
       skip-cert-verify: false
@@ -132,19 +140,19 @@ fallback-defaults:
 regions:
   香港:
     match: "(?i)(香港|港|\U0001F1ED\U0001F1F0|\\bHK[0-9]*\\b|Hong ?Kong)"
-    icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Hongkong.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/region-hk.svg
   日本:
     match: "(?i)(日本|东京|\U0001F1EF\U0001F1F5|\\bJP[0-9]*\\b|Japan)"
-    icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Japan.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/region-jp.svg
   新加坡:
     match: "(?i)(新加坡|狮城|\U0001F1F8\U0001F1EC|\\bSG[0-9]*\\b|Singapore)"
-    icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Singapore.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/region-sg.svg
   台湾:
     match: "(?i)(台湾|台灣|臺灣|\U0001F1F9\U0001F1FC|\\bTW[0-9]*\\b|\\bTWN[0-9]*\\b|Taiwan|Taipei|New ?Taipei|台北|臺北|新北|\\bTPE[0-9]*\\b|Taichung|台中|臺中|\\bRMQ[0-9]*\\b|Tainan|台南|臺南|\\bTNN[0-9]*\\b|Kaohsiung|高雄|\\bKHH[0-9]*\\b)"
-    icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/Taiwan_China.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
   美国:
     match: "(?i)(美国|\U0001F1FA\U0001F1F8|\U0001F1FA\U0001F1F2|\\bUS[0-9]*\\b|\\bUSA[0-9]*\\b|America|United States|UnitedStates|Los Angeles|Chicago|Ashburn|Seattle|Kansas)"
-    icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/America.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/region-us.svg
 admission:
   special: MITM|pornhub
   # 普通组不筛入住宅节点；独立专用组、自建/家宽及全部节点入口例外。
@@ -154,6 +162,7 @@ admission:
 # 备用排序定义在该机场条目；规则更新保持原先末级 DIRECT。
 reserve-airport: 机场名称4
 rule-update-policy: 机场名称3
+rule-update-icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/rule-update.svg
 
 # 独立保存选点；机场1先用同地区家宽测速组，再回退原地区节点，不检测 IP 信誉。
 independent-pools:
@@ -165,6 +174,7 @@ independent-pools:
   专用-机场名称2-香港:
     airport: 机场名称2
     region: 香港
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
 
 # 辅助入口共享内部选择；全部节点和低倍率入口默认拒绝，必须手选。
 helpers:
@@ -177,10 +187,11 @@ helpers:
     - 日本
     - 新加坡
     filter-tags: "(?<![0-9.])0\\.(?=[0-9]*[1-9])(?:[0-4][0-9]*|50*)(?:倍|x)(?![0-9A-Za-z.])|MITM|pornhub"
-    icon: https://pub-8feead0908f649a8b94397f152fb9cba.r2.dev/select.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/low-cost.svg
     proxies:
     - REJECT
   全部节点:
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/nodes.svg
     proxies:
     - REJECT
 manual-menu:
@@ -209,7 +220,7 @@ display-order:
 businesses:
   默认代理:
     default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/proxy.svg
   AI:
     default: 专用-机场名称1-日本
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
@@ -222,7 +233,7 @@ businesses:
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   下载:
     default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/download.svg
   Speedtest:
     default: 默认代理
     extra:
@@ -230,7 +241,7 @@ businesses:
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/speedtest.png
   金融:
     default: 专用-机场名称1-日本
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/wise.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/finance.svg
     four-default: 专用-机场名称2-香港
     independent: true
   Talkatone:
@@ -243,16 +254,16 @@ businesses:
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
   海外通讯:
     default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/communication.svg
   Microsoft站点:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
   OneDrive:
     default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/cloud-drive.svg
   FCM:
     default: 机场名称1
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/push.svg
   TikTok站点:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
@@ -262,7 +273,7 @@ businesses:
     four-default: 机场名称2
   海外电商:
     default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.svg
   游戏平台:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
@@ -313,13 +324,13 @@ businesses:
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
   Apple:
     default: DIRECT
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.svg
   DNS代理:
     default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/dns.svg
   GLOBAL:
     default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global.png
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/globe.svg
   Cloudflare Tunnel:
     default: DIRECT
     icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png

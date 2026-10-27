@@ -90,13 +90,15 @@ def generate(settings, policy, routing, model_name)
     end
     groups << automatic.call(pool_name.call(reserve, '备用', probe), 'fallback', probe).merge(
       'use' => [reserve_data.fetch('provider')],
+      'icon' => reserve_data.fetch(probe == 'TG' ? 'tg-icon' : 'icon'),
       'filter' => reserve_data.fetch('region-order').map do |region|
         pattern = regions.key?(region) ? regions[region].fetch('match') : reserve_data.fetch('extra-match').fetch(region)
         admission(pattern, special)
       end.join('`'))
     priorities.each do |name, order|
       groups << {'name' => probe == 'CF' ? name : "#{name}-TG", 'type' => 'select',
-                 'hidden' => false, 'empty-fallback' => 'REJECT', 'proxies' => flat_order.call(order, probe)}
+                 'hidden' => false, 'empty-fallback' => 'REJECT', 'proxies' => flat_order.call(order, probe),
+                 'icon' => airports.fetch(name).fetch(probe == 'TG' ? 'tg-icon' : 'icon')}
       next if probe == 'TG'
       automatic_regions.each do |region, details|
         groups << automatic.call("#{region}-#{name}", 'fallback', 'CF').merge(
@@ -113,6 +115,7 @@ def generate(settings, policy, routing, model_name)
       home_filter = admission(policy.fetch('helpers').fetch('自建/家宽节点').fetch('filter'), special)
       region_match = regions.fetch(region).fetch('match').delete_prefix('(?i)')
       groups << automatic.call(target['home-pool'], 'url-test', 'CF').merge(fields,
+        'icon' => policy.fetch('helpers').fetch('自建/家宽节点').fetch('icon'),
         'filter' => home_filter.sub('^', "^(?=[\\s\\S]*(?:#{region_match}))"))
     end
     group = automatic.call(name, target['home-pool'] ? 'fallback' : 'url-test', 'CF').merge(fields,
@@ -121,7 +124,8 @@ def generate(settings, policy, routing, model_name)
     groups << group
   end
   groups << automatic.call('规则更新', 'fallback', 'CF').merge(
-    'proxies' => flat_order.call(priorities.fetch(policy.fetch('rule-update-policy')), 'CF') + ['DIRECT'])
+    'proxies' => flat_order.call(priorities.fetch(policy.fetch('rule-update-policy')), 'CF') + ['DIRECT'],
+    'icon' => policy.fetch('rule-update-icon'))
 
   groups.each do |group|
     next unless group.key?('use')
