@@ -130,6 +130,13 @@ def generate(settings, policy, routing, model_name)
     group['exclude-filter'] = policy.fetch('admission').fetch('default-exclude')
   end
 
+  # 仅排序组定义；组内候选及业务规则顺序保持不变。
+  display_ranks = (policy.fetch('businesses').keys + policy.fetch('display-order')).each_with_index.to_h
+  groups = groups.each_with_index.sort_by do |group, index|
+    level = group['hidden'] ? 2 : (policy.fetch('businesses').key?(group['name']) ? 0 : 1)
+    [level, display_ranks.fetch(group['name'], display_ranks.length), index]
+  end.map(&:first)
+
   config = settings.dup
   defaults = policy.fetch('provider-defaults')
   config['proxy-providers'] = airports.to_h do |_name, airport|

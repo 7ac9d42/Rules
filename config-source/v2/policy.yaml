@@ -188,18 +188,46 @@ manual-menu:
 - 全部节点
 - DIRECT
 
-# default 直接写最终出口；four-default 只覆盖四机场默认。independent 追加独立选点组，extra 追加本业务选项。
+# 展示分层：业务入口、下层可见、隐藏。业务按下方声明顺序；其余层的常用组先列于此。
+# 只调整面板组顺序，不改变候选顺序；未启用组跳过，未列出组保持生成顺序。
+display-order:
+- 机场名称3
+- 机场名称1
+- 机场名称2
+- 专用-机场名称1-日本
+- 专用-机场名称2-香港
+- 全部节点
+- 自建/家宽节点
+- 机场名称1-TG
+- 机场名称3-TG
+- 机场名称2-TG
+- 低倍率/MITM节点
+- 机场名称1-家宽
+
+# 业务按常用/维护频率排列；default 直接写最终出口，four-default 只覆盖四机场默认。
+# independent 追加独立选点组，extra 追加本业务选项；本段顺序不改变分流规则顺序。
 businesses:
-  DNS代理:
+  默认代理:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
-  Cloudflare Tunnel:
-    default: DIRECT
-    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
   AI:
     default: 专用-机场名称1-日本
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
     independent: true
+  Telegram代理:
+    default: 机场名称1-TG
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
+  Google:
+    default: 机场名称1
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
+  下载:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
+  Speedtest:
+    default: 默认代理
+    extra:
+    - 默认代理
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/speedtest.png
   金融:
     default: 专用-机场名称1-日本
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/wise.png
@@ -210,27 +238,38 @@ businesses:
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
     four-default: 专用-机场名称2-香港
     independent: true
-  Google:
-    default: 机场名称1
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
-  FCM:
-    default: 机场名称1
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
+  海外社媒:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
+  海外通讯:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
   Microsoft站点:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
   OneDrive:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
-  Telegram代理:
-    default: 机场名称1-TG
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
-  海外通讯:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
+  FCM:
+    default: 机场名称1
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   TikTok站点:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
+  Reddit:
+    default: 机场名称1
+    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
+    four-default: 机场名称2
+  海外电商:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
+  游戏平台:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
+  Spotify:
+    default: 机场名称1
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
+    four-default: 机场名称2
   Netflix:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/netflix.png
@@ -247,46 +286,17 @@ businesses:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
     four-default: 机场名称2
+  Emby:
+    default: 低倍率/MITM节点
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/emby.png
+    extra:
+    - 低倍率/MITM节点
+  哔哩哔哩:
+    default: DIRECT
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
   哔哩东南亚站点:
     default: 新加坡-机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
-  Spotify:
-    default: 机场名称1
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
-    four-default: 机场名称2
-  TVB站点:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
-  境外影音:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
-  Reddit:
-    default: 机场名称1
-    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
-    four-default: 机场名称2
-  海外社媒:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
-  海外电商:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.png
-  Kryptex:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/automation.png
-  Speedtest:
-    default: 默认代理
-    extra:
-    - 默认代理
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/speedtest.png
-  下载:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
-  游戏平台:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/game.png
-  默认代理:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
   台湾限定站点:
     region: 台湾
     use:
@@ -295,23 +305,30 @@ businesses:
     - Airport_02
     - Airport_04
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
-  Emby:
-    default: 低倍率/MITM节点
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/emby.png
-    extra:
-    - 低倍率/MITM节点
+  TVB站点:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
+  境外影音:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
   Apple:
     default: DIRECT
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.png
-  哔哩哔哩:
+  DNS代理:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/select.png
+  GLOBAL:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global.png
+  Cloudflare Tunnel:
     default: DIRECT
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
+    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
+  Kryptex:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/automation.png
   隐私拦截:
     default: REJECT
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/block.png
     extra:
     - REJECT
     - REJECT-DROP
-  GLOBAL:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global.png
