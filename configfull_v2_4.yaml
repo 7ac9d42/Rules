@@ -222,6 +222,11 @@ proxy-groups:
   proxies: [专用-机场名称1-日本, 专用-机场名称2-香港, 机场名称1, 机场名称2, 机场名称3, 香港-机场名称1, 香港-机场名称2, 香港-机场名称3, 日本-机场名称1, 日本-机场名称2, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称2, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称2, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
+- name: CF
+  type: select
+  proxies: [机场名称1, 机场名称2, 机场名称3, 香港-机场名称1, 香港-机场名称2, 香港-机场名称3, 日本-机场名称1, 日本-机场名称2, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称2, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称2, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
+  empty-fallback: REJECT
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
 - name: Telegram代理
   type: select
   proxies: [机场名称1-TG, 机场名称2-TG, 机场名称3-TG, 香港-机场名称1, 香港-机场名称2, 香港-机场名称3, 日本-机场名称1, 日本-机场名称2, 日本-机场名称3, 新加坡-机场名称1, 新加坡-机场名称2, 新加坡-机场名称3, 美国-机场名称1, 美国-机场名称2, 美国-机场名称3, 自建/家宽节点, 全部节点, DIRECT]
@@ -1090,10 +1095,10 @@ sub-rules:
   - DOMAIN-SUFFIX,kryptex.com,Kryptex
   - DOMAIN-SUFFIX,kryptex.org,Kryptex
   - DOMAIN-SUFFIX,kryptex.network,Kryptex
+  - RULE-SET,cf_sensitive_domain,CF
   - DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$,AI
   - RULE-SET,ai_extra_domain,AI
   - RULE-SET,ai!cn_domain,AI
-  - RULE-SET,cf_sensitive_domain,AI
   - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
   - RULE-SET,telegram_domain,Telegram代理
   - RULE-SET,bahamut_domain,台湾限定站点

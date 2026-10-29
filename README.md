@@ -8,8 +8,8 @@
 |---|---|
 | [configfull_new.yaml](configfull_new.yaml) | 兼容版三机场：机场名称1、3、4，120 个组 |
 | [configfull_new_4.yaml](configfull_new_4.yaml) | 兼容版四机场：增加机场名称2家宽，160 个组 |
-| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，70 个组，无 rematch |
-| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，85 个组，无 rematch |
+| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，71 个组，无 rematch |
+| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，86 个组，无 rematch |
 
 每次导入一份完整配置，无需拼接。新旧配置均以官方 **Mihomo v1.19.30** 为兼容基线。新版独立试用，不替换旧下载地址、维护源或生成命令；规则库继续共享，每日规则更新照常进行。
 
@@ -45,7 +45,7 @@ ruby scripts/build-config-v2.rb --check
 
 普通运行链路为“业务 select → 机场 select → 同区 url-test”：机场入口可见，由用户手选地区组，入口自身不自动切换候选；原有候选顺序保留，首项作为初始选择。固定地区入口仍为 fallback，只在同地区跨机场回退；手选机场4备用时，该备用组仍可跨地区回退。业务也可选择独立组或辅助入口。普通测速使用 CF；Telegram 的机场入口使用 TG 地区组，固定地区仍复用普通 CF 政策。探针由菜单决定，不再按目标域名二次分类。
 
-组展示依次为“顶层业务 → 下层可见组 → 隐藏组”。顶层按 `businesses` 的声明顺序，将默认代理、AI、Telegram、Google、下载、Speedtest 前置；下层按 `display-order` 将常用机场、专用及手选入口前置，隐藏家宽组排在隐藏层首位，未列出的组保留原生成顺序。此顺序按使用与维护习惯安排，可在维护源调整；只改变组定义的排列，不改变组内候选、默认出口或分流规则。
+组展示依次为“顶层业务 → 下层可见组 → 隐藏组”。顶层按 `businesses` 的声明顺序，将默认代理、AI、CF、Telegram、Google、下载、Speedtest 前置；下层按 `display-order` 将常用机场、专用及手选入口前置，隐藏家宽组排在隐藏层首位，未列出的组保留原生成顺序。此顺序按使用与维护习惯安排，可在维护源调整；只改变组定义的排列，不改变组内候选、默认出口或分流规则。
 
 每个组均配置图标。品牌业务保留可辨识的品牌图形；通用功能使用仓库内轻量 SVG，机场用固定配色和编号区分，TG 入口用纸飞机，地区组用对应旗帜。机场图标在各机场的 `icon`／`tg-icon` 中维护，地区、业务及辅助入口使用各自的 `icon`；规则更新使用 `rule-update-icon`。新增图标文件须与配置一起推送，远端图标 URL 才会生效；本地预览直接嵌入图标，仍不纳入 Git。
 
@@ -61,6 +61,7 @@ ruby scripts/build-config-v2.rb --check
 | Telegram 机场入口下的地区组 | TG：`https://flora.web.telegram.org/apiw1`，预期 501 |
 | Telegram代理 | 机场名称1-TG |
 | Google、FCM | 机场名称1 |
+| CF | 机场名称1，使用普通机场／地区菜单，独立于 AI 选择 |
 | Speedtest | 默认代理，随后列出机场及其他选项；跟随默认代理当前选择 |
 | AI | 机场名称1日本独立 CF 选点组 |
 | 金融、Talkatone | 三机场共用 AI 的独立组；四机场默认机场名称2香港独立 CF 组 |
@@ -69,7 +70,9 @@ ruby scripts/build-config-v2.rb --check
 
 家宽优先仅在自动选择时生效。原专用入口名称保留，若曾手动固定节点，导入后需在面板“恢复自动”；不会清除其他手选状态。家宽测速复用 provider 周期，专用入口沿用 CF fallback 的 30 秒按需检查；切换还取决于健康记录及选点缓存，并非立即完成。CF 可达不代表 AI 业务、质询或地区解锁可用。
 
-Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。节点筛选、域名覆盖、明确 CF 端点归 AI、特殊节点隔离和统一延迟保持原有规则。DNS代理和 GLOBAL 默认选择机场名称3；DNS代理菜单无 DIRECT 选项。机场4备用、固定地区和规则更新保留自动回退，规则更新最后以 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
+新版将明确 CF 端点交给独立的 `CF` select，默认 `机场名称1`，不再跟随 AI，也不使用 AI 专用池。沿用 `cf_sensitive_domain` 的八项质询、管理 API／登录、Access 认证及探针端点；该规则先于国外 AI 集，避免重叠覆盖。其他 CF 托管站点及网站自身质询路径仍按原站点规则处理，不扩大覆盖；Cloudflare Tunnel 保持独立。兼容版仍沿用原有 AI 跟随行为。
+
+Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。节点筛选、域名覆盖、特殊节点隔离和统一延迟保持原有规则。DNS代理和 GLOBAL 默认选择机场名称3；DNS代理菜单无 DIRECT 选项。机场4备用、固定地区和规则更新保留自动回退，规则更新最后以 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
 
 主规则仅“进入有序业务子规则 → REJECT”。业务子规则先返回首个匹配出口；UDP 若不被该出口支持，就在外层拒绝，不继续匹配后续业务。无需 rematch 或逐条复制 UDP 护栏。[子规则实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/rules/logic/logic.go#L167)、[UDP 检查](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/tunnel/tunnel.go#L615)
 

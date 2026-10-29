@@ -77,14 +77,16 @@ def static(source, four, policy):
         if home:
             assert g['proxies'] == [home] and groups[home]['type'] == 'url-test' and groups[home]['hidden'] is True
             assert groups[home]['use'] == g['use']
-    assert 'RULE-SET,cf_sensitive_domain,AI' in source['sub-rules']['分流-业务规则']
+    rules = source['sub-rules']['分流-业务规则']
+    assert rules.index('RULE-SET,cf_sensitive_domain,CF') < rules.index('RULE-SET,ai_extra_domain,AI')
 
 
 def routing(source, mihomo):
     # 保留真实菜单与主入口，只替换网络依赖；域名覆盖由维护源对照验收。
     with tempfile.TemporaryDirectory(prefix='mihomo-v2-route-') as directory, ExitStack() as sockets, F.Runtime(directory, mihomo) as rt:
         config = rt.base(source)
-        config['rule-providers'], config['proxy-groups'] = {}, []
+        config['rule-providers'] = {'cf_sensitive_domain': copy.deepcopy(source['rule-providers']['cf_sensitive_domain'])}
+        config['proxy-groups'] = []
         for original in source['proxy-groups']:
             name = original['name']
             if original['type'] == 'select':
@@ -102,6 +104,7 @@ def routing(source, mihomo):
                 g['proxies'].append(label)
             config['proxy-groups'].append(g)
         config['sub-rules']['分流-业务规则'] = [
+            'RULE-SET,cf_sensitive_domain,CF',
             'DOMAIN,telegram.fixture.test,Telegram代理', 'DOMAIN,ai.fixture.test,AI',
             'DOMAIN,speedtest.fixture.test,Speedtest',
             'DOMAIN,udp.fixture.test,默认代理', 'DOMAIN,udp.fixture.test,下载', 'MATCH,默认代理']
@@ -118,7 +121,7 @@ def routing(source, mihomo):
         rt.start(config)
         # 机制见证显式选择入口；用户在 policy 调整默认项无需同步修改用例。
         for name, choice in [('默认代理', '机场名称3'), ('DNS代理', '机场名称3'),
-                             ('Telegram代理', '机场名称1-TG'), ('Speedtest', '默认代理'), ('AI', PRIVATE)]:
+                             ('Telegram代理', '机场名称1-TG'), ('Speedtest', '默认代理'), ('AI', PRIVATE), ('CF', '机场名称1')]:
             rt.select(name, choice)
         assert rt.request('ordinary.fixture.test') == '机场名称3-日本'
         assert rt.request('speedtest.fixture.test') == '机场名称3-日本'
@@ -129,6 +132,13 @@ def routing(source, mihomo):
         rt.select('Telegram代理', '日本-机场名称1')
         assert rt.request('telegram.fixture.test') == '日本-机场名称1'
         assert rt.request('ai.fixture.test') == PRIVATE
+        assert rt.request('challenges.cloudflare.com') == '机场名称1-日本'
+        rt.select('CF', '机场名称3')
+        assert rt.request('challenges.cloudflare.com') == '机场名称3-日本'
+        assert rt.request('ai.fixture.test') == PRIVATE
+        rt.select('AI', '机场名称1')
+        assert rt.request('challenges.cloudflare.com') == '机场名称3-日本'
+        rt.select('AI', PRIVATE)
         rt.select('下载', '机场名称1')
         rt.select('机场名称1', 'udp-机场名称1')
         # 后续业务确实能收发 UDP；若首命中错误穿透，下面应收到机场1而非拒绝。
@@ -152,7 +162,7 @@ def routing(source, mihomo):
         rt.api('/configs', 'PATCH', {'mode': 'global'})
         rt.select('GLOBAL', '日本-机场名称1')
         assert rt.request('telegram.fixture.test') == '日本-机场名称1'
-    print('PASS: CF/TG 菜单、Speedtest 跟随、固定地区、UDP 首命中、DNS/GLOBAL', flush=True)
+    print('PASS: CF/AI 独立选择、CF/TG 菜单、Speedtest 跟随、固定地区、UDP 首命中、DNS/GLOBAL', flush=True)
 
 
 def pools(source, mihomo):

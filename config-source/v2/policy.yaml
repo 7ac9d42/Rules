@@ -225,6 +225,9 @@ businesses:
     default: 专用-机场名称1-日本
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
     independent: true
+  CF:
+    default: 机场名称1
+    icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cloudflare.png
   Telegram代理:
     default: 机场名称1-TG
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/telegram.png
