@@ -1,6 +1,6 @@
 # 新版出口政策；修改后运行 ruby scripts/build-config-v2.rb。
 ---
-# 模型声明启用机场及候选顺序；机场入口手选，固定地区仅引用本机场同区组；规则更新沿用此顺序回退。
+# 模型声明启用机场及候选顺序；机场入口手选，固定地区直接使用本机场同区测速组；规则更新沿用此顺序回退。
 models:
   three-airports:
     active-airports:
@@ -312,7 +312,7 @@ businesses:
     default: DIRECT
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
   哔哩东南亚站点:
-    default: 新加坡-机场名称3
+    default: 机场名称3-新加坡
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibilit.png
   台湾限定站点:
     region: 台湾

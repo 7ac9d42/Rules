@@ -66,13 +66,14 @@ def static(source, four, policy):
     for name in model['priority-order']:
         for suffix in ('', '-TG'):
             assert groups[name + suffix]['type'] == 'select' and groups[name + suffix]['hidden'] is False
-    assert '日本-机场名称1' in groups['Telegram代理']['proxies']
+    assert '机场名称1-日本' in groups['Telegram代理']['proxies']
     assert 'DNS代理' not in groups
     assert '#DNS代理' not in json.dumps(source['dns'], ensure_ascii=False)
     for region in policy['regions'].keys() - {'台湾'}:
         for airport in model['priority-order']:
-            g = groups[f'{region}-{airport}']
-            assert g['proxies'] == [f'{airport}-{region}'] and 'use' not in g
+            g = groups[f'{airport}-{region}']
+            assert g['type'] == 'url-test' and 'proxies' not in g
+            assert g['use'] == [policy['airports'][airport]['provider']]
     assert 'RULE-SET,github_domain,Github' in source['sub-rules']['分流-业务规则']
     assert 'DOMAIN,download.proxmox.com,下载' in source['sub-rules']['分流-业务规则']
     assert groups['规则更新']['proxies'][-1] == 'DIRECT'
@@ -136,7 +137,7 @@ def routing(source, mihomo):
         assert rt.request('speedtest.fixture.test') == '机场名称1-日本'
         rt.select('默认代理', '机场名称3')
         assert rt.request('telegram.fixture.test') == '机场名称1-日本-TG'
-        rt.select('Telegram代理', '日本-机场名称1')
+        rt.select('Telegram代理', '机场名称1-日本')
         assert rt.request('telegram.fixture.test') == '机场名称1-日本'
         assert rt.request('ai.fixture.test') == PRIVATE
         assert rt.request('challenges.cloudflare.com') == '机场名称1-日本'
@@ -172,7 +173,7 @@ def routing(source, mihomo):
         assert code == 0 and ips == ['203.0.113.20'], (code, ips)
         assert {n for n, q in upstream['nodes'] if q == ('dns-switched.fixture.test', 1)} == {'机场名称1-日本'}
         rt.api('/configs', 'PATCH', {'mode': 'global'})
-        rt.select('GLOBAL', '日本-机场名称1')
+        rt.select('GLOBAL', '机场名称1-日本')
         assert rt.request('telegram.fixture.test') == '机场名称1-日本'
     print('PASS: CF/AI 独立选择、CF/TG 菜单、Speedtest 跟随、固定地区、UDP 首命中、DNS/GLOBAL', flush=True)
 

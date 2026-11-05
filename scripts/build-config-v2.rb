@@ -46,7 +46,7 @@ def generate(settings, policy, routing, model_name)
     policy.fetch('airports').fetch(target.fetch('airport'))
     airports.key?(target.fetch('airport'))
   end
-  fixed_regions = automatic_regions.keys.flat_map { |region| priorities.keys.map { |n| "#{region}-#{n}" } }
+  fixed_regions = automatic_regions.keys.flat_map { |region| priorities.keys.map { |n| pool_name.call(n, region, 'CF') } }
   menu = priorities.keys + fixed_regions + policy.fetch('manual-menu')
 
   groups = policy.fetch('businesses').map do |name, business|
@@ -98,12 +98,6 @@ def generate(settings, policy, routing, model_name)
       groups << {'name' => probe == 'CF' ? name : "#{name}-TG", 'type' => 'select',
                  'hidden' => false, 'empty-fallback' => 'REJECT', 'proxies' => flat_order.call(order, probe),
                  'icon' => airports.fetch(name).fetch(probe == 'TG' ? 'tg-icon' : 'icon')}
-      next if probe == 'TG'
-      automatic_regions.each do |region, details|
-        groups << {'name' => "#{region}-#{name}", 'type' => 'select', 'hidden' => true,
-                   'empty-fallback' => 'REJECT', 'proxies' => [pool_name.call(name, region, 'CF')],
-                   'icon' => details.fetch('icon')}
-      end
     end
   end
   independent.each do |name, target|
