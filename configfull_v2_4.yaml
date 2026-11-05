@@ -874,6 +874,7 @@ sub-rules:
   - DOMAIN,hk.tv.global.mi.com,默认代理
   - DOMAIN,ykk.emby.moe,Emby
   - IP-CIDR,189.24.106.132/32,DIRECT,no-resolve
+  - DOMAIN,www.csgraduates.com,DIRECT
   - DOMAIN-SUFFIX,kuapt.top,DIRECT
   - DOMAIN-SUFFIX,catxxp123.top,DIRECT
   - DOMAIN-SUFFIX,c4lm0n.top,DIRECT
