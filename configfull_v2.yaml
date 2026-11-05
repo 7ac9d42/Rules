@@ -373,15 +373,27 @@ proxy-groups:
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/block.png
 - name: 机场名称3
-  type: select
-  hidden: false
+  type: fallback
+  timeout: 5000
+  max-failed-times: 3
   empty-fallback: REJECT
+  hidden: false
+  interval: 30
+  lazy: true
+  url: https://cp.cloudflare.com/generate_204
+  expected-status: 204
   proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国, 机场名称1-日本, 机场名称1-香港, 机场名称1-新加坡, 机场名称1-美国, 机场名称4-备用]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-3.svg
 - name: 机场名称1
-  type: select
-  hidden: false
+  type: fallback
+  timeout: 5000
+  max-failed-times: 3
   empty-fallback: REJECT
+  hidden: false
+  interval: 30
+  lazy: true
+  url: https://cp.cloudflare.com/generate_204
+  expected-status: 204
   proxies: [机场名称1-日本, 机场名称1-香港, 机场名称1-新加坡, 机场名称1-美国, 机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国, 机场名称4-备用]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-1.svg
 - name: 专用-机场名称1-日本
@@ -409,15 +421,27 @@ proxy-groups:
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/private_node.png
   filter: "(?i)^(?![\\s\\S]*(?:MITM|pornhub))(?=[\\s\\S]*(?:(自建|家宽|住宅|(?<![0-9A-Za-z_])(?:The_house|Self_Back|private|home)(?![0-9A-Za-z_]))))[\\s\\S]*$"
 - name: 机场名称1-TG
-  type: select
-  hidden: false
+  type: fallback
+  timeout: 5000
+  max-failed-times: 3
   empty-fallback: REJECT
+  hidden: false
+  interval: 30
+  lazy: true
+  url: https://flora.web.telegram.org/apiw1
+  expected-status: 501
   proxies: [机场名称1-日本-TG, 机场名称1-香港-TG, 机场名称1-新加坡-TG, 机场名称1-美国-TG, 机场名称3-日本-TG, 机场名称3-新加坡-TG, 机场名称3-香港-TG, 机场名称3-美国-TG, 机场名称4-备用-TG]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-1-tg.svg
 - name: 机场名称3-TG
-  type: select
-  hidden: false
+  type: fallback
+  timeout: 5000
+  max-failed-times: 3
   empty-fallback: REJECT
+  hidden: false
+  interval: 30
+  lazy: true
+  url: https://flora.web.telegram.org/apiw1
+  expected-status: 501
   proxies: [机场名称3-日本-TG, 机场名称3-新加坡-TG, 机场名称3-香港-TG, 机场名称3-美国-TG, 机场名称1-日本-TG, 机场名称1-香港-TG, 机场名称1-新加坡-TG, 机场名称1-美国-TG, 机场名称4-备用-TG]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-3-tg.svg
 - name: 低倍率/MITM节点

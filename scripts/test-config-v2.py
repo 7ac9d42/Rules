@@ -65,7 +65,7 @@ def static(source, four, policy):
     model = policy['models']['four-airports' if four else 'three-airports']
     for name in model['priority-order']:
         for suffix in ('', '-TG'):
-            assert groups[name + suffix]['type'] == 'select' and groups[name + suffix]['hidden'] is False
+            assert groups[name + suffix]['type'] == 'fallback' and groups[name + suffix]['hidden'] is False
     assert '机场名称1-日本' in groups['Telegram代理']['proxies']
     assert 'DNS代理' not in groups
     assert '#DNS代理' not in json.dumps(source['dns'], ensure_ascii=False)
@@ -97,8 +97,9 @@ def routing(source, mihomo):
         config['proxy-groups'] = []
         for original in source['proxy-groups']:
             name = original['name']
-            if original['type'] == 'select':
+            if original['type'] == 'select' or name.removesuffix('-TG') in ('机场名称1', '机场名称2', '机场名称3'):
                 g = copy.deepcopy(original)
+                g['type'] = 'select'  # 路由夹具固定出口；机场自动回退由 pools 验证。
                 for field in ('use', 'filter', 'exclude-filter'):
                     g.pop(field, None)
                 g.setdefault('proxies', ['REJECT'])
@@ -246,8 +247,10 @@ def pools(source, mihomo):
         for node in nodes[3][:2]:
             rt.http.nodes[node].statuses['/cf'] = 503
             assert not rt.probe(node, url, 204)
-        # 地区池故障不自动换地区或机场；只有手选才改变入口。
-        assert rt.group(root)['now'] == preferred
+        # 明确地区池仍不漂移；机场入口按顺序回退下一地区。
+        assert not rt.probe(preferred, url, 204)
+        assert rt.probe('机场名称3-新加坡', url, 204)
+        assert rt.group(root)['now'] == '机场名称3-新加坡', rt.group(root)
         rt.select(root, '机场名称3-新加坡')
         assert rt.group(root)['now'] == '机场名称3-新加坡'
         rt.select(root, ordinary)
@@ -255,7 +258,7 @@ def pools(source, mihomo):
         rt.http.nodes[nodes[3][0]].statuses.pop('/cf')
         assert rt.probe(nodes[3][0], url, 204)
         assert rt.group(root)['now'] == ordinary
-    print('PASS: 同区测速、可选家宽优先、准入、台湾手选、地区手选不漂移、独立固定状态', flush=True)
+    print('PASS: 同区测速、可选家宽优先、准入、台湾手选、机场回退与手动固定、独立固定状态', flush=True)
 
 
 def main():

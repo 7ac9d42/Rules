@@ -95,9 +95,9 @@ def generate(settings, policy, routing, model_name)
         admission(pattern, special)
       end.join('`'))
     priorities.each do |name, order|
-      groups << {'name' => probe == 'CF' ? name : "#{name}-TG", 'type' => 'select',
-                 'hidden' => false, 'empty-fallback' => 'REJECT', 'proxies' => flat_order.call(order, probe),
-                 'icon' => airports.fetch(name).fetch(probe == 'TG' ? 'tg-icon' : 'icon')}
+      groups << automatic.call(probe == 'CF' ? name : "#{name}-TG", 'fallback', probe).merge(
+        'hidden' => false, 'proxies' => flat_order.call(order, probe),
+        'icon' => airports.fetch(name).fetch(probe == 'TG' ? 'tg-icon' : 'icon'))
     end
   end
   independent.each do |name, target|
