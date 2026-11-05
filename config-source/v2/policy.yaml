@@ -219,7 +219,7 @@ display-order:
 # independent 追加独立选点组，extra 追加本业务选项；本段顺序不改变分流规则顺序。
 businesses:
   默认代理:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/proxy.svg
   AI:
     default: 专用-机场名称1-日本
@@ -235,7 +235,7 @@ businesses:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
   Github:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
   下载:
     default: 机场名称3

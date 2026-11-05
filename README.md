@@ -60,7 +60,7 @@ ruby scripts/build-config-v2.rb --check
 | 普通业务、GLOBAL、规则更新 | CF：`https://cp.cloudflare.com/generate_204`，预期 204 |
 | Telegram 机场入口下的地区组 | TG：`https://flora.web.telegram.org/apiw1`，预期 501 |
 | Telegram代理 | 机场名称1-TG |
-| Google、FCM | 机场名称1 |
+| 默认代理、Github、Google、FCM | 机场名称1 |
 | CF | 机场名称1，使用普通机场／地区菜单，独立于 AI 选择 |
 | Speedtest | 默认代理，随后列出机场及其他选项；跟随默认代理当前选择 |
 | AI | 机场名称1日本独立 CF 选点组 |
@@ -80,7 +80,7 @@ Google／GitHub 探针及其自动组已移除；Google、下载等业务与现�
 
 此次吸收 [MIHOMO_YAMLS 的公共参数与菜单复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/YAML-%E9%94%9A%E7%82%B9%E7%BB%86%E8%B0%88%EF%BC%9A%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE%E7%9A%84%E7%81%B5%E9%AD%82)、[分层过滤及显式节点来源](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%96%B0%E6%89%8B%E7%AF%87) 的做法：公共值只维护一次，provider 只排公告，自动池独立准入，`use` 明确限定机场，DNS 复用分流规则集。未引入 Smart、均衡策略或新的配置继承机制。
 
-Github 组靠前展示，默认机场名称3；GitHub 网页、API 及普通资源走 Github，`release-assets.githubusercontent.com`、`codeload.github.com` 与既有容器下载端点走下载；`download.proxmox.com` 全部路径走下载。域名规则不能区分同一 HTTPS 主机上的网页、API 与下载路径，GitHub 页面／API 的下载重定向由最终下载域名接管。
+Github 组靠前展示，默认机场名称1；GitHub 网页、API 及普通资源走 Github，`release-assets.githubusercontent.com`、`codeload.github.com` 与既有容器下载端点走下载；`download.proxmox.com` 全部路径走下载。域名规则不能区分同一 HTTPS 主机上的网页、API 与下载路径，GitHub 页面／API 的下载重定向由最终下载域名接管。
 
 新版移除 DNS代理组及 DoH 的 `#DNS代理` 强制出口，保留 `respect-rules: true`、节点域名独立解析、国内直连解析和 Fake-IP。DNS 上游连接恢复按路由规则选择出口；`strict-route` 是 TUN 路由限制，不保证 DNS 上游与目标网站使用同一节点。代理支持域名转发时，目标解析由对应出口完成。[Mihomo DNS 说明](https://wiki.metacubex.one/config/dns/)
 
