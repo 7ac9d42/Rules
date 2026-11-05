@@ -164,12 +164,12 @@ reserve-airport: 机场名称4
 rule-update-policy: 机场名称3
 rule-update-icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/rule-update.svg
 
-# 独立保存选点；机场1先用同地区家宽测速组，再回退原地区节点，不检测 IP 信誉。
+# 独立保存选点，默认直接 url-test；取消 home-pool 行注释可启用日本家宽优先。
 independent-pools:
   专用-机场名称1-日本:
     airport: 机场名称1
     region: 日本
-    home-pool: 机场名称1-家宽
+    # home-pool: 机场名称1-家宽
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/ai.png
   专用-机场名称2-香港:
     airport: 机场名称2
