@@ -94,9 +94,9 @@ def generate(settings, policy, routing, model_name)
         pattern = regions.key?(region) ? regions[region].fetch('match') : reserve_data.fetch('extra-match').fetch(region)
         admission(pattern, special)
       end.join('`'))
-    priorities.each do |name, order|
+    priorities.each_key do |name|
       groups << automatic.call(probe == 'CF' ? name : "#{name}-TG", 'fallback', probe).merge(
-        'hidden' => false, 'proxies' => flat_order.call(order, probe),
+        'hidden' => false, 'proxies' => airports.fetch(name).fetch('region-order').map { |r| pool_name.call(name, r, probe) },
         'icon' => airports.fetch(name).fetch(probe == 'TG' ? 'tg-icon' : 'icon'))
     end
   end

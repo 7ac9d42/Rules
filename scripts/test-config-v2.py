@@ -65,7 +65,9 @@ def static(source, four, policy):
     model = policy['models']['four-airports' if four else 'three-airports']
     for name in model['priority-order']:
         for suffix in ('', '-TG'):
-            assert groups[name + suffix]['type'] == 'fallback' and groups[name + suffix]['hidden'] is False
+            g = groups[name + suffix]
+            assert g['type'] == 'fallback' and g['hidden'] is False
+            assert g['proxies'] == [f'{name}-{r}{suffix}' for r in policy['airports'][name]['region-order']]
     assert '机场名称1-日本' in groups['Telegram代理']['proxies']
     assert 'DNS代理' not in groups
     assert '#DNS代理' not in json.dumps(source['dns'], ensure_ascii=False)
@@ -253,11 +255,9 @@ def pools(source, mihomo):
         assert rt.group(root)['now'] == '机场名称3-新加坡', rt.group(root)
         rt.select(root, '机场名称3-新加坡')
         assert rt.group(root)['now'] == '机场名称3-新加坡'
-        rt.select(root, ordinary)
-        assert rt.group(root)['now'] == ordinary
         rt.http.nodes[nodes[3][0]].statuses.pop('/cf')
         assert rt.probe(nodes[3][0], url, 204)
-        assert rt.group(root)['now'] == ordinary
+        assert rt.group(root)['now'] == '机场名称3-新加坡'
     print('PASS: 同区测速、可选家宽优先、准入、台湾手选、机场回退与手动固定、独立固定状态', flush=True)
 
 

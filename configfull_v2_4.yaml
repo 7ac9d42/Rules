@@ -399,7 +399,7 @@ proxy-groups:
   lazy: true
   url: https://cp.cloudflare.com/generate_204
   expected-status: 204
-  proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国, 机场名称1-日本, 机场名称1-香港, 机场名称1-新加坡, 机场名称1-美国, 机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国, 机场名称4-备用]
+  proxies: [机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-3.svg
 - name: 机场名称1
   type: fallback
@@ -411,7 +411,7 @@ proxy-groups:
   lazy: true
   url: https://cp.cloudflare.com/generate_204
   expected-status: 204
-  proxies: [机场名称1-日本, 机场名称1-香港, 机场名称1-新加坡, 机场名称1-美国, 机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国, 机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国, 机场名称4-备用]
+  proxies: [机场名称1-日本, 机场名称1-香港, 机场名称1-新加坡, 机场名称1-美国]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-1.svg
 - name: 机场名称2
   type: fallback
@@ -423,7 +423,7 @@ proxy-groups:
   lazy: true
   url: https://cp.cloudflare.com/generate_204
   expected-status: 204
-  proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国, 机场名称1-日本, 机场名称1-香港, 机场名称1-新加坡, 机场名称1-美国, 机场名称3-日本, 机场名称3-新加坡, 机场名称3-香港, 机场名称3-美国, 机场名称4-备用]
+  proxies: [机场名称2-香港, 机场名称2-日本, 机场名称2-新加坡, 机场名称2-美国]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-2.svg
 - name: 专用-机场名称1-日本
   type: url-test
@@ -471,7 +471,7 @@ proxy-groups:
   lazy: true
   url: https://flora.web.telegram.org/apiw1
   expected-status: 501
-  proxies: [机场名称1-日本-TG, 机场名称1-香港-TG, 机场名称1-新加坡-TG, 机场名称1-美国-TG, 机场名称2-香港-TG, 机场名称2-日本-TG, 机场名称2-新加坡-TG, 机场名称2-美国-TG, 机场名称3-日本-TG, 机场名称3-新加坡-TG, 机场名称3-香港-TG, 机场名称3-美国-TG, 机场名称4-备用-TG]
+  proxies: [机场名称1-日本-TG, 机场名称1-香港-TG, 机场名称1-新加坡-TG, 机场名称1-美国-TG]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-1-tg.svg
 - name: 机场名称3-TG
   type: fallback
@@ -483,7 +483,7 @@ proxy-groups:
   lazy: true
   url: https://flora.web.telegram.org/apiw1
   expected-status: 501
-  proxies: [机场名称3-日本-TG, 机场名称3-新加坡-TG, 机场名称3-香港-TG, 机场名称3-美国-TG, 机场名称1-日本-TG, 机场名称1-香港-TG, 机场名称1-新加坡-TG, 机场名称1-美国-TG, 机场名称2-香港-TG, 机场名称2-日本-TG, 机场名称2-新加坡-TG, 机场名称2-美国-TG, 机场名称4-备用-TG]
+  proxies: [机场名称3-日本-TG, 机场名称3-新加坡-TG, 机场名称3-香港-TG, 机场名称3-美国-TG]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-3-tg.svg
 - name: 机场名称2-TG
   type: fallback
@@ -495,7 +495,7 @@ proxy-groups:
   lazy: true
   url: https://flora.web.telegram.org/apiw1
   expected-status: 501
-  proxies: [机场名称2-香港-TG, 机场名称2-日本-TG, 机场名称2-新加坡-TG, 机场名称2-美国-TG, 机场名称1-日本-TG, 机场名称1-香港-TG, 机场名称1-新加坡-TG, 机场名称1-美国-TG, 机场名称3-日本-TG, 机场名称3-新加坡-TG, 机场名称3-香港-TG, 机场名称3-美国-TG, 机场名称4-备用-TG]
+  proxies: [机场名称2-香港-TG, 机场名称2-日本-TG, 机场名称2-新加坡-TG, 机场名称2-美国-TG]
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/airport-2-tg.svg
 - name: 低倍率/MITM节点
   type: select
