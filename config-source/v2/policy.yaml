@@ -1,6 +1,6 @@
 # 新版出口政策；修改后运行 ruby scripts/build-config-v2.rb。
 ---
-# 模型声明启用机场及候选顺序；机场入口手选，固定地区和规则更新沿用此顺序回退。
+# 模型声明启用机场及候选顺序；机场入口手选，固定地区仅引用本机场同区组；规则更新沿用此顺序回退。
 models:
   three-airports:
     active-airports:
@@ -234,6 +234,9 @@ businesses:
   Google:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/google.png
+  Github:
+    default: 机场名称3
+    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
   下载:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/download.svg
@@ -328,9 +331,6 @@ businesses:
   Apple:
     default: DIRECT
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.svg
-  DNS代理:
-    default: 机场名称3
-    icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/dns.svg
   GLOBAL:
     default: 机场名称3
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/globe.svg

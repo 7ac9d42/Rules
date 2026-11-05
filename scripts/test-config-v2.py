@@ -67,7 +67,14 @@ def static(source, four, policy):
         for suffix in ('', '-TG'):
             assert groups[name + suffix]['type'] == 'select' and groups[name + suffix]['hidden'] is False
     assert '日本-机场名称1' in groups['Telegram代理']['proxies']
-    assert 'DIRECT' not in groups['DNS代理']['proxies']
+    assert 'DNS代理' not in groups
+    assert '#DNS代理' not in json.dumps(source['dns'], ensure_ascii=False)
+    for region in policy['regions'].keys() - {'台湾'}:
+        for airport in model['priority-order']:
+            g = groups[f'{region}-{airport}']
+            assert g['proxies'] == [f'{airport}-{region}'] and 'use' not in g
+    assert 'RULE-SET,github_domain,Github' in source['sub-rules']['分流-业务规则']
+    assert 'DOMAIN,download.proxmox.com,下载' in source['sub-rules']['分流-业务规则']
     assert groups['规则更新']['proxies'][-1] == 'DIRECT'
     for name in private:
         g, shared = groups[name], groups[name.removeprefix('专用-')]
@@ -115,12 +122,12 @@ def routing(source, mihomo):
         dns_port = F.free_port()
         config['dns'] = dict(enable=True, listen=f'127.0.0.1:{dns_port}', **{
             'enhanced-mode': 'redir-host', 'default-nameserver': [local],
-            'proxy-server-nameserver': [local], 'nameserver': ['http://dns.fixture.test/dns#DNS代理']})
+            'proxy-server-nameserver': [local], 'respect-rules': True, 'nameserver': ['http://dns.fixture.test/dns']})
         upstream = dict(status=200, answer='203.0.113.20', nodes=[], queries=set())
         rt.http.dns_upstreams = {'/dns': upstream}
         rt.start(config)
         # 机制见证显式选择入口；用户在 policy 调整默认项无需同步修改用例。
-        for name, choice in [('默认代理', '机场名称3'), ('DNS代理', '机场名称3'),
+        for name, choice in [('默认代理', '机场名称3'),
                              ('Telegram代理', '机场名称1-TG'), ('Speedtest', '默认代理'), ('AI', PRIVATE), ('CF', '机场名称1')]:
             rt.select(name, choice)
         assert rt.request('ordinary.fixture.test') == '机场名称3-日本'
@@ -130,7 +137,7 @@ def routing(source, mihomo):
         rt.select('默认代理', '机场名称3')
         assert rt.request('telegram.fixture.test') == '机场名称1-日本-TG'
         rt.select('Telegram代理', '日本-机场名称1')
-        assert rt.request('telegram.fixture.test') == '日本-机场名称1'
+        assert rt.request('telegram.fixture.test') == '机场名称1-日本'
         assert rt.request('ai.fixture.test') == PRIVATE
         assert rt.request('challenges.cloudflare.com') == '机场名称1-日本'
         rt.select('CF', '机场名称3')
@@ -155,13 +162,18 @@ def routing(source, mihomo):
         rt.select('机场名称3', 'udp-机场名称3')
         assert F.udp_request(rt.mixed, 'udp.fixture.test', sockets) == '机场名称3'
         rt.select('机场名称3', '机场名称3-日本')
-        rt.select('默认代理', 'DIRECT')
+        rt.select('默认代理', '机场名称3')
         code, ips = F.query(dns_port, 'dns-outlet.fixture.test')
         assert code == 0 and ips == ['203.0.113.20'], (code, ips)
         assert {n for n, q in upstream['nodes'] if q == ('dns-outlet.fixture.test', 1)} == {'机场名称3-日本'}
+        rt.select('默认代理', '机场名称1')
+        rt.select('机场名称1', '机场名称1-日本')
+        code, ips = F.query(dns_port, 'dns-switched.fixture.test')
+        assert code == 0 and ips == ['203.0.113.20'], (code, ips)
+        assert {n for n, q in upstream['nodes'] if q == ('dns-switched.fixture.test', 1)} == {'机场名称1-日本'}
         rt.api('/configs', 'PATCH', {'mode': 'global'})
         rt.select('GLOBAL', '日本-机场名称1')
-        assert rt.request('telegram.fixture.test') == '日本-机场名称1'
+        assert rt.request('telegram.fixture.test') == '机场名称1-日本'
     print('PASS: CF/AI 独立选择、CF/TG 菜单、Speedtest 跟随、固定地区、UDP 首命中、DNS/GLOBAL', flush=True)
 
 

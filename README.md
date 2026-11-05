@@ -43,13 +43,13 @@ ruby scripts/build-config-v2.rb --check
 
 `settings.yaml` 用 `&direct_dns`／`&proxy_dns` 两个浅层锚点复用直连和代理 DNS 列表，修改定义处即可同步所有引用；导出文件仍完全展开。这沿用参考仓库的 [DNS 列表复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%B8%89%E9%98%B6%E6%AE%B5%EF%BC%9A%E8%BF%9B%E9%98%B6%E7%AF%87#%E5%85%AD%E8%BF%9B%E9%98%B6-dns-%E5%AE%8C%E6%95%B4%E9%85%8D%E7%BD%AE) 思路。生成器先完成两模型的生成，再写文件；模型配置报错时不会只更新其中一份。
 
-普通运行链路为“业务 select → 机场 select → 同区 url-test”：机场入口可见，由用户手选地区组，入口自身不自动切换候选；原有候选顺序保留，首项作为初始选择。固定地区入口仍为 fallback，只在同地区跨机场回退；手选机场4备用时，该备用组仍可跨地区回退。业务也可选择独立组或辅助入口。普通测速使用 CF；Telegram 的机场入口使用 TG 地区组，固定地区仍复用普通 CF 政策。探针由菜单决定，不再按目标域名二次分类。
+普通运行链路为“业务 select → 机场 select → 同区 url-test”：机场入口可见，由用户手选地区组，入口自身不自动切换候选；原有候选顺序保留，首项作为初始选择。固定地区入口为隐藏的单选引用，只连接名称指定的机场同地区 url-test；该机场同区不可用时不会跨机场或跨地区回退。手选机场4备用时，该备用组仍可跨地区回退。业务也可选择独立组或辅助入口。普通测速使用 CF；Telegram 的机场入口使用 TG 地区组，固定地区仍复用普通 CF 政策。探针由菜单决定，不再按目标域名二次分类。
 
-组展示依次为“顶层业务 → 下层可见组 → 隐藏组”。顶层按 `businesses` 的声明顺序，将默认代理、AI、CF、Telegram、Google、下载、Speedtest 前置；下层按 `display-order` 将常用机场、专用及手选入口前置，隐藏家宽组排在隐藏层首位，未列出的组保留原生成顺序。此顺序按使用与维护习惯安排，可在维护源调整；只改变组定义的排列，不改变组内候选、默认出口或分流规则。
+组展示依次为“顶层业务 → 下层可见组 → 隐藏组”。顶层按 `businesses` 的声明顺序，将默认代理、AI、CF、Telegram、Google、Github、下载、Speedtest 前置；下层按 `display-order` 将常用机场、专用及手选入口前置，隐藏家宽组排在隐藏层首位，未列出的组保留原生成顺序。此顺序按使用与维护习惯安排，可在维护源调整；只改变组定义的排列，不改变组内候选、默认出口或分流规则。
 
 每个组均配置图标。品牌业务保留可辨识的品牌图形；通用功能使用仓库内轻量 SVG，机场用固定配色和编号区分，TG 入口用纸飞机，地区组用对应旗帜。机场图标在各机场的 `icon`／`tg-icon` 中维护，地区、业务及辅助入口使用各自的 `icon`；规则更新使用 `rule-update-icon`。新增图标文件须与配置一起推送，远端图标 URL 才会生效；本地预览直接嵌入图标，仍不纳入 Git。
 
-普通业务（包括 DNS代理、GLOBAL）不再展开订阅节点，单节点手选统一进入“全部节点”；选用这个入口的业务共享其中的节点选择。“全部节点”默认 REJECT，需主动选点。台湾限定、自建／家宽、低倍率等有筛选用途的直选组继续保留节点列表。
+普通业务（包括 GLOBAL）不再展开订阅节点，单节点手选统一进入“全部节点”；选用这个入口的业务共享其中的节点选择。“全部节点”默认 REJECT，需主动选点。台湾限定、自建／家宽、低倍率等有筛选用途的直选组继续保留节点列表。
 
 节点名称包含“住宅”时，默认不筛入普通组，包括低倍率、台湾直选及 CF／TG 备用组；排除关键词集中在 `admission.default-exclude`。专用组、家宽组及全部节点允许筛入，仍遵守各自原有筛选条件。家宽入口同时识别“住宅”；订阅层保留这些节点，方便上述例外组使用。
 
@@ -57,7 +57,7 @@ ruby scripts/build-config-v2.rb --check
 
 | 使用场景 | 新版默认 |
 |---|---|
-| 普通业务、固定地区、DNS、GLOBAL、规则更新 | CF：`https://cp.cloudflare.com/generate_204`，预期 204 |
+| 普通业务、GLOBAL、规则更新 | CF：`https://cp.cloudflare.com/generate_204`，预期 204 |
 | Telegram 机场入口下的地区组 | TG：`https://flora.web.telegram.org/apiw1`，预期 501 |
 | Telegram代理 | 机场名称1-TG |
 | Google、FCM | 机场名称1 |
@@ -72,13 +72,17 @@ ruby scripts/build-config-v2.rb --check
 
 新版将明确 CF 端点交给独立的 `CF` select，默认 `机场名称1`，不再跟随 AI，也不使用 AI 专用池。沿用 `cf_sensitive_domain` 的八项质询、管理 API／登录、Access 认证及探针端点；该规则先于国外 AI 集，避免重叠覆盖。其他 CF 托管站点及网站自身质询路径仍按原站点规则处理，不扩大覆盖；Cloudflare Tunnel 保持独立。兼容版仍沿用原有 AI 跟随行为。
 
-Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。节点筛选、域名覆盖、特殊节点隔离和统一延迟保持原有规则。DNS代理和 GLOBAL 默认选择机场名称3；DNS代理菜单无 DIRECT 选项。机场4备用、固定地区和规则更新保留自动回退，规则更新最后以 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
+Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。节点筛选、域名覆盖、特殊节点隔离和统一延迟保持原有规则。GLOBAL 默认选择机场名称3。机场4备用和规则更新保留自动回退，规则更新最后以 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
 
 主规则仅“进入有序业务子规则 → REJECT”。业务子规则先返回首个匹配出口；UDP 若不被该出口支持，就在外层拒绝，不继续匹配后续业务。无需 rematch 或逐条复制 UDP 护栏。[子规则实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/rules/logic/logic.go#L167)、[UDP 检查](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/tunnel/tunnel.go#L615)
 
 新版组名去掉“优先”和 `-CF`，仅 TG 链保留 `-TG`，例如 `机场名称1`、`机场名称1-日本`、`日本-机场名称1` 和 `机场名称1-TG`。多个业务选择同一个机场入口时，共用该入口的地区选择；TG 入口独立保存选择。仍有效的业务手选保留，已删除或改名的选项回到新版默认；不清空缓存或创建旧名称别名。同一客户端切换新旧配置可能共享同名业务的选择状态，导入后检查实际选择。
 
 此次吸收 [MIHOMO_YAMLS 的公共参数与菜单复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/YAML-%E9%94%9A%E7%82%B9%E7%BB%86%E8%B0%88%EF%BC%9A%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE%E7%9A%84%E7%81%B5%E9%AD%82)、[分层过滤及显式节点来源](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%96%B0%E6%89%8B%E7%AF%87) 的做法：公共值只维护一次，provider 只排公告，自动池独立准入，`use` 明确限定机场，DNS 复用分流规则集。未引入 Smart、均衡策略或新的配置继承机制。
+
+Github 组靠前展示，默认机场名称3；GitHub 网页、API 及普通资源走 Github，`release-assets.githubusercontent.com`、`codeload.github.com` 与既有容器下载端点走下载；`download.proxmox.com` 全部路径走下载。域名规则不能区分同一 HTTPS 主机上的网页、API 与下载路径，GitHub 页面／API 的下载重定向由最终下载域名接管。
+
+新版移除 DNS代理组及 DoH 的 `#DNS代理` 强制出口，保留 `respect-rules: true`、节点域名独立解析、国内直连解析和 Fake-IP。DNS 上游连接恢复按路由规则选择出口；`strict-route` 是 TUN 路由限制，不保证 DNS 上游与目标网站使用同一节点。代理支持域名转发时，目标解析由对应出口完成。[Mihomo DNS 说明](https://wiki.metacubex.one/config/dns/)
 
 ## 兼容版出口与手选
 

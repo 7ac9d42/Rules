@@ -58,7 +58,6 @@ def generate(settings, policy, routing, model_name)
     default = model_name == 'four-airports' ? business.fetch('four-default', business.fetch('default')) : business.fetch('default')
     choices = menu.dup
     choices = choices.map { |n| priorities.key?(n) ? "#{n}-TG" : n } if name == 'Telegram代理'
-    choices.delete('DIRECT') if name == 'DNS代理'
     choices = independent.keys + choices if business['independent']
     choices += business.fetch('extra', [])
     abort "#{name}: default #{default} is outside its menu" unless choices.include?(default)
@@ -101,10 +100,9 @@ def generate(settings, policy, routing, model_name)
                  'icon' => airports.fetch(name).fetch(probe == 'TG' ? 'tg-icon' : 'icon')}
       next if probe == 'TG'
       automatic_regions.each do |region, details|
-        groups << automatic.call("#{region}-#{name}", 'fallback', 'CF').merge(
-          'proxies' => order.map { |a| pool_name.call(a, region, 'CF') },
-          'use' => [reserve_data.fetch('provider')],
-          'filter' => admission(details.fetch('match'), special), 'icon' => details.fetch('icon'))
+        groups << {'name' => "#{region}-#{name}", 'type' => 'select', 'hidden' => true,
+                   'empty-fallback' => 'REJECT', 'proxies' => [pool_name.call(name, region, 'CF')],
+                   'icon' => details.fetch('icon')}
       end
     end
   end

@@ -3,6 +3,7 @@
 rules:
 - DOMAIN,release-assets.githubusercontent.com,下载
 - DOMAIN,codeload.github.com,下载
+- DOMAIN,download.proxmox.com,下载
 - DOMAIN-SUFFIX,aur.archlinux.org,下载
 - DOMAIN-SUFFIX,opencode.ai,AI
 - DOMAIN,origin-tracker.githubusercontent.com,AI
@@ -71,6 +72,7 @@ rules:
 - DOMAIN,storage.googleapis.com,下载
 - DOMAIN-SUFFIX,dl.google.com,下载
 - RULE-SET,dev_download_domain,下载
+- RULE-SET,github_domain,Github
 - DOMAIN-SUFFIX,kryptex.com,Kryptex
 - DOMAIN-SUFFIX,kryptex.org,Kryptex
 - DOMAIN-SUFFIX,kryptex.network,Kryptex
@@ -90,7 +92,6 @@ rules:
 - RULE-SET,googlevpn_domain,Google
 - RULE-SET,twitch_domain,境外影音
 - RULE-SET,porn_domain,境外影音
-- RULE-SET,github_domain,下载
 - RULE-SET,gitbook_domain,下载
 - RULE-SET,onedrive_domain,OneDrive
 - RULE-SET,line_domain,海外通讯
