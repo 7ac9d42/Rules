@@ -97,6 +97,7 @@ dns:
   - DOMAIN-SUFFIX,mcdn.bilivideo.cn,real-ip
   - DOMAIN-SUFFIX,proxy.golang.org,real-ip
   - DOMAIN-SUFFIX,steamserver.net,real-ip
+  # 优先于下方 real-ip 规则，防止重叠域名提前命中；末尾 fake-ip 仅负责兜底。
   - RULE-SET,google_domain,fake-ip
   - RULE-SET,biliintl_domain,fake-ip
   - RULE-SET,TVB_domain,fake-ip

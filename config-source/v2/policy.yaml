@@ -238,7 +238,7 @@ businesses:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
   下载:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/download.svg
   Speedtest:
     default: 默认代理
@@ -256,29 +256,28 @@ businesses:
     four-default: 专用-机场名称2-香港
     independent: true
   海外社媒:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
   海外通讯:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/communication.svg
   Microsoft站点:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
   OneDrive:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/cloud-drive.svg
   FCM:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/push.svg
   TikTok站点:
-    default: 机场名称3
+    default: DIRECT
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
   Reddit:
     default: 机场名称1
     icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
-    four-default: 机场名称2
   海外电商:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.svg
   游戏平台:
     default: 机场名称3
@@ -286,30 +285,25 @@ businesses:
   Spotify:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/spotify.png
-    four-default: 机场名称2
   Netflix:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/netflix.png
-    four-default: 机场名称2
   Disney+:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/disney.png
-    four-default: 机场名称2
   HBO:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/hbo.png
-    four-default: 机场名称2
   Prime Video:
     default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/primevideo.png
-    four-default: 机场名称2
   Emby:
     default: 低倍率/MITM节点
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/emby.png
     extra:
     - 低倍率/MITM节点
   哔哩哔哩:
-    default: DIRECT
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
   哔哩东南亚站点:
     default: 机场名称3-新加坡
@@ -323,16 +317,16 @@ businesses:
     - Airport_04
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/Taiwan_China.png
   TVB站点:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
   境外影音:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
   Apple:
-    default: DIRECT
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.svg
   GLOBAL:
-    default: 机场名称3
+    default: 机场名称1
     icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/globe.svg
   Cloudflare Tunnel:
     default: DIRECT

@@ -66,13 +66,15 @@ ruby scripts/build-config-v2.rb --check
 | AI | 机场名称1日本独立 CF 选点组 |
 | 金融、Talkatone | 三机场共用 AI 的独立组；四机场默认机场名称2香港独立 CF 组 |
 
+其余普通业务（包括下载、Apple、哔哩哔哩及 GLOBAL）在三／四机场版均默认机场名称1；TikTok 默认 DIRECT。游戏平台、Speedtest、Kryptex，以及 Telegram、专用池、Emby、地区限定、隧道和隐私拦截保留各自默认设计。
+
 原先所称的“敏感专用测速池”就是独立选点组：与对应普通组共用订阅和 CF 测速结果，独立保存选点、手动固定状态，不检测 IP 信誉。三机场一个专用入口、四机场两个，只向 AI、金融、Talkatone 开放。专用入口默认均为可见 `url-test`，直接在本机场指定地区的节点中选点，允许住宅节点。
 
 日本家宽优先配置以 `# home-pool: 机场名称1-家宽` 保留在 `policy.yaml`，当前不生成该家宽组。需要时取消该行注释并重新生成：隐藏家宽组按日本地区与家宽关键词交集筛选，组内 `url-test`；外层专用入口自动改为 `fallback`，家宽优先、其他日本节点备用。已有手动固定状态需要在面板解除后才恢复自动。
 
 新版将明确 CF 端点交给独立的 `CF` select，默认 `机场名称1`，不再跟随 AI，也不使用 AI 专用池。沿用 `cf_sensitive_domain` 的八项质询、管理 API／登录、Access 认证及探针端点；该规则先于国外 AI 集，避免重叠覆盖。其他 CF 托管站点及网站自身质询路径仍按原站点规则处理，不扩大覆盖；Cloudflare Tunnel 保持独立。兼容版仍沿用原有 AI 跟随行为。
 
-Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。节点筛选、域名覆盖、特殊节点隔离和统一延迟保持原有规则。GLOBAL 默认选择机场名称3。机场4备用和规则更新保留自动回退，规则更新最后以 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
+Google／GitHub 探针及其自动组已移除；Google、下载等业务与现有 DNS 上游继续保留。节点筛选、域名覆盖、特殊节点隔离和统一延迟保持原有规则。GLOBAL 默认选择机场名称1。机场4备用和规则更新保留自动回退，规则更新最后以 DIRECT 兜底。CF 可达性不代表所有目标服务都可用。
 
 主规则仅“进入有序业务子规则 → REJECT”。业务子规则先返回首个匹配出口；UDP 若不被该出口支持，就在外层拒绝，不继续匹配后续业务。无需 rematch 或逐条复制 UDP 护栏。[子规则实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/rules/logic/logic.go#L167)、[UDP 检查](https://github.com/MetaCubeX/mihomo/blob/v1.19.30/tunnel/tunnel.go#L615)
 

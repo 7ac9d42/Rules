@@ -227,7 +227,7 @@ proxy-groups:
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/github.png
 - name: 下载
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/download.svg
 - name: Speedtest
@@ -247,22 +247,22 @@ proxy-groups:
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/talkatone.png
 - name: 海外社媒
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_media.png
 - name: 海外通讯
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/communication.svg
 - name: Microsoft站点
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/microsoft.png
 - name: OneDrive
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/cloud-drive.svg
 - name: FCM
@@ -272,7 +272,7 @@ proxy-groups:
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/push.svg
 - name: TikTok站点
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [DIRECT, 机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tiktok.png
 - name: Reddit
@@ -282,7 +282,7 @@ proxy-groups:
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/reddit.png
 - name: 海外电商
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/shopping.svg
 - name: 游戏平台
@@ -322,7 +322,7 @@ proxy-groups:
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/emby.png
 - name: 哔哩哔哩
   type: select
-  proxies: [DIRECT, 机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/bilibili.png
 - name: 哔哩东南亚站点
@@ -339,22 +339,22 @@ proxy-groups:
   exclude-filter: 住宅
 - name: TVB站点
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/tvb.png
 - name: 境外影音
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/global_tv.png
 - name: Apple
   type: select
-  proxies: [DIRECT, 机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/apple.svg
 - name: GLOBAL
   type: select
-  proxies: [机场名称3, 机场名称1, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
+  proxies: [机场名称1, 机场名称3, 机场名称1-香港, 机场名称3-香港, 机场名称1-日本, 机场名称3-日本, 机场名称1-新加坡, 机场名称3-新加坡, 机场名称1-美国, 机场名称3-美国, 自建/家宽节点, 全部节点, DIRECT]
   empty-fallback: REJECT
   icon: https://raw.githubusercontent.com/7ac9d42/Rules/main/icon/globe.svg
 - name: Cloudflare Tunnel
