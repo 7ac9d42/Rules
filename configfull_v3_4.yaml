@@ -969,7 +969,7 @@ rules:
 - RULE-SET,github_domain,REJECT
 - RULE-SET,tiktok_domain,TikTok站点
 - RULE-SET,tiktok_domain,REJECT
-- AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
+- AND,((RULE-SET,cn_domain),(NOT,((OR,((RULE-SET,google_domain),(RULE-SET,category-proxy)))))),DIRECT
 - RULE-SET,telegram_domain,Telegram代理
 - RULE-SET,telegram_domain,REJECT
 - RULE-SET,bahamut_domain,台湾限定站点

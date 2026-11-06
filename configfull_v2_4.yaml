@@ -923,7 +923,7 @@ sub-rules:
   - RULE-SET,ai!cn_domain,AI
   - RULE-SET,github_domain,Github
   - RULE-SET,tiktok_domain,TikTok站点
-  - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
+  - AND,((RULE-SET,cn_domain),(NOT,((OR,((RULE-SET,google_domain),(RULE-SET,proxy_domain)))))),DIRECT
   - RULE-SET,telegram_domain,Telegram代理
   - RULE-SET,bahamut_domain,台湾限定站点
   - RULE-SET,youtube_domain,境外影音

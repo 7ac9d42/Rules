@@ -92,7 +92,8 @@ rules:
 # TikTok 海外 CDN 跟随业务手选；该组默认仍为 DIRECT。
 - RULE-SET,tiktok_domain,TikTok站点
 # 泛 CN 继续保留共用 Sony 认证、Microsoft 短链及 OneDrive 更新 CDN 的直连。
-- AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
+# 排除 Google 与手工代理集，使明确代理域名继续匹配后续业务，与 DNS 策略一致。
+- AND,((RULE-SET,cn_domain),(NOT,((OR,((RULE-SET,google_domain),(RULE-SET,proxy_domain)))))),DIRECT
 - RULE-SET,telegram_domain,Telegram代理
 - RULE-SET,bahamut_domain,台湾限定站点
 - RULE-SET,youtube_domain,境外影音
