@@ -67,3 +67,5 @@ jobs:
           python3 scripts/test-config-v2.py --suite static \
             --mihomo "${RUNNER_TOOL_CACHE}/mihomo/v1.19.30/mihomo"
           ruby scripts/build-config-v2.rb --v3 --check
+          MIHOMO_BIN="${RUNNER_TOOL_CACHE}/mihomo/v1.19.30/mihomo" \
+            ruby scripts/validate-rules.rb --config configfull_v3.yaml --config configfull_v3_4.yaml

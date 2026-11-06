@@ -1,8 +1,0 @@
-# v3 复用 v2 的机场、菜单、筛选、探针和业务规则；此处只维护 Smart 组选点参数。
-# OpenClash 的 Smart 覆写可启用这些功能；关闭界面开关不会强制清除模板中的 true。
----
-prefer-asn: false
-uselightgbm: false
-collectdata: false
-# Smart 中表示候选延迟排序的容差，不是 url-test 的换点门槛。
-tolerance: 50
