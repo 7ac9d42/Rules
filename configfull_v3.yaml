@@ -88,6 +88,7 @@ dns:
   - DOMAIN-SUFFIX,xbox.microsoft.com,real-ip
   - DOMAIN-SUFFIX,proxy.golang.org,real-ip
   - DOMAIN-SUFFIX,steamserver.net,real-ip
+  - DOMAIN-SUFFIX,z.ai,fake-ip
   - RULE-SET,category-ai-!cn,fake-ip
   - RULE-SET,google_domain,fake-ip
   - RULE-SET,biliintl_domain,fake-ip
@@ -123,6 +124,9 @@ dns:
     - https://doh.pub/dns-query#DIRECT
     rule-set:private_domain: rcode://name_error
     hk.tv.global.mi.com:
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+    "+.z.ai":
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
     rule-set:category-ai-!cn,google_domain,biliintl_domain,TVB_domain,category-proxy:
@@ -746,6 +750,8 @@ rules:
 - RULE-SET,alibaba_domain,DIRECT
 - RULE-SET,115_domain,DIRECT
 - RULE-SET,ifast_domain,DIRECT
+- DOMAIN-SUFFIX,z.ai,AI
+- DOMAIN-SUFFIX,z.ai,REJECT
 - RULE-SET,ai_cn_domain,DIRECT
 - RULE-SET,direct_domain,DIRECT
 - RULE-SET,private_domain,DIRECT

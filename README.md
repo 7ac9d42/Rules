@@ -94,6 +94,8 @@ Hugging Face 的 `router.huggingface.co`、`api-inference.huggingface.co`、`end
 
 国外 AI 集在 DNS 中也先于泛 CN，使用 Fake-IP 与代理解析；已核实 `kimi.ai`、`moonshot.ai`、`minimax.io`、`qoder.com` 为独立国际入口。国内 `kimi.com`、`moonshot.cn`、`minimaxi.com`／`minimax.cn`、`qoder.cn` 继续直连、real-ip。联网检测、时间及游戏等已有 Fake-IP 例外优先，重复的九项后缀统一由 `fakeip_filter_domain` 维护。
 
+`z.ai` 国际平台在路由及 DNS 中显式优先于上游国内 AI 分类，使用 AI、Fake-IP 和代理解析；国内 `bigmodel.cn`、`chatglm.cn` 保持直连、real-ip。
+
 ## v3：Smart 内核与 OpenClash 自动切换
 
 导入 [configfull_v3.yaml](configfull_v3.yaml)（三机场）或 [configfull_v3_4.yaml](configfull_v3_4.yaml)（四机场）。v3 保留原生 `url-test`，由 OpenClash 开启 Smart 内核及自动切换后转换；适配重点是让 Smart 正确识别学习目标。v2 和 `_new` 继续保留。机场、菜单、默认项、节点筛选、CF／TG 健康检查、DNS 和域名规则仍统一维护在 `config-source/v2/`，不新增一套 Smart 参数源。

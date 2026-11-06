@@ -44,6 +44,8 @@ rules:
 - RULE-SET,alibaba_domain,DIRECT
 - RULE-SET,115_domain,DIRECT
 - RULE-SET,ifast_domain,DIRECT
+# Z.ai 是独立国际平台，先于上游国内 AI 分类；国内智谱入口仍直连。
+- DOMAIN-SUFFIX,z.ai,AI
 - RULE-SET,ai_cn_domain,DIRECT
 - RULE-SET,direct_domain,DIRECT
 - RULE-SET,private_domain,DIRECT
