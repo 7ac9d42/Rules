@@ -82,9 +82,13 @@ Google／GitHub 探针及其自动组已移除；Google、下载等业务与现�
 
 此次吸收 [MIHOMO_YAMLS 的公共参数与菜单复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/YAML-%E9%94%9A%E7%82%B9%E7%BB%86%E8%B0%88%EF%BC%9A%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE%E7%9A%84%E7%81%B5%E9%AD%82)、[分层过滤及显式节点来源](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%96%B0%E6%89%8B%E7%AF%87) 的做法：公共值只维护一次，provider 只排公告，自动池独立准入，`use` 明确限定机场，DNS 复用分流规则集。未引入 Smart、均衡策略或新的配置继承机制。
 
-Github 组靠前展示，默认机场名称1；GitHub 网页、API 及普通资源走 Github，`release-assets.githubusercontent.com`、`codeload.github.com` 与既有容器下载端点走下载；`download.proxmox.com` 全部路径走下载。域名规则不能区分同一 HTTPS 主机上的网页、API 与下载路径，GitHub 页面／API 的下载重定向由最终下载域名接管。
+Github 组靠前展示，默认机场名称1；Copilot 功能先由 AI 规则接管，GitHub 网页、API 及普通资源再走 Github，`release-assets.githubusercontent.com`、`codeload.github.com` 与既有容器下载端点走下载；`download.proxmox.com` 全部路径走下载。域名规则不能区分同一 HTTPS 主机上的网页、API 与下载路径，GitHub 页面／API 的下载重定向由最终下载域名接管。
+
+游戏平台使用 PlayStation 与 Xbox 规则，不再将整个 Sony 集团纳入游戏；共用 Sony 认证、Microsoft 短链和 OneDrive 更新 CDN 继续由 CN 规则直连。TikTok 规则先于泛 CN，海外 CDN 跟随业务手选，默认仍为 DIRECT。金融集合先于电商父域；`aws.amazon.com` 及其子域走默认代理，不随 Amazon 零售分流。手工通用代理域名在全部明确业务域名之后、服务 IP 兜底之前匹配，避免共享 IP 归属覆盖域名政策；未知域名的国内 IP 直连兜底保留。
 
 新版移除 DNS代理组及 DoH 的 `#DNS代理` 强制出口，保留 `respect-rules: true`、节点域名独立解析、国内直连解析和 Fake-IP。DNS 上游连接恢复按路由规则选择出口；`strict-route` 是 TUN 路由限制，不保证 DNS 上游与目标网站使用同一节点。代理支持域名转发时，目标解析由对应出口完成。[Mihomo DNS 说明](https://wiki.metacubex.one/config/dns/)
+
+国外 AI 集在 DNS 中也先于泛 CN，使用 Fake-IP 与代理解析；已核实 `kimi.ai`、`moonshot.ai`、`minimax.io`、`qoder.com` 为独立国际入口。国内 `kimi.com`、`moonshot.cn`、`minimaxi.com`／`minimax.cn`、`qoder.cn` 继续直连、real-ip。联网检测、时间及游戏等已有 Fake-IP 例外优先，重复的九项后缀统一由 `fakeip_filter_domain` 维护。
 
 ## v3：Smart 内核与 OpenClash 自动切换
 
@@ -111,7 +115,7 @@ ruby scripts/build-config-v2.rb --v3 --check
 
 业务规则展平到顶层，让 Smart 取得实际命中的规则身份。Smart `77af4804` 的 SUB-RULE 只向外返回出口，SmartTarget 却取外层规则，导致同池的不同业务共用外层学习目标。v3 在每条策略组出口规则后自动补同条件的 REJECT 护栏，保留“不支持 UDP 时不穿透后续业务”的行为；DIRECT 等固定出口不用补。源规则仍只维护一次，产物的保护行是有意保留的，不能作为重复规则删除；未命中时会增加一次相同条件判断。
 
-末尾通用代理规则移除冗余 AND／NOT Google 包装：Google 已由前面的专属规则和护栏处理；普通 RuleSet 身份能让 Smart 正确评估集合。七个上游分类列表（含成人内容）还原为 `category-*` 键名，自有通用代理与开发下载集合分别标为 `category-proxy`、`category-dev-download`，DNS 引用同步更新，URL、域名内容和 provider 数量不变。Smart 根据键名识别集合，不读取下载 URL；这避免把多个无关服务当成单一服务学习。OpenAI 补充集 `ai_extra_domain` 主要承载 ChatGPT／Codex／Sora 及认证、附件、语音依赖，与相邻的生产异步通道正则合为一条窄服务 OR，在 v3 中共用学习目标，避免过度拆散出口。v2 同步使用此合并规则，原先两项本就都走 AI，合并不扩大域名范围；v2 保留外层 SUB-RULE，Smart 学习适配仍应使用 v3。
+通用代理在共同源使用普通 RuleSet，无需 AND／NOT Google 包装或 v3 专项改写：Google 已先命中专属规则，v2 子规则与 v3 护栏均保留首命中语义；普通 RuleSet 身份能让 Smart 正确评估集合。七个上游分类列表（含成人内容）还原为 `category-*` 键名，自有通用代理与开发下载集合分别标为 `category-proxy`、`category-dev-download`，DNS 引用同步更新，URL、域名内容和 provider 数量不变。Smart 根据键名识别集合，不读取下载 URL；这避免把多个无关服务当成单一服务学习。OpenAI 补充集 `ai_extra_domain` 主要承载 ChatGPT／Codex／Sora 及认证、附件、语音依赖，与相邻的生产异步通道正则合为一条窄服务 OR，在 v3 中共用学习目标，避免过度拆散出口。v2 同步使用此合并规则，原先两项本就都走 AI，合并不扩大域名范围；v2 保留外层 SUB-RULE，Smart 学习适配仍应使用 v3。
 
 Smart 开关和参数统一在 OpenClash 设置。建议开启 ASN 偏好：具体服务保留规则级学习，分类集合按目标网络学习，共享 CDN 或未知网络退回站点；关闭时仍按整个规则集学习。ASN 查询可能为尚未解析的域名先做 DNS 解析，增加解析依赖和等待，不能据此保证所有连接更快。未取得本地模型效果证据前，LightGBM、训练数据收集和自定义权重保持关闭／未配置。继承的 `tolerance: 50` 在 Smart 中是候选延迟排序容差，不是 url-test 的换点门槛，无需盲目调大。
 

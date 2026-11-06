@@ -156,13 +156,6 @@ end
 
 def smart_compatible_variant(config)
   rules = config.delete('sub-rules').fetch('分流-业务规则').dup
-  wrapped_proxy = 'AND,((RULE-SET,proxy_domain),(NOT,((RULE-SET,google_domain)))),默认代理'
-  if (proxy_index = rules.index(wrapped_proxy))
-    google_index = rules.index('RULE-SET,google_domain,Google')
-    abort 'v3: Google must precede the general proxy rule' unless google_index && google_index < proxy_index
-    # Google 已先匹配并受下方护栏保护；去掉包装，使 Smart 能识别通用代理集合。
-    rules[proxy_index] = 'RULE-SET,proxy_domain,默认代理'
-  end
 
   # Smart 根据 provider 键名识别分类集合，不读取 URL；单服务（含 OpenAI 补充集）保持原名。
   names = {
