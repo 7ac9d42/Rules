@@ -8,8 +8,8 @@
 |---|---|
 | [configfull_new.yaml](configfull_new.yaml) | 兼容版三机场：机场名称1、3、4，120 个组 |
 | [configfull_new_4.yaml](configfull_new_4.yaml) | 兼容版四机场：增加机场名称2家宽，160 个组 |
-| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，62 个组，无 rematch |
-| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，73 个组，无 rematch |
+| [configfull_v2.yaml](configfull_v2.yaml) | 新版试用三机场：CF／TG 双探针，61 个组，无 rematch |
+| [configfull_v2_4.yaml](configfull_v2_4.yaml) | 新版试用四机场：CF／TG 双探针，72 个组，无 rematch |
 
 每次导入一份完整配置，无需拼接。新旧配置均以官方 **Mihomo v1.19.30** 为兼容基线。新版独立试用，不替换旧下载地址、维护源或生成命令；规则库继续共享，每日规则更新照常进行。
 
@@ -51,7 +51,7 @@ ruby scripts/build-config-v2.rb --check
 
 普通业务（包括 GLOBAL）不再展开订阅节点，单节点手选统一进入“全部节点”；选用这个入口的业务共享其中的节点选择。“全部节点”默认 REJECT，需主动选点。台湾限定、自建／家宽、低倍率等有筛选用途的直选组继续保留节点列表。
 
-节点名称包含“住宅”时，默认不筛入普通组，包括低倍率、台湾直选及 CF／TG 备用组；排除关键词集中在 `admission.default-exclude`。专用组、家宽组及全部节点允许筛入，仍遵守各自原有筛选条件。家宽入口同时识别“住宅”；订阅层保留这些节点，方便上述例外组使用。
+节点名称包含“住宅”时，默认不筛入普通组，包括低倍率、台湾直选及 CF 备用组；排除关键词集中在 `admission.default-exclude`。专用组、家宽组及全部节点允许筛入，仍遵守各自原有筛选条件。家宽入口同时识别“住宅”；订阅层保留这些节点，方便上述例外组使用。普通 TG 池同时将该排除条件并入 `filter`，使附加 TG 健康检查也跳过住宅节点；provider 的 CF 基准检查继续保留。v2／v3 均不再生成无引用的机场4 TG 备用组。
 
 台湾限定站点使用 `region: 台湾` 和原生 `use` 声明，直接生成台湾节点的 select 菜单，按机场3 → 1 → 2（仅四机场）→ 4 排列，不自动跨机场换点。节点沿用手选准入，排除特殊标签及住宅节点；空菜单返回 REJECT。不再生成 `机场名称X-台湾` 测速组或 `台湾-机场名称X` 回退组。
 
@@ -95,7 +95,7 @@ ruby scripts/build-config-v2.rb --v3
 ruby scripts/build-config-v2.rb --v3 --check
 ```
 
-修改共同源后，分别运行不带 `--v3` 和带 `--v3` 的生成命令，更新两代产物。开启自动转换后的选点结构如下，三／四机场仍为 62／73 个组：
+修改共同源后，分别运行不带 `--v3` 和带 `--v3` 的生成命令，更新两代产物。开启自动转换后的选点结构如下，三／四机场为 61／72 个组：
 
 ```text
 业务 select（沿用现有默认与手选菜单）

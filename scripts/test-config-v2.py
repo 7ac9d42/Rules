@@ -245,6 +245,8 @@ def pools(source, mihomo):
         assert rt.group(ordinary)['now'] == nodes[1][0] and rt.group(PRIVATE)['now'] == nodes[1][1]
         preferred = '机场名称3-日本'
         F.until(lambda: rt.group(preferred)['now'] == nodes[3][0])
+        # 子组选点完成不代表父组已探测到该入口；显式更新，避免启动探测时序影响断言。
+        assert rt.probe(preferred, url, 204)
         assert rt.group(root)['now'] == preferred
         for node in nodes[3][:2]:
             rt.http.nodes[node].statuses['/cf'] = 503

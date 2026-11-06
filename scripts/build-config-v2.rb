@@ -27,10 +27,12 @@ def generate(settings, policy, routing, model_name)
   special = policy.fetch('admission').fetch('special')
   providers = airports.values.map { |a| a.fetch('provider') }
   pool_name = ->(airport, region, probe) { "#{airport}-#{region}#{probe == 'TG' ? '-TG' : ''}" }
-  pool_filter = lambda do |airport, region|
+  pool_filter = lambda do |airport, region, probe = nil|
     data = airports.fetch(airport)
     exclude = data.fetch('exclude-overrides', {}).fetch(region, policy['admission'].fetch('standard-exclude'))
     exclusions = [exclude.delete_prefix('(?i)'), special, data.fetch('region-excludes', {})[region]].compact
+    # 附加健康检查只读取 filter；TG 也排除住宅，避免测到不会入组的节点。
+    exclusions << policy['admission'].fetch('default-exclude').delete_prefix('(?i)') if probe == 'TG'
     admission(regions.fetch(region).fetch('match'), exclusions.join('|'))
   end
   automatic = lambda do |name, type, probe|
@@ -83,17 +85,19 @@ def generate(settings, policy, routing, model_name)
       pool_regions = probe == 'CF' ? automatic_regions.keys : data.fetch('region-order')
       pool_regions.each do |region|
         groups << automatic.call(pool_name.call(airport, region, probe), 'url-test', probe).merge(
-          'use' => [data.fetch('provider')], 'filter' => pool_filter.call(airport, region),
+          'use' => [data.fetch('provider')], 'filter' => pool_filter.call(airport, region, probe),
           'icon' => regions.fetch(region).fetch('icon'))
       end
     end
-    groups << automatic.call(pool_name.call(reserve, '备用', probe), 'fallback', probe).merge(
-      'use' => [reserve_data.fetch('provider')],
-      'icon' => reserve_data.fetch(probe == 'TG' ? 'tg-icon' : 'icon'),
-      'filter' => reserve_data.fetch('region-order').map do |region|
-        pattern = regions.key?(region) ? regions[region].fetch('match') : reserve_data.fetch('extra-match').fetch(region)
-        admission(pattern, special)
-      end.join('`'))
+    # 机场4只供规则更新的 CF 回退链使用，无需注册闲置 TG 探针。
+    if probe == 'CF'
+      groups << automatic.call(pool_name.call(reserve, '备用', probe), 'fallback', probe).merge(
+        'use' => [reserve_data.fetch('provider')], 'icon' => reserve_data.fetch('icon'),
+        'filter' => reserve_data.fetch('region-order').map do |region|
+          pattern = regions.key?(region) ? regions[region].fetch('match') : reserve_data.fetch('extra-match').fetch(region)
+          admission(pattern, special)
+        end.join('`'))
+    end
     priorities.each_key do |name|
       groups << automatic.call(probe == 'CF' ? name : "#{name}-TG", 'fallback', probe).merge(
         'hidden' => false, 'proxies' => airports.fetch(name).fetch('region-order').map { |r| pool_name.call(name, r, probe) },
