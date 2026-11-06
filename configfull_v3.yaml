@@ -810,10 +810,8 @@ rules:
 - DOMAIN-SUFFIX,kryptex.network,REJECT
 - RULE-SET,cf_sensitive_domain,CF
 - RULE-SET,cf_sensitive_domain,REJECT
-- DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$,AI
-- DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$,REJECT
-- RULE-SET,ai_extra_domain,AI
-- RULE-SET,ai_extra_domain,REJECT
+- OR,((DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$),(RULE-SET,ai_extra_domain)),AI
+- OR,((DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$),(RULE-SET,ai_extra_domain)),REJECT
 - RULE-SET,category-ai-!cn,AI
 - RULE-SET,category-ai-!cn,REJECT
 - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
@@ -829,8 +827,8 @@ rules:
 - RULE-SET,googlevpn_domain,REJECT
 - RULE-SET,twitch_domain,境外影音
 - RULE-SET,twitch_domain,REJECT
-- RULE-SET,porn_domain,境外影音
-- RULE-SET,porn_domain,REJECT
+- RULE-SET,category-porn,境外影音
+- RULE-SET,category-porn,REJECT
 - RULE-SET,gitbook_domain,下载
 - RULE-SET,gitbook_domain,REJECT
 - RULE-SET,onedrive_domain,OneDrive
@@ -1489,7 +1487,7 @@ rule-providers:
     format: mrs
     proxy: 规则更新
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/twitch.mrs
-  porn_domain:
+  category-porn:
     type: http
     interval: 86400
     behavior: domain

@@ -82,8 +82,8 @@ rules:
 # 国外 AI 功能域名先于宽泛 CN/代理规则。
 # 社区实测异步回复通道；只覆盖生产区域/编号主机，domain MRS 不支持标签内通配。
 # https://github.com/EFForg/privacybadger/issues/2949
-- 'DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$,AI'
-- RULE-SET,ai_extra_domain,AI
+# 同一 OpenAI 服务合并匹配；v3 转为 Smart 后，异步通道与主服务共用学习目标。
+- 'OR,((DOMAIN-REGEX,(?i)^chatgpt-async-webps-prod-[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.webpubsub\.azure\.com$),(RULE-SET,ai_extra_domain)),AI'
 - RULE-SET,ai!cn_domain,AI
 - AND,((RULE-SET,cn_domain),(NOT,((RULE-SET,google_domain)))),DIRECT
 - RULE-SET,telegram_domain,Telegram代理

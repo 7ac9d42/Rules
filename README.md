@@ -111,7 +111,7 @@ ruby scripts/build-config-v2.rb --v3 --check
 
 业务规则展平到顶层，让 Smart 取得实际命中的规则身份。Smart `77af4804` 的 SUB-RULE 只向外返回出口，SmartTarget 却取外层规则，导致同池的不同业务共用外层学习目标。v3 在每条策略组出口规则后自动补同条件的 REJECT 护栏，保留“不支持 UDP 时不穿透后续业务”的行为；DIRECT 等固定出口不用补。源规则仍只维护一次，产物的保护行是有意保留的，不能作为重复规则删除；未命中时会增加一次相同条件判断。
 
-末尾通用代理规则移除冗余 AND／NOT Google 包装：Google 已由前面的专属规则和护栏处理；普通 RuleSet 身份能让 Smart 正确评估集合。六个上游分类列表还原为 `category-*` 键名，自有通用代理与开发下载集合分别标为 `category-proxy`、`category-dev-download`，DNS 引用同步更新，URL、域名内容和 provider 数量不变。Smart 根据键名识别集合，不读取下载 URL；这避免把多个无关服务当成单一服务学习。OpenAI 补充集 `ai_extra_domain` 主要承载 ChatGPT／Codex／Sora 及认证、附件、语音依赖，保留服务级身份，避免过度拆散出口。
+末尾通用代理规则移除冗余 AND／NOT Google 包装：Google 已由前面的专属规则和护栏处理；普通 RuleSet 身份能让 Smart 正确评估集合。七个上游分类列表（含成人内容）还原为 `category-*` 键名，自有通用代理与开发下载集合分别标为 `category-proxy`、`category-dev-download`，DNS 引用同步更新，URL、域名内容和 provider 数量不变。Smart 根据键名识别集合，不读取下载 URL；这避免把多个无关服务当成单一服务学习。OpenAI 补充集 `ai_extra_domain` 主要承载 ChatGPT／Codex／Sora 及认证、附件、语音依赖，与相邻的生产异步通道正则合为一条窄服务 OR，在 v3 中共用学习目标，避免过度拆散出口。v2 同步使用此合并规则，原先两项本就都走 AI，合并不扩大域名范围；v2 保留外层 SUB-RULE，Smart 学习适配仍应使用 v3。
 
 Smart 开关和参数统一在 OpenClash 设置。建议开启 ASN 偏好：具体服务保留规则级学习，分类集合按目标网络学习，共享 CDN 或未知网络退回站点；关闭时仍按整个规则集学习。ASN 查询可能为尚未解析的域名先做 DNS 解析，增加解析依赖和等待，不能据此保证所有连接更快。未取得本地模型效果证据前，LightGBM、训练数据收集和自定义权重保持关闭／未配置。继承的 `tolerance: 50` 在 Smart 中是候选延迟排序容差，不是 url-test 的换点门槛，无需盲目调大。
 

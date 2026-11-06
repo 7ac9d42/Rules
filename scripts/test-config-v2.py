@@ -88,7 +88,8 @@ def static(source, four, policy):
             assert g['proxies'] == [home] and groups[home]['type'] == 'url-test' and groups[home]['hidden'] is True
             assert groups[home]['use'] == g['use']
     rules = source['sub-rules']['分流-业务规则']
-    assert rules.index('RULE-SET,cf_sensitive_domain,CF') < rules.index('RULE-SET,ai_extra_domain,AI')
+    openai = next(rule for rule in rules if 'RULE-SET,ai_extra_domain' in rule)
+    assert rules.index('RULE-SET,cf_sensitive_domain,CF') < rules.index(openai)
 
 
 def routing(source, mihomo):

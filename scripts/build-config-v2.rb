@@ -169,7 +169,8 @@ def smart_compatible_variant(config)
     'ai!cn_domain' => 'category-ai-!cn', 'social_media_non_cn_domain' => 'category-social-media-!cn',
     'finance_domain' => 'category-finance', 'cryptocurrency_domain' => 'category-cryptocurrency',
     'communication_domain' => 'category-communication', 'ecommerce_domain' => 'category-ecommerce',
-    'proxy_domain' => 'category-proxy', 'dev_download_domain' => 'category-dev-download'
+    'proxy_domain' => 'category-proxy', 'dev_download_domain' => 'category-dev-download',
+    'porn_domain' => 'category-porn'
   }
   rename_rule = ->(rule) { rule.gsub(/RULE-SET,([^,()]+)/) { "RULE-SET,#{names.fetch($1, $1)}" } }
   config['rule-providers'] = config.fetch('rule-providers').to_h { |name, provider| [names.fetch(name, name), provider] }
