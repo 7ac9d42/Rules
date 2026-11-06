@@ -88,6 +88,12 @@ dns:
   - DOMAIN-SUFFIX,xbox.microsoft.com,real-ip
   - DOMAIN-SUFFIX,proxy.golang.org,real-ip
   - DOMAIN-SUFFIX,steamserver.net,real-ip
+  - DOMAIN,coding-intl.dashscope.aliyuncs.com,fake-ip
+  - DOMAIN,dashscope-intl.aliyuncs.com,fake-ip
+  - DOMAIN,dashscope-us.aliyuncs.com,fake-ip
+  - DOMAIN,token-plan.ap-southeast-1.maas.aliyuncs.com,fake-ip
+  - DOMAIN,maas.qwencloudapi.com,fake-ip
+  - DOMAIN,maas.qianwenaiapi.com,real-ip
   - DOMAIN-SUFFIX,z.ai,fake-ip
   - RULE-SET,ai!cn_domain,fake-ip
   - RULE-SET,google_domain,fake-ip
@@ -126,6 +132,12 @@ dns:
     hk.tv.global.mi.com:
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
+    ? coding-intl.dashscope.aliyuncs.com,dashscope-intl.aliyuncs.com,dashscope-us.aliyuncs.com,token-plan.ap-southeast-1.maas.aliyuncs.com,maas.qwencloudapi.com
+    : - https://cloudflare-dns.com/dns-query
+      - https://dns.google/dns-query
+    maas.qianwenaiapi.com:
+    - https://dns.alidns.com/dns-query#DIRECT
+    - https://doh.pub/dns-query#DIRECT
     "+.z.ai":
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
@@ -885,6 +897,12 @@ sub-rules:
   - RULE-SET,TVB_domain,TVB站点
   - RULE-SET,wechat_domain,DIRECT
   - RULE-SET,bank_cn_domain,DIRECT
+  - DOMAIN,coding-intl.dashscope.aliyuncs.com,AI
+  - DOMAIN,dashscope-intl.aliyuncs.com,AI
+  - DOMAIN,dashscope-us.aliyuncs.com,AI
+  - DOMAIN,token-plan.ap-southeast-1.maas.aliyuncs.com,AI
+  - DOMAIN,maas.qwencloudapi.com,AI
+  - DOMAIN,maas.qianwenaiapi.com,DIRECT
   - RULE-SET,alibaba_domain,DIRECT
   - RULE-SET,115_domain,DIRECT
   - RULE-SET,ifast_domain,DIRECT

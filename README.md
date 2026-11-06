@@ -96,6 +96,8 @@ Hugging Face 的 `router.huggingface.co`、`api-inference.huggingface.co`、`end
 
 `z.ai` 国际平台在路由及 DNS 中显式优先于上游国内 AI 分类，使用 AI、Fake-IP 和代理解析；国内 `bigmodel.cn`、`chatglm.cn` 保持直连、real-ip。
 
+百炼国际 API `coding-intl.dashscope.aliyuncs.com`、`dashscope-intl.aliyuncs.com`、`dashscope-us.aliyuncs.com`、`token-plan.ap-southeast-1.maas.aliyuncs.com` 及 QwenCloud 国际 API `maas.qwencloudapi.com` 精确匹配到 AI、Fake-IP 和代理解析，先于 CN 的共享云后缀。国内 `maas.qianwenaiapi.com` 精确匹配到直连、real-ip 和国内解析；其他云主机及 `qwen.ai` 保留原有分流。
+
 ## v3：Smart 内核与 OpenClash 自动切换
 
 导入 [configfull_v3.yaml](configfull_v3.yaml)（三机场）或 [configfull_v3_4.yaml](configfull_v3_4.yaml)（四机场）。v3 保留原生 `url-test`，由 OpenClash 开启 Smart 内核及自动切换后转换；适配重点是让 Smart 正确识别学习目标。v2 和 `_new` 继续保留。机场、菜单、默认项、节点筛选、CF／TG 健康检查、DNS 和域名规则仍统一维护在 `config-source/v2/`，不新增一套 Smart 参数源。

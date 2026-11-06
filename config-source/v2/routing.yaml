@@ -41,6 +41,13 @@ rules:
 - RULE-SET,TVB_domain,TVB站点
 - RULE-SET,wechat_domain,DIRECT
 - RULE-SET,bank_cn_domain,DIRECT
+# 百炼／QwenCloud 按精确 API 主机区分国内外，先于共享云后缀的直连规则。
+- DOMAIN,coding-intl.dashscope.aliyuncs.com,AI
+- DOMAIN,dashscope-intl.aliyuncs.com,AI
+- DOMAIN,dashscope-us.aliyuncs.com,AI
+- DOMAIN,token-plan.ap-southeast-1.maas.aliyuncs.com,AI
+- DOMAIN,maas.qwencloudapi.com,AI
+- DOMAIN,maas.qianwenaiapi.com,DIRECT
 - RULE-SET,alibaba_domain,DIRECT
 - RULE-SET,115_domain,DIRECT
 - RULE-SET,ifast_domain,DIRECT
