@@ -6,7 +6,7 @@ echo "=== Building amazon-ip ==="
 mkdir -p rules/IP  # 确保目录存在
 
 # 下载 Amazon IP 规则文件
-curl --fail --show-error --silent --location "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AmazonIP/AmazonIP.list" -o rules/IP/amazon-ip.list
+curl --fail --show-error --silent --location --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AmazonIP/AmazonIP.list" -o rules/IP/amazon-ip.list
 
 # Convert Amazon IP Rules to YAML
 # 将 IP 规则文件转换为 YAML 格式

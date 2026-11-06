@@ -12,6 +12,7 @@ mrs_file="$work_dir/applefirmware.mrs"
 
 # MetaCubeX apple-update 跟踪 Apple 官方企业网络文档中的软件更新端点。
 curl --fail --show-error --silent --location \
+  --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 \
   "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/apple-update.yaml" \
   -o "$yaml_file"
 

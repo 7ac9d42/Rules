@@ -54,12 +54,15 @@ local_pcdn_sources=(
 )
 
 curl --fail --show-error --silent --location \
+  --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 \
   "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox.json" \
   -o "$awa_full_json"
 curl --fail --show-error --silent --location \
+  --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 \
   "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox-No.Unwelcome.json" \
   -o "$awa_core_json"
 curl --fail --show-error --silent --location \
+  --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 \
   "https://raw.githubusercontent.com/DDCHlsq/sing-ruleset/refs/heads/master/pcdn.json" \
   -o "$pcdn_json"
 

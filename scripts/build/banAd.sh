@@ -14,11 +14,11 @@ raw_domains_file="$work_dir/domains.raw.list"
 domains_file="$work_dir/domains.list"
 
 curl --fail --show-error --silent --location \
-  --retry 4 --retry-all-errors --retry-delay 2 \
+  --connect-timeout 10 --max-time 30 --retry 1 --retry-all-errors --retry-delay 1 \
   "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/qx.list" \
   -o "$work_dir/qx.list"
 curl --fail --show-error --silent --location \
-  --retry 4 --retry-all-errors --retry-delay 2 \
+  --connect-timeout 10 --max-time 30 --retry 1 --retry-all-errors --retry-delay 1 \
   "https://raw.githubusercontent.com/DDCHlsq/sing-ruleset/refs/heads/master/pcdn.json" \
   -o "$work_dir/pcdn.json"
 

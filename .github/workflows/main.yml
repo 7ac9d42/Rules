@@ -28,7 +28,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/Lanlan13-14/Rules.git
           git remote set-url --push upstream PUSH_DISABLED
-          git fetch --depth=1 upstream main
+          GIT_TERMINAL_PROMPT=0 timeout --kill-after=5s 120s git fetch --depth=1 upstream main
           git rm -r --ignore-unmatch rules/
           git checkout upstream/main -- rules/
 

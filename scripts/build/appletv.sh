@@ -6,7 +6,7 @@ echo "=== Building appletv ==="
 mkdir -p rules/Domain  # 确保目录存在
 
 # 下载 AppleTV 规则文件
-curl --fail --show-error --silent --location "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AppleTV/AppleTV.list" -o rules/Domain/appletv.list
+curl --fail --show-error --silent --location --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AppleTV/AppleTV.list" -o rules/Domain/appletv.list
 
 # Extract DOMAIN and DOMAIN-SUFFIX rules from appletv.list
 # 提取 DOMAIN 和 DOMAIN-SUFFIX 规则，并过滤掉以 # 开头的注释行

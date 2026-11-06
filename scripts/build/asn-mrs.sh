@@ -13,6 +13,7 @@ for asn in "${asns[@]}"; do
   mrs_file="$work_dir/$asn.mrs"
 
   curl --fail --show-error --silent --location \
+    --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 \
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/asn/$asn.list" \
     -o "$source_file"
 

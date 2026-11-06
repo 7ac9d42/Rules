@@ -8,6 +8,7 @@ work_dir=$(mktemp -d)
 trap 'rm -rf -- "$work_dir"' EXIT
 
 curl --fail --show-error --silent --location \
+  --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 \
   "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/WeChat/WeChat.list" \
   -o "$work_dir/WeChat.list"
 

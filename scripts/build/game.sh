@@ -22,9 +22,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git clone --depth=1 --filter=blob:none --sparse \
+GIT_TERMINAL_PROMPT=0 timeout --kill-after=5s 120s git clone --depth=1 --filter=blob:none --sparse \
   https://github.com/FQrabbit/SSTap-Rule.git "$source_dir"
-git -C "$source_dir" sparse-checkout set rules
+GIT_TERMINAL_PROMPT=0 timeout --kill-after=5s 120s git -C "$source_dir" sparse-checkout set rules
 mkdir -p "$build_dir"
 
 # Only preserve syntactically valid CIDRs. The old code guessed how malformed

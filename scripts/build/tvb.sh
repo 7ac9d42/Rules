@@ -7,6 +7,7 @@ work_dir=$(mktemp -d)
 trap 'rm -rf -- "$work_dir"' EXIT
 
 curl --fail --show-error --silent --location \
+  --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 \
   "https://raw.githubusercontent.com/btjson/loon/refs/heads/main/TVB.list" \
   -o "$work_dir/tvb.list"
 
