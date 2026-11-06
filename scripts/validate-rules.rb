@@ -234,8 +234,9 @@ Dir.mktmpdir("rules-validate") do |tmp_dir|
     stdout, stderr, status = Open3.capture3(
       MIHOMO_BIN, "convert-ruleset", behavior, "yaml", yaml_path, rebuilt_mrs
     )
-    unless status.success?
-      detail = stderr.strip.empty? ? stdout.strip : stderr.strip
+    # 转换器可能丢弃非法域名并仅打印警告，仍返回成功。
+    if !status.success? || [stdout, stderr].any? { |output| output.include?("invalid domain") }
+      detail = [stdout, stderr].map(&:strip).reject(&:empty?).join("\n")
       errors << "#{yaml_path.delete_prefix("#{ROOT}/")}: cannot rebuild MRS: #{detail}"
       next
     end
