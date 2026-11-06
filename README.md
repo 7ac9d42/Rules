@@ -82,11 +82,13 @@ Google／GitHub 探针及其自动组已移除；Google、下载等业务与现�
 
 此次吸收 [MIHOMO_YAMLS 的公共参数与菜单复用](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/YAML-%E9%94%9A%E7%82%B9%E7%BB%86%E8%B0%88%EF%BC%9A%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE%E7%9A%84%E7%81%B5%E9%AD%82)、[分层过滤及显式节点来源](https://github.com/HenryChiao/MIHOMO_YAMLS/wiki/%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%96%B0%E6%89%8B%E7%AF%87) 的做法：公共值只维护一次，provider 只排公告，自动池独立准入，`use` 明确限定机场，DNS 复用分流规则集。未引入 Smart、均衡策略或新的配置继承机制。
 
-Github 组靠前展示，默认机场名称1；Copilot 功能先由 AI 规则接管，GitHub 网页、API 及普通资源再走 Github，`release-assets.githubusercontent.com`、`codeload.github.com` 与既有容器下载端点走下载；`download.proxmox.com` 全部路径走下载。域名规则不能区分同一 HTTPS 主机上的网页、API 与下载路径，GitHub 页面／API 的下载重定向由最终下载域名接管。
+Github 组靠前展示，默认机场名称1；Copilot 功能先由 AI 规则接管，GitHub 网页、API 及普通资源再走 Github，`release-assets.githubusercontent.com`、`codeload.github.com`、LFS 存储端点 `github-cloud.githubusercontent.com`／`github-cloud.s3.amazonaws.com` 与容器、`pkg.github.com` 包仓库走下载；`download.proxmox.com` 全部路径走下载。域名规则不能区分同一 HTTPS 主机的上传、下载和元数据请求，GitHub 页面／API 的下载重定向由最终下载域名接管。包仓库补充在共享下载源中，兼容版也会生效。
+
+Hugging Face 的 `router.huggingface.co`、`api-inference.huggingface.co`、`endpoints.huggingface.co` 和 `endpoints.huggingface.cloud` 后缀先走 AI，模型、数据集等其余下载保留下载分流。
 
 游戏平台使用 PlayStation 与 Xbox 规则，不再将整个 Sony 集团纳入游戏；共用 Sony 认证、Microsoft 短链和 OneDrive 更新 CDN 继续由 CN 规则直连。TikTok 规则先于泛 CN，海外 CDN 跟随业务手选，默认仍为 DIRECT。金融集合先于电商父域；`aws.amazon.com` 及其子域走默认代理，不随 Amazon 零售分流。手工通用代理域名在全部明确业务域名之后、服务 IP 兜底之前匹配，避免共享 IP 归属覆盖域名政策；未知域名的国内 IP 直连兜底保留。
 
-新版 CN 仍沿用 MetaCubeX 基准，由 `scripts/build/cn.sh` 在每日构建时补回 ChinaMax 转换中丢失的精确主机名并删除异常的 `+.full`；保留上游排除项、原规则顺序及 DNS 引用，不扩大为父域直连。
+新版 CN 仍沿用 MetaCubeX 基准，由 `scripts/build/cn.sh` 在每日构建时补回 ChinaMax 转换中丢失的精确主机名并删除异常的 `+.full`；保留上游排除项、原规则顺序及 DNS 引用，不扩大为父域直连。Steam 国内域名已包含在 `game_cn_domain`，新版不再重复加载独立 Steam 国内集。
 
 新版移除 DNS代理组及 DoH 的 `#DNS代理` 强制出口，保留 `respect-rules: true`、节点域名独立解析、国内直连解析和 Fake-IP。DNS 上游连接恢复按路由规则选择出口；`strict-route` 是 TUN 路由限制，不保证 DNS 上游与目标网站使用同一节点。代理支持域名转发时，目标解析由对应出口完成。[Mihomo DNS 说明](https://wiki.metacubex.one/config/dns/)
 

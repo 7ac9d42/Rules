@@ -95,7 +95,6 @@ dns:
   - RULE-SET,category-proxy,fake-ip
   - DOMAIN,hk.tv.global.mi.com,fake-ip
   - RULE-SET,game_cn_domain,real-ip
-  - RULE-SET,steam_cn_domain,real-ip
   - RULE-SET,pt_domain,real-ip
   - RULE-SET,public-tracker_domain,real-ip
   - RULE-SET,115_domain,real-ip
@@ -129,7 +128,7 @@ dns:
     rule-set:category-ai-!cn,google_domain,biliintl_domain,TVB_domain,category-proxy:
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
-    ? rule-set:cn_domain,game_cn_domain,steam_cn_domain,pt_domain,public-tracker_domain,115_domain,wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain,NetEaseMusic_domain,media_cn_domain,iptv_domain
+    ? rule-set:cn_domain,game_cn_domain,pt_domain,public-tracker_domain,115_domain,wechat_domain,bank_cn_domain,alibaba_domain,xiaomi_domain,apple_cn_domain,ai_cn_domain,NetEaseMusic_domain,media_cn_domain,iptv_domain
     : - https://dns.alidns.com/dns-query#DIRECT
       - https://doh.pub/dns-query#DIRECT
   direct-nameserver-follow-policy: true
@@ -842,6 +841,10 @@ rules:
 - DOMAIN,release-assets.githubusercontent.com,REJECT
 - DOMAIN,codeload.github.com,下载
 - DOMAIN,codeload.github.com,REJECT
+- DOMAIN,github-cloud.githubusercontent.com,下载
+- DOMAIN,github-cloud.githubusercontent.com,REJECT
+- DOMAIN,github-cloud.s3.amazonaws.com,下载
+- DOMAIN,github-cloud.s3.amazonaws.com,REJECT
 - DOMAIN,download.proxmox.com,下载
 - DOMAIN,download.proxmox.com,REJECT
 - DOMAIN-SUFFIX,aur.archlinux.org,下载
@@ -906,7 +909,6 @@ rules:
 - RULE-SET,iptv_domain,DIRECT
 - RULE-SET,xiaomi_domain,DIRECT
 - RULE-SET,apple_cn_domain,DIRECT
-- RULE-SET,steam_cn_domain,DIRECT
 - RULE-SET,game_cn_domain,DIRECT
 - RULE-SET,steamcdn_domain,DIRECT
 - RULE-SET,NetEaseMusic_domain,DIRECT
@@ -925,6 +927,8 @@ rules:
 - DOMAIN-SUFFIX,pixiv.net,REJECT
 - DOMAIN-SUFFIX,pximg.net,海外社媒
 - DOMAIN-SUFFIX,pximg.net,REJECT
+- OR,((DOMAIN,router.huggingface.co),(DOMAIN,api-inference.huggingface.co),(DOMAIN,endpoints.huggingface.co),(DOMAIN-SUFFIX,endpoints.huggingface.cloud)),AI
+- OR,((DOMAIN,router.huggingface.co),(DOMAIN,api-inference.huggingface.co),(DOMAIN,endpoints.huggingface.co),(DOMAIN-SUFFIX,endpoints.huggingface.cloud)),REJECT
 - DOMAIN-SUFFIX,huggingface.co,下载
 - DOMAIN-SUFFIX,huggingface.co,REJECT
 - DOMAIN-SUFFIX,hf.co,下载
@@ -1234,13 +1238,6 @@ rule-providers:
     format: mrs
     proxy: 规则更新
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/spotify.mrs
-  steam_cn_domain:
-    type: http
-    interval: 86400
-    behavior: domain
-    format: mrs
-    proxy: 规则更新
-    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/steam%40cn.mrs
   steamcdn_domain:
     type: http
     interval: 86400

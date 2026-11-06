@@ -19,7 +19,7 @@ if ! awk '
 fi
 
 work_dir=$(mktemp -d)
-trap 'rm -rf -- "$work_dir"' EXIT
+trap 'rm -f -- "$work_dir/dev-download.yaml" "$work_dir/dev-download.mrs"; rmdir -- "$work_dir"' EXIT
 yaml_file="$work_dir/dev-download.yaml"
 mrs_file="$work_dir/dev-download.mrs"
 

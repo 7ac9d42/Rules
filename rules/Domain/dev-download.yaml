@@ -49,6 +49,7 @@ payload:
   - '+.packagist.org'
   - '+.pkg-containers.githubusercontent.com'
   - '+.pkg.dev'
+  - '+.pkg.github.com'
   - '+.pkgs.k8s.io'
   - '+.plugins.jetbrains.com'
   - '+.ports.ubuntu.com'

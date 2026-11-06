@@ -3,6 +3,8 @@
 rules:
 - DOMAIN,release-assets.githubusercontent.com,下载
 - DOMAIN,codeload.github.com,下载
+- DOMAIN,github-cloud.githubusercontent.com,下载
+- DOMAIN,github-cloud.s3.amazonaws.com,下载
 - DOMAIN,download.proxmox.com,下载
 - DOMAIN-SUFFIX,aur.archlinux.org,下载
 - DOMAIN-SUFFIX,opencode.ai,AI
@@ -48,7 +50,6 @@ rules:
 - RULE-SET,iptv_domain,DIRECT
 - RULE-SET,xiaomi_domain,DIRECT
 - RULE-SET,apple_cn_domain,DIRECT
-- RULE-SET,steam_cn_domain,DIRECT
 - RULE-SET,game_cn_domain,DIRECT
 - RULE-SET,steamcdn_domain,DIRECT
 - RULE-SET,NetEaseMusic_domain,DIRECT
@@ -61,6 +62,8 @@ rules:
 - RULE-SET,bilibili_domain,哔哩哔哩
 - DOMAIN-SUFFIX,pixiv.net,海外社媒
 - DOMAIN-SUFFIX,pximg.net,海外社媒
+# 推理与端点管理先于 HF 整站下载；同一服务在 Smart 中共用学习目标。
+- OR,((DOMAIN,router.huggingface.co),(DOMAIN,api-inference.huggingface.co),(DOMAIN,endpoints.huggingface.co),(DOMAIN-SUFFIX,endpoints.huggingface.cloud)),AI
 - DOMAIN-SUFFIX,huggingface.co,下载
 - DOMAIN-SUFFIX,hf.co,下载
 - DOMAIN-SUFFIX,docker.io,下载
@@ -247,8 +250,6 @@ rule-providers:
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/bahamut.mrs
   spotify_domain:
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/spotify.mrs
-  steam_cn_domain:
-    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/steam%40cn.mrs
   steamcdn_domain:
     url: https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/Steam-domain.mrs
   steam_domain:
