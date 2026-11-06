@@ -66,3 +66,4 @@ jobs:
             --mihomo "${RUNNER_TOOL_CACHE}/mihomo/v1.19.30/mihomo"
           python3 scripts/test-config-v2.py --suite static \
             --mihomo "${RUNNER_TOOL_CACHE}/mihomo/v1.19.30/mihomo"
+          ruby scripts/build-config-v2.rb --v3 --check

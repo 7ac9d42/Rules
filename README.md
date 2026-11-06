@@ -86,6 +86,47 @@ Github 组靠前展示，默认机场名称1；GitHub 网页、API 及普通资�
 
 新版移除 DNS代理组及 DoH 的 `#DNS代理` 强制出口，保留 `respect-rules: true`、节点域名独立解析、国内直连解析和 Fake-IP。DNS 上游连接恢复按路由规则选择出口；`strict-route` 是 TUN 路由限制，不保证 DNS 上游与目标网站使用同一节点。代理支持域名转发时，目标解析由对应出口完成。[Mihomo DNS 说明](https://wiki.metacubex.one/config/dns/)
 
+## v3：Smart 内核与 OpenClash 自动切换
+
+导入 [configfull_v3.yaml](configfull_v3.yaml)（三机场）或 [configfull_v3_4.yaml](configfull_v3_4.yaml)（四机场）。v3 需要 Smart 内核；v2 和 `_new` 继续保留。机场、菜单、默认项、节点筛选、CF／TG 健康检查、DNS 和域名规则仍统一维护在 `config-source/v2/`，v3 仅增加 [smart.yaml](config-source/v3/smart.yaml) 的组选点参数，避免复制维护源。
+
+```sh
+ruby scripts/build-config-v2.rb --v3
+ruby scripts/build-config-v2.rb --v3 --check
+```
+
+修改共同源后，分别运行不带 `--v3` 和带 `--v3` 的生成命令，更新两代产物。v3 的选点结构如下，三／四机场仍为 62／73 个组：
+
+```text
+业务 select（沿用现有默认与手选菜单）
+├── 机场 fallback → 同机场按地区顺序回退 → 同机场同地区 Smart
+├── 固定地区 → 同机场同地区 Smart
+├── Telegram 机场 fallback → 同机场地区 Smart（TG 探针）
+├── AI／金融／Talkatone → 独立 Smart（原机场、地区与住宅准入）
+└── 全部节点／家宽／低倍率／台湾 → 原有 select
+后台规则更新 → 原有 fallback 链 → DIRECT 兜底
+```
+
+原 `url-test` 叶子组直接声明为 `smart`，OpenClash 开启自动切换后类型不再变化。机场、规则更新及备用组继续 fallback。专用池也采用 Smart，但不与普通池合并；不增加跨机场或跨地区候选。可选的日本家宽优先仍由共同源的注释控制：启用后外层 fallback、家宽叶子 Smart。
+
+业务规则展平到顶层，让 Smart 取得实际命中的规则身份。Smart `77af4804` 的 SUB-RULE 只向外返回出口，SmartTarget 却取外层规则，导致同池的不同业务共用外层学习目标。v3 在每条策略组出口规则后自动补同条件的 REJECT 护栏，保留“不支持 UDP 时不穿透后续业务”的行为；DIRECT 等固定出口不用补。源规则仍只维护一次，产物的保护行是有意保留的，不能作为重复规则删除；未命中时会增加一次相同条件判断。使用宽泛规则集的业务仍可能共享该规则集的学习目标，不等于逐域名独立学习。
+
+默认关闭 LightGBM、训练数据收集与 ASN 偏好，基础 Smart 学习仍工作。`tolerance: 50` 在 Smart 中是候选延迟排序容差，不是 url-test 的换点门槛。配置健康检查仍只有 CF／TG；内核还会按条件探测目标 `/robots.txt`、目标 `/cdn-cgi/trace` 和节点出口（Cloudflare trace，失败后尝试 `api.ip.sb`、`ipwho.is`）。这些探测有缓存和限流，源码无总关闭开关，且直接通过待测节点发出，不受业务分流规则控制。
+
+OpenClash 的设置必须与模板配合；原始 YAML 无法禁止客户端覆写：
+
+| OpenClash 选项 | v3 使用方式 |
+|---|---|
+| `smart_enable`、`auto_smart_switch` | 均开启 |
+| `enable_respect_rules` | 开启，否则会将模板中的 DNS 遵循规则改为 false |
+| `custom_fakeip_filter` | 关闭，保留模板的有序 rule 模式过滤 |
+| `urltest_address_mod`、`urltest_interval_mod` | 不覆写（0），保留 CF／TG 各自 URL、状态码及周期 |
+| Smart 权重、ASN、LightGBM、收集、容差覆写 | 默认不覆写，使用 `smart.yaml`；需要时由用户调整 |
+
+尤其不能统一覆写测速 URL：OpenClash 只替换地址，不同步替换 `expected-status`，会令 TG 的 501 与 CF 的 204 探针冲突。OpenClash 开启 TUN 时会重建该段，并关闭内核的 auto-route／auto-redirect／strict-route，由插件防火墙接管；不能把模板的 strict-route 当作设备实际状态，也不强行反覆写这些字段。现有手选缓存可能继续生效，导入后检查实际选择。
+
+源码核对固定在 OpenClash `3b4ec32c` 与 Smart `77af4804`：[自动转换及探针覆写](https://github.com/vernesong/OpenClash/blob/3b4ec32c747c52aea1501e3b6d1b66c604715410/luci-app-openclash/root/usr/share/openclash/yml_rules_change.sh#L347)、[DNS／TUN 处理](https://github.com/vernesong/OpenClash/blob/3b4ec32c747c52aea1501e3b6d1b66c604715410/luci-app-openclash/root/usr/share/openclash/yml_change.sh#L567)、[SmartTarget 赋值](https://github.com/vernesong/mihomo/blob/77af4804d091d89b871c99b52d50915f4a600d81/tunnel/tunnel.go#L673)、[组选点实现](https://github.com/vernesong/mihomo/blob/77af4804d091d89b871c99b52d50915f4a600d81/adapter/outboundgroup/smart.go#L184)、[出口探针](https://github.com/vernesong/mihomo/blob/77af4804d091d89b871c99b52d50915f4a600d81/component/smart/exit.go#L48)。同提交 Smart 二进制已通过两份 v3 配置检查，以及本地回环夹具的规则学习目标、筛选／显示属性、空池拒绝和 UDP 防穿透验证；未在实际路由器部署验证。CI 仅增加 v3 生成一致性检查，不下载第二套内核或运行联网学习测试。
+
 ## 兼容版出口与手选
 
 普通自动路径为：业务 select → 机场优先或固定地区 rematch → 共享目标分类 → 对应探针 fallback → 同机场同地区 url-test。同区池按延迟选点，跨地区链路先换同机场地区，再跨机场；固定地区始终留在选定地区。
