@@ -86,6 +86,8 @@ Github 组靠前展示，默认机场名称1；Copilot 功能先由 AI 规则接
 
 游戏平台使用 PlayStation 与 Xbox 规则，不再将整个 Sony 集团纳入游戏；共用 Sony 认证、Microsoft 短链和 OneDrive 更新 CDN 继续由 CN 规则直连。TikTok 规则先于泛 CN，海外 CDN 跟随业务手选，默认仍为 DIRECT。金融集合先于电商父域；`aws.amazon.com` 及其子域走默认代理，不随 Amazon 零售分流。手工通用代理域名在全部明确业务域名之后、服务 IP 兜底之前匹配，避免共享 IP 归属覆盖域名政策；未知域名的国内 IP 直连兜底保留。
 
+新版 CN 仍沿用 MetaCubeX 基准，由 `scripts/build/cn.sh` 在每日构建时补回 ChinaMax 转换中丢失的精确主机名并删除异常的 `+.full`；保留上游排除项、原规则顺序及 DNS 引用，不扩大为父域直连。
+
 新版移除 DNS代理组及 DoH 的 `#DNS代理` 强制出口，保留 `respect-rules: true`、节点域名独立解析、国内直连解析和 Fake-IP。DNS 上游连接恢复按路由规则选择出口；`strict-route` 是 TUN 路由限制，不保证 DNS 上游与目标网站使用同一节点。代理支持域名转发时，目标解析由对应出口完成。[Mihomo DNS 说明](https://wiki.metacubex.one/config/dns/)
 
 国外 AI 集在 DNS 中也先于泛 CN，使用 Fake-IP 与代理解析；已核实 `kimi.ai`、`moonshot.ai`、`minimax.io`、`qoder.com` 为独立国际入口。国内 `kimi.com`、`moonshot.cn`、`minimaxi.com`／`minimax.cn`、`qoder.cn` 继续直连、real-ip。联网检测、时间及游戏等已有 Fake-IP 例外优先，重复的九项后缀统一由 `fakeip_filter_domain` 维护。

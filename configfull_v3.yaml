@@ -1195,7 +1195,7 @@ rule-providers:
     behavior: domain
     format: mrs
     proxy: 规则更新
-    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs
+    url: https://raw.githubusercontent.com/7ac9d42/Rules/refs/heads/main/rules/Domain/cn.mrs
   media_cn_domain:
     type: http
     interval: 86400
