@@ -126,8 +126,9 @@ extract_classical() {
 
 validate_domain_source() {
   local source_file=$1
+  local allow_ip_cidr=${2:-false}
 
-  if ! jq -e '
+  if ! jq -e --argjson allow_ip_cidr "$allow_ip_cidr" '
     ((.rules | type) == "array") and
     ((.rules | length) > 0) and
     all(.rules[];
@@ -145,7 +146,9 @@ validate_domain_source() {
       (.domain_suffix == null or ((.domain_suffix | type) == "array" and all(.domain_suffix[]; type == "string" and length > 0))) and
       (.domain_keyword == null or ((.domain_keyword | type) == "array" and all(.domain_keyword[]; type == "string" and length > 0))) and
       (.domain_regex == null or ((.domain_regex | type) == "array" and all(.domain_regex[]; type == "string" and length > 0))) and
-      (.ip_cidr == null or ((.ip_cidr | type) == "array" and (.ip_cidr | length) == 0))
+      (.ip_cidr == null or ((.ip_cidr | type) == "array" and
+        (if $allow_ip_cidr then all(.ip_cidr[]; type == "string" and length > 0)
+         else (.ip_cidr | length) == 0 end)))
     )
   ' "$source_file" > /dev/null; then
     echo "Source contains an inverted, malformed, or unsupported rule: $source_file" >&2
@@ -237,8 +240,9 @@ find_covered_domains() {
   rm -f "$uncovered_file"
 }
 
-validate_domain_source "$awa_full_json"
-validate_domain_source "$awa_core_json"
+# AWAvenue 的 IP 段不属于域名拦截层，只提取域名类规则。
+validate_domain_source "$awa_full_json" true
+validate_domain_source "$awa_core_json" true
 validate_domain_source "$pcdn_json"
 for source_file in "${local_pcdn_sources[@]}"; do
   validate_local_pcdn_source "$source_file"
