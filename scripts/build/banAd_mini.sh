@@ -63,7 +63,7 @@ curl --fail --show-error --silent --location \
   -o "$awa_core_json"
 curl --fail --show-error --silent --location \
   --connect-timeout 10 --max-time 30 --retry 1 --retry-delay 1 \
-  "https://raw.githubusercontent.com/DDCHlsq/sing-ruleset/refs/heads/master/pcdn.json" \
+  "https://raw.githubusercontent.com/DDCHlsq/sing-ruleset/refs/heads/master/rules/pcdn.json" \
   -o "$pcdn_json"
 
 extract_domains() {

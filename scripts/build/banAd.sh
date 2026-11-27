@@ -19,7 +19,7 @@ curl --fail --show-error --silent --location \
   -o "$work_dir/qx.list"
 curl --fail --show-error --silent --location \
   --connect-timeout 10 --max-time 30 --retry 1 --retry-all-errors --retry-delay 1 \
-  "https://raw.githubusercontent.com/DDCHlsq/sing-ruleset/refs/heads/master/pcdn.json" \
+  "https://raw.githubusercontent.com/DDCHlsq/sing-ruleset/refs/heads/master/rules/pcdn.json" \
   -o "$work_dir/pcdn.json"
 
 # Parse the rule type before the value. Two loose grep expressions made
